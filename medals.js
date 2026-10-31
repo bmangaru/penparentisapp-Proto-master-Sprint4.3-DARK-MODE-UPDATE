@@ -63,9 +63,16 @@ export const MEDALS = [
     desc: 'Words longer than 10 letters, like “extraordinary” or “imagination”.',
     tiers: [10, 100, 500, 2000],
   },
+  {
+    // One tier only: finishing the app tour earns it straight at Diamond.
+    id: 'tour', name: 'Tour Guide', icon: 'compass-outline', unit: 'tour', single: true,
+    desc: 'Finish every chapter of the app tour. It goes straight to Diamond.',
+    tiers: [1, 1, 1, 1],
+  },
 ];
 
-export const TOTAL_TIERS = MEDALS.length * TIERS.length;
+// Single-tier medals (the Tour Guide) count once.
+export const TOTAL_TIERS = MEDALS.reduce((n, m) => n + (m.single ? 1 : TIERS.length), 0);
 
 // ---------------------------------------------------------------------------
 // Counting text.
@@ -94,7 +101,8 @@ export function textStats(text) {
 }
 
 // Everything the medals measure, from all saved sessions.
-export function medalStats(sessions, dailyGoals = {}, goals = null) {
+// extra: { tour: true } once the app tour is finished.
+export function medalStats(sessions, dailyGoals = {}, goals = null, extra = {}) {
   const sum = summarize(sessions);
   const days = [...new Set(sessions.map((s) => s.day))];
   const totals = { vowels: 0, consonants: 0, punctuation: 0, longWords: 0 };
@@ -116,6 +124,7 @@ export function medalStats(sessions, dailyGoals = {}, goals = null) {
     sessions: sum.count,
     streak: longestStreak(sessions),
     goals: goalsMet,
+    tour: extra.tour ? 1 : 0,
     ...totals,
   };
 }
@@ -155,14 +164,18 @@ export function medalProgress(medal, value) {
   return { ...medal, value, tierIndex, tier, nextTier, next, pct, toGo, maxed, progressText, toGoText };
 }
 
-export function allMedalProgress(sessions, dailyGoals, goals) {
-  const stats = medalStats(sessions, dailyGoals, goals);
+export function allMedalProgress(sessions, dailyGoals, goals, extra = {}) {
+  const stats = medalStats(sessions, dailyGoals, goals, extra);
   return MEDALS.map((m) => medalProgress(m, stats[m.id]));
 }
 
 export function tierCounts(progressList) {
   const counts = { bronze: 0, silver: 0, gold: 0, diamond: 0, total: 0 };
   for (const p of progressList) {
+    if (p.single) {
+      if (p.tierIndex >= 0) { counts.diamond += 1; counts.total += 1; }
+      continue;
+    }
     for (let i = 0; i <= p.tierIndex; i += 1) counts[TIERS[i]] += 1;
     counts.total += p.tierIndex + 1;
   }
@@ -186,6 +199,8 @@ export function diffMedals(progressList, record, nowIso = new Date().toISOString
       const dates = [...prev.dates];
       for (let i = prev.tierIndex + 1; i <= p.tierIndex; i += 1) {
         dates[i] = nowIso;
+        // A single-tier medal pops up once, as Diamond.
+        if (p.single && i < p.tierIndex) continue;
         newlyEarned.push({ ...p, earnedTier: TIERS[i], earnedTierIndex: i, threshold: p.tiers[i] });
       }
       next[p.id] = { tierIndex: p.tierIndex, dates };

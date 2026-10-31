@@ -25,6 +25,7 @@ import MedalDetailScreen from './screens/MedalDetailScreen';
 import CommunitiesScreen from './screens/CommunitiesScreen';
 import BottomBar from './components/BottomBar';
 import IntroSplash from './components/IntroSplash';
+import TourModal from './components/TourModal';
 import { loadEvents, upcoming } from './eventsService';
 import { onNotificationTap, syncNotifications } from './notify';
 import { openLink } from './components/ui';
@@ -131,6 +132,9 @@ export default function App() {
           </NavigationContainer>
         ) : null}
       </View>
+      {/* The app tour (Home's welcome card, Settings → The app tour). Outside
+          the part that redraws on an Appearance switch, so it stays open. */}
+      {choice ? <TourModal navRef={navRef} /> : null}
       {/* Waits for the saved Appearance (a moment) so it opens in the right colours. */}
       {intro && choice ? <IntroSplash key={scheme} onDone={() => setIntro(false)} /> : null}
     </SafeAreaProvider>

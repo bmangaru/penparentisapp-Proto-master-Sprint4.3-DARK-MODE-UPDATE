@@ -620,3 +620,30 @@ Also: writing you're picking up from earlier today never counts twice. If you ta
 - **Logic** (`writingLogic.js`): `shareMonths`, `shareTitle`, `shareStats`. Tested in `test29`.
 - **Needs** two add-ons that work in Expo Go: `npx expo install react-native-view-shot expo-sharing`.
 - **Revised ranges:** **This month · 3 months · 6 months** (no full year: too big to read). This month fills the width; 3 months sit side by side in one row, and 6 months in two rows of three, so the picture stays short enough to share without running into the phone's notch.
+
+## Round 53 — smooth wrap-around
+
+- **Fix (blog and Calendar cards):** going from the last card back to the first no longer flashes the second card. The swap from the end copy to the real first card used a timer that could fire mid-slide, and the strip's start position was being re-applied on every redraw. Now the swap happens the moment the slide lands on the copy (`onScroll`), and the start position is set once.
+
+## Round 54 — the app tour (sponsor request)
+
+- **Home:** a gold **Welcome to Pen Parentis** card above From the blog (`components/TourCard.js`): how many chapters are done, **Start / Continue the tour**, and "Hide for now". It disappears for good once every chapter is done.
+- **The tour** (`components/TourModal.js`, full screen over the app):
+  - **Chapters list** with ✓ on finished ones; tap any chapter to do it or go over it again.
+  - **Chapter cards**: a picture of that part of the app (drawn with the app's own pieces, so it's right in light and dark mode), a title, a few plain sentences, dots, ‹ Back / Next ›, and "Done ✓" on the last card (moves on to the next chapter).
+  - **Try it** on some cards closes the tour and opens the real thing: set today's goal, start writing, write with a prompt, Share your rings, Log offline writing. Your place is saved; "Continue the tour" picks it up.
+  - **The end**: the 💎 **Diamond Tour Guide** medal pops up the first time, then a thank-you with **Get Karma**, the **credits**, and **Start writing**.
+- **10 chapters** (`components/TourContent.js`, all the words in one place):
+  1. Welcome & settings (pick Light / Dark / System right in the tour; the tour is always in Settings; the five tabs)
+  2. Home (the blog, the website and socials, our supporters)
+  3. Your goals & rings (three rings, today's goal, usual goals and the number pad, goal met)
+  4. Start writing (the pencil, the writing page, picking up where you left off)
+  5. Prompts & tools (prompts and levels, Aa text size and Focus, Pause and auto-pause, "Almost there!")
+  6. Finish & check in (saving, how do you feel, send to myself, reading it again)
+  7. Medals (the medals, four tiers and bars, Diamond)
+  8. Calendar (your rings over time, salons and the countdown, Share your rings)
+  9. Writing elsewhere (Log offline writing)
+  10. Salons & community (Eventbrite, previous salons, Discord, Facebook group, Accountability groups)
+- **⚙ Settings → The app tour:** **Open the tour** (review any chapter) and **Start over** (clears the ticks; the medal stays earned).
+- **New medal: Tour Guide** (`medals.js`): one tier only, earned straight at Diamond when every chapter is done. Medals now total 37. The medal page shows just the Diamond tier.
+- **Progress** is saved on the phone (`tour.js`). Tested in `test24` (the medal) and `test30` (chapters, finishing once, starting over, hiding).

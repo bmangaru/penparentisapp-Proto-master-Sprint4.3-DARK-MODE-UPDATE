@@ -1,5 +1,6 @@
 // components/SettingsSheet.js — ⚙ Settings, opened from Home's banner.
-// For now: Appearance (System / Light / Dark), as three little pictures.
+// Appearance (System / Light / Dark, as three little pictures) and the app
+// tour (open it, or start over).
 // System follows the phone, so the app turns dark when the phone does.
 
 import React from 'react';
@@ -7,6 +8,8 @@ import { View, Text, Pressable } from 'react-native';
 import Sheet from './Sheet';
 import { colors, radius, themed } from '../theme';
 import { setAppearance, useAppearance } from '../appearance';
+import { openTour, restartTour } from '../tour';
+import { Ionicons } from '@expo/vector-icons';
 
 const OPTIONS = [
   { id: 'system', label: 'System' },
@@ -14,34 +17,55 @@ const OPTIONS = [
   { id: 'dark', label: 'Dark' },
 ];
 
-export default function SettingsSheet({ visible, onClose }) {
+// The three picture tiles (also used in the app tour's first chapter).
+export function AppearancePicker() {
   const choice = useAppearance() || 'system';
-  function pick(id) {
-    if (id === choice) return;
-    setAppearance(id);
-  }
+  return (
+    <View style={s.row} accessibilityRole="radiogroup">
+      {OPTIONS.map((o) => {
+        const on = o.id === choice;
+        return (
+          <Pressable
+            key={o.id}
+            onPress={() => { if (o.id !== choice) setAppearance(o.id); }}
+            style={[s.opt, on && s.optOn]}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: on }}
+            accessibilityLabel={`${o.label} appearance`}
+          >
+            <Preview kind={o.id} />
+            <Text style={[s.optText, on && { color: colors.royal }]}>{o.label}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+export default function SettingsSheet({ visible, onClose }) {
+  // The tour opens over everything, so close Settings first.
+  const go = (restart) => {
+    onClose();
+    setTimeout(async () => { if (restart) await restartTour(); openTour(); }, 350);
+  };
   return (
     <Sheet visible={visible} onClose={onClose} title="Settings" subtitle="Make the app yours.">
       <Text style={s.label}>APPEARANCE</Text>
-      <View style={s.row} accessibilityRole="radiogroup">
-        {OPTIONS.map((o) => {
-          const on = o.id === choice;
-          return (
-            <Pressable
-              key={o.id}
-              onPress={() => pick(o.id)}
-              style={[s.opt, on && s.optOn]}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: on }}
-              accessibilityLabel={`${o.label} appearance`}
-            >
-              <Preview kind={o.id} />
-              <Text style={[s.optText, on && { color: colors.royal }]}>{o.label}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      <AppearancePicker />
       <Text style={s.note}>System follows your phone's setting, so the app turns dark when your phone does.</Text>
+
+      <Text style={[s.label, { marginTop: 18 }]}>THE APP TOUR</Text>
+      <Text style={s.note}>A short, step-by-step guide to everything in the app. Review any chapter, or start over from the beginning.</Text>
+      <View style={[s.row, { marginTop: 10 }]}>
+        <Pressable onPress={() => go(false)} style={[s.tourBtn, s.tourBtnFill]} accessibilityRole="button">
+          <Ionicons name="compass-outline" size={17} color="#FFFFFF" />
+          <Text style={[s.tourText, { color: '#FFFFFF' }]}>Open the tour</Text>
+        </Pressable>
+        <Pressable onPress={() => go(true)} style={s.tourBtn} accessibilityRole="button">
+          <Ionicons name="refresh" size={16} color={colors.royal} />
+          <Text style={s.tourText}>Start over</Text>
+        </Pressable>
+      </View>
     </Sheet>
   );
 }
@@ -78,5 +102,8 @@ const s = themed(() => ({
   optOn: { borderColor: colors.royal },
   optText: { fontSize: 13, fontWeight: '800', color: colors.ink },
   mini: { alignSelf: 'stretch', height: 70, borderRadius: 8, overflow: 'hidden', borderWidth: 1, borderColor: colors.line },
+  tourBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, minHeight: 46, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.royal },
+  tourBtnFill: { backgroundColor: colors.royal },
+  tourText: { fontSize: 14, fontWeight: '700', color: colors.royal },
   note: { fontSize: 12.5, lineHeight: 18, color: colors.muted, marginTop: 12, marginBottom: 6 },
 }));

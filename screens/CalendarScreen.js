@@ -37,7 +37,7 @@ const VISIBLE_WEEKS = 4;
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']; // Sunday first, like a regular calendar
 const STAR = '#E0AE45';
 
-export default function CalendarScreen({ navigation }) {
+export default function CalendarScreen({ navigation, route }) {
   const today = useToday();
   const [data, setData] = useState({ goals: DEFAULT_GOALS, dailyGoals: {}, sessions: [] });
   const [events, setEvents] = useState([]); // the gold ★ on event days, and the countdown card
@@ -51,6 +51,12 @@ export default function CalendarScreen({ navigation }) {
   }
   const [selected, setSelected] = useState(today);
   const [shareOpen, setShareOpen] = useState(false); // ⇪ Share your rings
+  // From the app tour's "Try it": open Share your rings.
+  useEffect(() => {
+    if (route?.params?.tour !== 'share') return;
+    const id = setTimeout(() => setShareOpen(true), 400);
+    return () => clearTimeout(id);
+  }, [route?.params?.at]);
   const scrollRef = useRef(null);
   const [earlier, setEarlier] = useState(0);
 

@@ -91,7 +91,7 @@ const BG_DARK = {
   '#F2F5FD': '#1F2A4C', '#EEF2FB': '#1F2A4C', '#F7F8FB': '#1C2541', '#F6F7FA': '#1C2541', '#F3F5FA': '#1C2541',
   '#E3E9F8': '#22305A', '#EEF0FF': '#252B5C', '#E9F2FE': '#1A2B48',
   // pale golds / creams → deep gold tint
-  '#FFF8E6': '#2E2817', '#FFF4D6': '#2E2817', '#FFF6DF': '#2E2817', '#F1EDE3': '#111829', '#FFFBEF': '#2E2817',
+  '#FFF8E6': '#2E2817', '#EFE4CC': '#4A3F25', '#E0C27A': '#8A6A2A', '#FFF4D6': '#2E2817', '#FFF6DF': '#2E2817', '#F1EDE3': '#111829', '#FFFBEF': '#2E2817',
   // pale greens / reds / violets
   '#EEF8F1': '#173225', '#E7F8EE': '#173225', '#E6F6EA': '#173225', '#FDECEA': '#3A1E22', '#FDE7E7': '#3A1E22',
   '#FFEDED': '#3A1E22', '#F7F5FF': '#231F45',

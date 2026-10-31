@@ -135,7 +135,8 @@ const CREDITS = {
   developers: ['Brian Mangaru', 'Rony Castillo', 'Rafael Mendoza', 'Nala Hamer'],
 };
 
-function Credits() {
+// Also shown at the end of the app tour.
+export function Credits() {
   return (
     <View style={s.credits} accessibilityRole="summary">
       <View style={s.rule} />

@@ -4,6 +4,7 @@
 //   • Follow Pen Parentis: Facebook, Instagram, LinkedIn, X and Bluesky as
 //     brand buttons (same style as Discord / YouTube / Spotify), each with its
 //     handle.
+//   • The app tour's welcome card (until it's finished; components/TourCard.js).
 //   • From the blog + Visit penparentis.org together (both from the website).
 //   • Get Karma.
 //   • "Thank you to all of our supporters" over the donor scroll.
@@ -20,6 +21,7 @@ import { BrandButton } from '../components/LinkButtons';
 import { takeSettingsOpen } from '../appearance';
 import DonorCrawl from '../components/DonorCrawl';
 import BlogCarousel from '../components/BlogCarousel';
+import TourCard from '../components/TourCard';
 import { colors, lift, radius, space, themed } from '../theme';
 import { LINKS } from '../links';
 
@@ -70,6 +72,7 @@ export default function HomeScreen() {
       />
 
       <View style={s.pad}>
+        <TourCard />
         <BlogCarousel />
         <Pressable onPress={() => openLink(LINKS.website)} style={({ pressed }) => [s.web, { marginTop: space.md }, pressed && { opacity: 0.85 }]} accessibilityRole="link" accessibilityLabel="Visit penparentis.org">
           <Image source={require('../assets/pen-parentis-logo.png')} style={s.webLogo} resizeMode="cover" accessibilityIgnoresInvertColors />

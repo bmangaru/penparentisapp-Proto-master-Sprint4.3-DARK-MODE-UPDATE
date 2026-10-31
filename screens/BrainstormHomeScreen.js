@@ -7,7 +7,7 @@
 // Goals are set in ONE place (GoalsSheet). "What's your goal today?" is asked
 // once a day (TodayPlanSheet) and resets at midnight.
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
@@ -29,7 +29,7 @@ import {
 import { addOfflineSession, loadAll, saveDailyGoal, saveGoals, syncMedals, useToday } from '../writingStore';
 import PromptHeader from '../components/PromptHeader';
 
-export default function BrainstormHomeScreen({ navigation }) {
+export default function BrainstormHomeScreen({ navigation, route }) {
   const today = useToday();
   const [data, setData] = useState({ goals: DEFAULT_GOALS, hasGoals: true, dailyGoals: {}, sessions: [] });
 
@@ -113,6 +113,14 @@ export default function BrainstormHomeScreen({ navigation }) {
   }
 
   // Honor-system log of writing done elsewhere; any new medal pops up after.
+  // From the app tour's "Try it": open today's goal or Log offline writing.
+  useEffect(() => {
+    const t = route?.params?.tour;
+    if (!t) return;
+    const id = setTimeout(() => { if (t === 'plan') openPlan('edit'); if (t === 'offline') setOfflineOpen(true); }, 400);
+    return () => clearTimeout(id);
+  }, [route?.params?.at]);
+
   async function onSaveOffline(day, values) {
     await addOfflineSession(day, values);
     setOfflineOpen(false);
