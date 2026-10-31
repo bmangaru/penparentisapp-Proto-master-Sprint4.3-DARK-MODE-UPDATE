@@ -253,7 +253,7 @@ export const CHAPTERS = [
       },
       {
         target: 'offline.card', wait: true, info: true, lock: true, noRing: true, place: 'top',
-        text: 'Pick the day, then add the minutes, words and sessions you wrote. It counts toward your rings and most medals. Try the numbers: nothing is added until you tap Add.',
+        text: 'Pick the day, then add the minutes, words and sessions you wrote. It counts toward your rings and most medals. Play with it: during the tour nothing is saved.',
       },
       {
         target: 'offline.close', wait: true, round: 18,
@@ -339,8 +339,8 @@ export const CHAPTERS = [
         on: (ev, v) => ev === 'revealed' && v === 'cal.past',
       },
       {
-        target: 'cal.past', tab: 'Calendar', info: true, look: true,
-        text: 'Missed a salon, or want to hear it again? Recordings are on YouTube and the salon podcast is on Spotify. The switch tells you when a new episode lands.',
+        target: 'cal.past', tab: 'Calendar', info: true,
+        text: 'Missed a salon, or want to hear it again? Recordings are on YouTube and the salon podcast is on Spotify (they open after the tour). Try the switch: it tells you when a new episode lands. Tap Got it when you’re ready.',
       },
     ],
   },
@@ -353,8 +353,8 @@ export const CHAPTERS = [
         text: 'The next salon. Register on Eventbrite, watch it live on YouTube, add it to your calendar, or share it with a friend.',
       },
       {
-        target: 'ev.remind', tab: 'Eventbrite', info: true, look: true, round: 16,
-        title: 'Never miss one', text: 'Turn this on and you’ll get one reminder half an hour before a salon goes live. Nothing else.',
+        target: 'ev.remind', tab: 'Eventbrite', info: true, round: 16,
+        title: 'Never miss one', text: 'Turn this on and you’ll get one reminder half an hour before a salon goes live. Nothing else. Try it, keep it on if you’d like it, then tap Got it.',
       },
       tapTab('Community', 'Community', 'People to write with.', { section: 'Community' }),
       {

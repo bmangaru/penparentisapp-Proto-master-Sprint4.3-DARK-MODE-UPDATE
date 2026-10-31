@@ -139,10 +139,11 @@ export default function OfflineLogSheet({ visible, onClose, onSave, sessions = [
 
       <MedalPreview preview={preview} day={day} isToday={isToday} />
 
-      <Pressable onPress={save} disabled={empty || saving} style={[s.cta, (empty || saving) && { opacity: 0.45 }]} accessibilityRole="button">
+      {/* During the app tour you can try everything, but nothing is saved. */}
+      <Pressable onPress={save} disabled={empty || saving || !!run} style={[s.cta, (empty || saving || !!run) && { opacity: 0.45 }]} accessibilityRole="button" accessibilityState={{ disabled: empty || saving || !!run }}>
         <Text style={s.ctaText}>{isToday ? 'Add to today' : `Add to ${shortDay(day)}`}</Text>
       </Pressable>
-      {empty ? <Text style={s.hint}>Enter the minutes or words you wrote.</Text> : null}
+      {run ? <Text style={s.hint}>Adding is off during the tour, so try anything: nothing is saved.</Text> : empty ? <Text style={s.hint}>Enter the minutes or words you wrote.</Text> : null}
     </Sheet>
   );
 }

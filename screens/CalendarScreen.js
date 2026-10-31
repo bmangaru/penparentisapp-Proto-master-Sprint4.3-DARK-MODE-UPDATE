@@ -24,7 +24,7 @@ import RingStats from '../components/RingStats';
 import { LinearGradient } from 'expo-linear-gradient';
 import Cycler from '../components/Cycler';
 import TourTarget from '../components/TourTarget';
-import { tourEvent, useRun } from '../tourRun';
+import { tourEvent, tourRunning, useRun } from '../tourRun';
 import ShareCalendarSheet from '../components/ShareCalendarSheet';
 import EventCountdown, { nextUpcoming } from '../components/EventCountdown';
 import { colors, gradients, lift, radius, space, themed } from '../theme';
@@ -272,13 +272,13 @@ export default function CalendarScreen({ navigation, route }) {
             icon={<Ionicons name="logo-youtube" size={22} color={YT_RED} />}
             brand="youtube"
             label="Watch past salons on YouTube"
-            onPress={() => openLink(LINKS.youtube)}
+            onPress={() => { if (!tourRunning()) openLink(LINKS.youtube); }}
           />
           <BrandButton
             icon={<FontAwesome name="spotify" size={21} color={SPOTIFY_GREEN} />}
             brand="spotify"
             label="Listen on Spotify"
-            onPress={() => openLink(LINKS.spotify)}
+            onPress={() => { if (!tourRunning()) openLink(LINKS.spotify); }}
           />
           <ToggleCard
             title="New episode in the feed"
