@@ -12,7 +12,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export const BLOG_URL = 'https://penparentis.org/category/blog/';
 const SITE = 'https://penparentis.org';
 const CACHE_KEY = 'pp.blog.v1';
-const COUNT = 5;
+const COUNT = 10; // newest posts shown on Home
 
 // ---------------------------------------------------------------------------
 // Pure helpers (tested in Node).
