@@ -29,7 +29,7 @@ import {
 import { addOfflineSession, loadAll, saveDailyGoal, saveGoals, syncMedals, useToday } from '../writingStore';
 import PromptHeader from '../components/PromptHeader';
 import TourTarget from '../components/TourTarget';
-import { tourRunning } from '../tourRun';
+import { tourEvent, tourRunning } from '../tourRun';
 
 export default function BrainstormHomeScreen({ navigation, route }) {
   const today = useToday();
@@ -164,6 +164,11 @@ export default function BrainstormHomeScreen({ navigation, route }) {
     .map((k) => daySummary(sessions, dailyGoals, k, goals))
     .filter((d) => d.count > 0 || d.key !== today);
 
+  // The folder: closed shows the most recent day you wrote (else the newest row).
+  const [folderOpen, setFolderOpen] = useState(false);
+  const latest = weekDays.find((d) => d.count > 0) || weekDays[0];
+  const writtenDays = weekDays.filter((d) => d.count > 0).length;
+
   const todayLabel = parseDayKey(today).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
 
   return (
@@ -217,7 +222,8 @@ export default function BrainstormHomeScreen({ navigation, route }) {
           />
         </TourTarget>
 
-        {/* One bubble per day (one spot for the tour, with See all) */}
+        {/* Your writing: one folder for this week. Closed, it shows your most
+            recent day; open, every day this week. */}
         <TourTarget id="bs.history" style={{ gap: space.md }}>
         <View style={s.titleRow}>
           <Text style={s.h}>Your writing</Text>
@@ -226,7 +232,24 @@ export default function BrainstormHomeScreen({ navigation, route }) {
         {weekDays.length === 0 && (
           <Text style={s.empty}>Your first day of writing this week will show up here.</Text>
         )}
-        {weekDays.map((d, i) => (
+        {weekDays.length > 1 ? (
+          <TourTarget id="bs.folder">
+            <Pressable
+              onPress={() => { const next = !folderOpen; setFolderOpen(next); if (next) tourEvent('folder-open'); }}
+              style={({ pressed }) => [s.folder, pressed && { opacity: 0.85 }]}
+              accessibilityRole="button"
+              accessibilityState={{ expanded: folderOpen }}
+            >
+              <Ionicons name={folderOpen ? 'folder-open-outline' : 'folder-outline'} size={20} color={colors.royal} />
+              <View style={{ flex: 1 }}>
+                <Text style={s.folderTitle}>This week</Text>
+                <Text style={s.folderSub}>{writtenDays} day{writtenDays === 1 ? '' : 's'} of writing</Text>
+              </View>
+              <Text style={s.folderToggle}>{folderOpen ? 'Close  ⌃' : `Open all ${weekDays.length}  ⌄`}</Text>
+            </Pressable>
+          </TourTarget>
+        ) : null}
+        {(folderOpen ? weekDays : weekDays.filter((d) => d === latest)).map((d, i) => (
           <TourTarget key={d.key} id={`bs.day${i}`}>
             <DayBubble
               day={d}
@@ -299,6 +322,10 @@ const s = themed(() => ({
   h: { fontSize: 15, fontWeight: '700', color: colors.ink },
   meta: { fontSize: 12, color: colors.muted },
   empty: { fontSize: 13, color: colors.muted },
+  folder: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#F5F7FD', borderWidth: 1.5, borderColor: '#B9C6E8', borderRadius: radius.md, paddingVertical: 11, paddingHorizontal: 12 },
+  folderTitle: { fontSize: 14, fontWeight: '700', color: colors.royalDeep },
+  folderSub: { fontSize: 12, color: colors.muted, marginTop: 1 },
+  folderToggle: { fontSize: 12.5, fontWeight: '800', color: colors.royal },
   allLink: { alignItems: 'center', paddingVertical: 10, minHeight: 44, justifyContent: 'center' },
   link: { color: colors.royal, fontSize: 13, fontWeight: '700' },
 }));

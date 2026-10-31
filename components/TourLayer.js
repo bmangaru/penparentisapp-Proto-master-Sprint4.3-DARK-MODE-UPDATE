@@ -39,7 +39,10 @@ export default function TourLayer({ host = 'root' }) {
   const [rect, setRect] = useState(null);
   const [missing, setMissing] = useState(false);
   const [kb, setKb] = useState(0);
-  const [bubbleH, setBubbleH] = useState(0);
+  // The bubble's measured height, tagged with the step it belongs to, so a
+  // measurement can never be wiped out by the step-change reset (that left
+  // the bubble invisible: an outline with nothing to read).
+  const [bubble, setBubble] = useState({ key: null, h: 0 });
   const [ringRects, setRingRects] = useState(null); // step.rings: outline these spots one by one
   const [markRects, setMarkRects] = useState(null); // step.marks: pulsing gold rings ("tap here")
   const pulse = useRef(new Animated.Value(1)).current;
@@ -60,7 +63,6 @@ export default function TourLayer({ host = 'root' }) {
   useEffect(() => {
     setRect(null);
     setMissing(false);
-    setBubbleH(0);
     setRingRects(null);
     setMarkRects(null);
     if (!step?.target) return undefined;
@@ -253,6 +255,7 @@ export default function TourLayer({ host = 'root' }) {
   const block = () => true;
 
   // Where the bubble goes: below the spot, else above, else at the top.
+  const bubbleH = bubble.key === key ? bubble.h : 0;
   const bh = bubbleH || 170;
   const floor = H - (kb || insets.bottom) - 8;
   const below = floor - (hy + hh);
@@ -294,7 +297,7 @@ export default function TourLayer({ host = 'root' }) {
       <View
         key={key} // a fresh bubble per step, so it's always measured (and shown)
         style={[c.abs, { left: 14, right: 14, top, opacity: bubbleH ? 1 : 0 }]}
-        onLayout={(e) => setBubbleH(Math.round(e.nativeEvent.layout.height))}
+        onLayout={(e) => { const h = Math.round(e.nativeEvent.layout.height); setBubble({ key, h }); }}
       >
         <Bubble run={run} step={step} />
       </View>

@@ -275,9 +275,15 @@ export const CHAPTERS = [
         on: (ev, v) => ev === 'revealed' && v === 'bs.history',
       },
       {
-        target: 'bs.history', tab: 'Brainstorm', info: true, look: true,
-        noRing: true, markRound: 16, marks: ['bs.day0', 'bs.day1', 'bs.day2', 'bs.day3', 'bs.day4', 'bs.day5', 'bs.day6', 'bs.seeAll'],
-        text: 'It’s all saved on your phone. Each day you wrote this week has a card with how you felt; tap one to read it. “See all my writing” has every day, by week.',
+        target: 'bs.history', tab: 'Brainstorm', noRing: true, markRound: 16, marks: ['bs.folder'],
+        text: 'It’s all saved on your phone. Your writing is kept in a folder for the week: closed, it shows your most recent day.',
+        task: 'Tap the folder to open this week.', doneText: 'Every day this week, with how you felt. Tap a day any time to read it.', manual: true,
+        skipIf: () => !getTarget('bs.folder'), // only one day so far: nothing to open
+        on: (ev) => ev === 'folder-open',
+      },
+      {
+        target: 'bs.history', tab: 'Brainstorm', info: true, look: true, noRing: true, markRound: 16, marks: ['bs.seeAll'],
+        text: '“See all my writing” has every day you’ve ever written, by week.',
       },
     ],
   },

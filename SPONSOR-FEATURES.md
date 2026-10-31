@@ -792,3 +792,10 @@ No new behaviour: this zip has every file the on-app tour touches (rounds 56–5
 - **No ‹ Back or Skip › inside a chapter** — each chapter is done start to finish, which keeps it stable. (Only if a step's spot can't be found does "Skip this step ›" appear, so the tour can never get stuck. ✕ still tucks it away.)
 - **Chapter card:** big buttons are **↺ Redo chapter** and **Next**; Take a break and See all chapters are small links under them.
 - **6.2:** the "See all medals" step from round 68 is removed (it made the sheet jumpy). See all still works normally outside the tour.
+
+## Round 70 — Your writing as a folder; the "outline but no bubble" fix
+
+- **Your writing (Brainstorm)** is now one folder for the week. Closed (the default), it shows your most recent day; "Open all ⌄" shows every day this week, "Close ⌃" folds it again. "See all my writing" is unchanged.
+- **Tour 7.3:** tap the folder to open this week (pulsing), then a note on "See all my writing". If you've only written one day so far, the folder step is skipped.
+- **Fix:** a step could show its gold outline with no bubble (the bubble's size was sometimes reset just after it was measured, leaving it invisible). Now each measurement belongs to its step, so the bubble always shows.
+- **Take a break:** from a chapter's last card it ends there and "Continue the tour" starts the next chapter; leaving mid-chapter (✕ → End) means that chapter starts again from the top next time.
