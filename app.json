@@ -37,7 +37,8 @@
         {
           "calendarPermission": "Pen Parentis adds the events you choose to your calendar, with a reminder."
         }
-      ]
+      ],
+      "expo-web-browser"
     ]
   }
 }
