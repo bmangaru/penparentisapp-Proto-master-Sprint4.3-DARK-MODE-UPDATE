@@ -1,7 +1,7 @@
 // tour.js — the app tour's progress, saved on this phone.
 //   { done: { chapterId: true }, ever: { chapterId: true }, hidden: bool, finished: bool }
-// ever = chapters ever finished (the Tour Guide medal counts these; Start
-// over clears done, not ever).
+// ever = chapters ever finished (the Tour Guide medal counts these). Start
+// over clears both, and the medal, so it's earned again.
 // finished = every chapter done at least once (earns the Diamond Tour Guide
 // medal; the Home card goes away). Replaying from Settings keeps the medal.
 // Any screen can open the tour with openTour(chapterId?) — App.js shows it.
@@ -58,10 +58,16 @@ export async function setTourHidden(hidden) {
   await save({ ...cur, hidden });
 }
 
-// Settings → Start the tour over: clears the ticks (the medal stays earned).
+// Settings → Start the tour over: clears every chapter AND the Tour Guide
+// medal, so it's earned again (and celebrated again) as you go.
+const MEDAL_RECORD_KEY = 'pp.medals.v1'; // writingStore.js MEDALS_KEY
 export async function restartTour() {
   const cur = await loadTour();
-  await save({ ...cur, done: {}, hidden: false });
+  await save({ ...cur, done: {}, ever: {}, finished: false, hidden: false });
+  try {
+    const rec = JSON.parse((await AsyncStorage.getItem(MEDAL_RECORD_KEY)) || 'null');
+    if (rec && rec.tour) { delete rec.tour; await AsyncStorage.setItem(MEDAL_RECORD_KEY, JSON.stringify(rec)); }
+  } catch {}
 }
 
 // Opening the tour from anywhere.

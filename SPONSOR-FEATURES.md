@@ -677,3 +677,16 @@ The tour no longer uses practice copies for chapters 1–4. It sits **on top of 
 - Chapters 5–10 are still the card pages for now (next round).
 
 How it's built: `tourRun.js` (the run), `components/TourTarget.js` (marks a spot), `components/TourLayer.js` (spotlight, bubble, cards; one over the app, one inside each sheet), `components/TourOverlay.js` (in App.js), and the steps in `components/TourContent.js`.
+
+## Round 57 — the tour: no shortcuts, ‹ Back, chapters 5–7 on the real app
+
+- **No shortcuts:** every chapter (after the welcome) starts by asking you to tap the right tab yourself: Home for chapter 2, the pencil (Brainstorm) for chapters 3, 4 and 7. You learn where everything is.
+- **‹ Back** in the bubble goes back a step to try it again (to the right tab, if needed). It hides when there's no sensible step to go back to (e.g. from inside a sheet to the page under it).
+- **Goals can't be closed by accident:** while the tour is on the goals sheet or today's goal, the × is hidden and tapping outside does nothing; "‹ Your goals" is hidden too.
+- **What to tap on My usual:** a pulsing gold ring takes turns between − / + and the number, with "Tap − or + to change a goal" / "Or tap the number to type it", until you try one.
+- **The chapter card's Next button** shows a small "NEXT" over a short name, and shrinks to fit.
+- **Chapters now (all 10 kept, so the medal tiers are the same):** 1 Welcome & settings · 2 Home · 3 Goals · 4 Start writing (pencil, Start writing, 5 words) · 5 Prompts & tools on the real writing page (✦ Prompt, level and ↻ Refresh, Aa size, Focus mode on and off, Pause, type to resume) · 6 Finish & check in (Finish, then a gold outline around just "How do you feel?" and the faces, then Done) · 7 Medals (look only: the medals card at the bottom of Brainstorm, two short notes; it can't be opened from the tour) · 8 Calendar, 9 Writing elsewhere, 10 Salons & community (still cards).
+- **Earning the medal:** when a chapter earns a Tour Guide tier, the chapter card becomes a "✦ MEDAL EARNED ✦" screen with the medal popping in.
+- **Start over resets the medal:** Settings → Start over clears every chapter and the Tour Guide medal, so it's earned (and celebrated) again.
+- Session saved no longer lists "Tour Guide +4" as if writing had moved it.
+- `components/TourSteps.js` (the old practice copies) is no longer used: delete it.

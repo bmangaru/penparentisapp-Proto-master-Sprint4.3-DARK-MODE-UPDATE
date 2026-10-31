@@ -68,9 +68,24 @@ export function startChapter(idx) {
   enter();
 }
 
+// Steps with skipIf() that's true right now are passed over (e.g. "open the
+// writing page" when you're already on it).
 function enter() {
-  const st = stepOf();
+  let st = stepOf();
+  while (st && st.skipIf && safe(st.skipIf)) {
+    const steps = CHAPTERS[run.ch].steps;
+    if (run.step + 1 >= steps.length) { finishChapter(); return; }
+    set({ ...run, step: run.step + 1, data: {}, progress: '', taskDone: false });
+    st = stepOf();
+  }
   if (st?.go && goTo) goTo(st.go);
+}
+const safe = (fn) => { try { return !!fn(); } catch { return false; } };
+
+function finishChapter() {
+  const ch = run.ch;
+  set({ ...run, phase: 'done', earned: null });
+  if (chapterDone) chapterDone(ch);
 }
 
 export function nextStep() {
@@ -80,11 +95,43 @@ export function nextStep() {
   if (run.step + 1 < steps.length) {
     set({ ...run, step: run.step + 1, phase: 'step', data: {}, progress: '', taskDone: false });
     enter();
-  } else {
-    const ch = run.ch;
-    set({ ...run, phase: 'done' });
-    if (chapterDone) chapterDone(ch);
+  } else finishChapter();
+}
+
+// ‹ Back: the nearest earlier step you can do again from where you are now.
+// Its spot has to be on screen in the same place you are (over the app, or
+// the same sheet). A step that names its tab (`tab`) is reached by going to
+// that tab. -1 = no way back (the button hides).
+export function backIndex(r = run) {
+  if (!r || r.phase !== 'step') return -1;
+  const steps = CHAPTERS[r.ch]?.steps || [];
+  const cur = steps[r.step];
+  const curHost = cur?.target ? getTarget(cur.target)?.host || 'root' : 'root';
+  for (let i = r.step - 1; i >= 0; i -= 1) {
+    const st = steps[i];
+    if (st.kind === 'welcome') return -1;
+    if (st.skipIf && safe(st.skipIf)) continue;
+    if (!st.target) continue;
+    const t = getTarget(st.target);
+    if (!t) continue;
+    if (t.host !== curHost) continue;
+    return i;
   }
+  return -1;
+}
+
+export function prevStep() {
+  const i = backIndex();
+  if (i < 0) return;
+  clearTimeout(advanceTimer);
+  set({ ...run, step: i, phase: 'step', data: {}, progress: '', taskDone: false });
+  const st = stepOf();
+  if (st?.tab && goTo) goTo({ tab: st.tab });
+}
+
+// A Tour Guide tier earned by the chapter just finished (shown on its card).
+export function setTourEarned(tiers) {
+  if (run && run.phase === 'done') set({ ...run, earned: tiers });
 }
 
 export function stopTour() {

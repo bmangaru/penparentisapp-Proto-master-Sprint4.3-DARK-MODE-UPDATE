@@ -2,11 +2,11 @@
 // words, sessions). Your usual goal applies every day; there are no set
 // writing days and no weekly goal.
 
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
 import { PadValue, useNumberPad } from './NumberPad';
 import Sheet from './Sheet';
-import { tourEvent } from '../tourRun';
+import { isTourTarget, tourEvent, useRun } from '../tourRun';
 import Rings, { RING_COLORS } from './Rings';
 import { colors, radius, space, themed } from '../theme';
 import { GOAL_LIMITS, lightTargets, normalizeGoals, stepGoal } from '../writingLogic';
@@ -37,6 +37,7 @@ export default function GoalsSheet({ visible, goals, firstTime, kind = 'usual', 
 
   const max = (k) => (light ? usual[k] : GOAL_LIMITS[k].max);
   const step = (k, dir) => {
+    setTouched(true);
     setG((cur) => ({ ...cur, [k]: Math.min(max(k), stepGoal(k, cur[k], dir)) }));
     if (light) setCustom(true);
   };
@@ -47,6 +48,28 @@ export default function GoalsSheet({ visible, goals, firstTime, kind = 'usual', 
     values: g,
     onChange: (k, n) => { setG((cur) => ({ ...cur, [k]: n })); if (light) setCustom(true); },
   });
+  // The app tour: a pulsing gold ring shows what to tap, taking turns
+  // between − / + and the number (tap it to type), until you try one.
+  const run = useRun();
+  const inTour = isTourTarget('goals.card', run);
+  const [touched, setTouched] = useState(false);
+  useEffect(() => { if (visible) setTouched(false); }, [visible]);
+  useEffect(() => { if (pad.active) setTouched(true); }, [pad.active]);
+  const showHint = inTour && !run.taskDone && !touched;
+  const [hint, setHint] = useState(0); // 0: − and +   1: the number
+  const pulse = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    if (!showHint) return undefined;
+    const loop = Animated.loop(Animated.sequence([
+      Animated.timing(pulse, { toValue: 0.25, duration: 550, useNativeDriver: true }),
+      Animated.timing(pulse, { toValue: 1, duration: 550, useNativeDriver: true }),
+    ]));
+    loop.start();
+    const id = setInterval(() => setHint((h) => (h + 1) % 2), 2200);
+    return () => { loop.stop(); clearInterval(id); };
+  }, [showHint]);
+  const ring = (on) => (on ? <Animated.View pointerEvents="none" style={[s.hintRing, { opacity: pulse }]} /> : null);
+
   const half = lightTargets({ ...usual, light: undefined });
   function useHalf() {
     setG((cur) => ({ ...cur, ...half }));
@@ -73,7 +96,7 @@ export default function GoalsSheet({ visible, goals, firstTime, kind = 'usual', 
 
   return (
     <Sheet visible={visible} onClose={firstTime ? () => {} : onClose} title={title} subtitle={subtitle} footer={pad.footer} tourId="goals">
-      {onBack ? (
+      {onBack && !inTour ? (
         <Pressable onPress={onBack} hitSlop={8} style={s.back} accessibilityRole="button">
           <Text style={s.backText}>‹ Your goals</Text>
         </Pressable>
@@ -95,6 +118,7 @@ export default function GoalsSheet({ visible, goals, firstTime, kind = 'usual', 
                 <Text style={s.rowName}>{r.name}</Text>
                 <Text style={s.rowSub}>{r.sub}</Text>
               </View>
+              <View>
               <Pressable
                 onPress={() => step(r.k, -1)}
                 disabled={atMin}
@@ -104,7 +128,13 @@ export default function GoalsSheet({ visible, goals, firstTime, kind = 'usual', 
               >
                 <Text style={s.stepText}>−</Text>
               </Pressable>
-              <PadValue pad={pad} k={r.k} value={g[r.k]} label={`${r.name} goal`} />
+              {ring(showHint && i === 0 && hint === 0)}
+              </View>
+              <View>
+                <PadValue pad={pad} k={r.k} value={g[r.k]} label={`${r.name} goal`} />
+                {ring(showHint && i === 0 && hint === 1)}
+              </View>
+              <View>
               <Pressable
                 onPress={() => step(r.k, 1)}
                 disabled={atMax}
@@ -114,10 +144,16 @@ export default function GoalsSheet({ visible, goals, firstTime, kind = 'usual', 
               >
                 <Text style={s.stepText}>+</Text>
               </Pressable>
+              {ring(showHint && i === 0 && hint === 0)}
+              </View>
             </View>
           );
         })}
       </View>
+
+      {showHint ? (
+        <Text style={s.hintText}>{hint === 0 ? '👆  Tap − or + to change a goal' : '👆  Or tap the number to type it'}</Text>
+      ) : null}
 
       {light ? (
         <>
@@ -157,6 +193,8 @@ const s = themed(() => ({
   dot: { width: 12, height: 12, borderRadius: 6 },
   rowName: { fontSize: 14.5, fontWeight: '700', color: colors.ink },
   rowSub: { fontSize: 12, color: colors.muted, marginTop: 2 },
+  hintRing: { position: 'absolute', top: -6, left: -6, right: -6, bottom: -6, borderRadius: 999, borderWidth: 3, borderColor: '#F2C14E' },
+  hintText: { fontSize: 13, fontWeight: '800', color: '#B07A1C', textAlign: 'center', marginTop: 10 },
   stepBtn: { width: 44, height: 44, borderRadius: 22, borderWidth: 1.5, borderColor: 'rgba(10,22,51,0.2)', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' },
   stepOff: { opacity: 0.3 },
   stepText: { fontSize: 20, color: colors.ink, lineHeight: 22 },

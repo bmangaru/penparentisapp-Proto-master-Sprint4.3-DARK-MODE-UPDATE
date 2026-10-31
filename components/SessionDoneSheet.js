@@ -6,6 +6,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import Sheet from './Sheet';
+import TourTarget from './TourTarget';
 import Face from './Face';
 import { MedalSummary } from './MedalProgress';
 import { colors, radius, space, themed } from '../theme';
@@ -98,6 +99,7 @@ export default function SessionDoneSheet({
         </View>
       ) : null}
 
+      <TourTarget id="done.feel">
       <View style={s.feelHead}>
         <Text style={s.feelTitle}>How do you feel?</Text>
         <Text style={s.feelPicked}>{feeling ? feelingLabel(feeling) : 'Optional'}</Text>
@@ -120,7 +122,9 @@ export default function SessionDoneSheet({
           );
         })}
       </View>
+      </TourTarget>
 
+      <TourTarget id="done.buttons">
       <View style={s.actions}>
         <Pressable style={[s.btn, s.btnOutline]} onPress={onShare}>
           <Text style={[s.btnText, { color: colors.royal }]}>Send to myself</Text>
@@ -129,6 +133,7 @@ export default function SessionDoneSheet({
           <Text style={[s.btnText, { color: '#FFFFFF' }]}>Done</Text>
         </Pressable>
       </View>
+      </TourTarget>
     </Sheet>
   );
 }

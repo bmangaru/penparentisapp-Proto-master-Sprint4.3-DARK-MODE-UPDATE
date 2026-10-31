@@ -230,7 +230,9 @@ export default function BrainstormHomeScreen({ navigation, route }) {
           <Text style={s.link}>See all my writing  ›</Text>
         </Pressable>
 
-        <MedalsCard medals={medalState.medals} record={medalState.record} onPress={() => navigation.navigate('Medals')} />
+        <TourTarget id="bs.medals">
+          <MedalsCard medals={medalState.medals} record={medalState.record} onPress={() => navigation.navigate('Medals')} />
+        </TourTarget>
       </View>
 
       <GoalsSheet

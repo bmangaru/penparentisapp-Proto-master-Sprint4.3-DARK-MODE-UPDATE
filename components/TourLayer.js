@@ -19,8 +19,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFonts, Caveat_600SemiBold } from '@expo-google-fonts/caveat';
 import { BlackPen, PEN, TIP } from './IntroSplash';
 import { colors, isDark } from '../theme';
+import Medal from './Medal';
+import { MEDALS } from '../medals';
 import {
-  getTarget, getTourChapters, nextStep, startChapter, stepOf, stopTour, topHost, useRun,
+  backIndex, getTarget, getTourChapters, nextStep, prevStep, startChapter, stepOf, stopTour, topHost, useRun,
 } from '../tourRun';
 import { openTour, useTour } from '../tour';
 
@@ -69,6 +71,12 @@ export default function TourLayer({ host = 'root' }) {
       if (!node || !node.measureInWindow) return;
       node.measureInWindow((x, y, w, h) => {
         if (!w && !h) return;
+        // On another tab (the pages sit side by side): not on screen.
+        if (x >= W - 1 || x + w <= 1) {
+          setRect(null);
+          setMissing(host === 'root' && !step.wait && Date.now() - since > 1800);
+          return;
+        }
         setRect((r) => (r && r.x === x && r.y === y && r.w === w && r.h === h ? r : { x, y, w, h }));
         // Below the fold (or under the header)? Scroll the page to it, once.
         if (t.scroll && scrolledFor.current !== key) {
@@ -87,6 +95,8 @@ export default function TourLayer({ host = 'root' }) {
     return () => clearInterval(id);
   }, [key, host]);
 
+  useEffect(() => { if (run?.phase === 'done') Keyboard.dismiss(); }, [run?.phase]);
+
   if (!run) return null;
   const chapters = getTourChapters();
   const chapter = chapters[run.ch];
@@ -100,7 +110,7 @@ export default function TourLayer({ host = 'root' }) {
       <View style={StyleSheet.absoluteFill}>
         <View style={[StyleSheet.absoluteFill, { backgroundColor: `${DIM}0.66)` }]} onStartShouldSetResponder={() => true} />
         <View style={[c.centerWrap, { paddingTop: insets.top, paddingBottom: insets.bottom }]} pointerEvents="box-none">
-          {run.phase === 'done' ? <DoneCard ch={run.ch} /> : step.kind === 'welcome' ? <WelcomeCard /> : <Bubble run={run} step={step} />}
+          {run.phase === 'done' ? <DoneCard ch={run.ch} earned={run.earned} /> : step.kind === 'welcome' ? <WelcomeCard /> : <Bubble run={run} step={step} />}
         </View>
       </View>
     );
@@ -151,6 +161,9 @@ export default function TourLayer({ host = 'root' }) {
           <View style={[c.abs, { left: 0, top: hy, width: hx, height: hh, backgroundColor: dim }]} onStartShouldSetResponder={block} />
           <View style={[c.abs, { left: hx + hw, top: hy, width: Math.max(0, W - hx - hw), height: hh, backgroundColor: dim }]} onStartShouldSetResponder={block} />
         </>
+      ) : null}
+      {step.look ? (
+        <View style={[c.abs, { left: hx, top: hy, width: hw, height: hh }]} onStartShouldSetResponder={block} />
       ) : null}
       {ring ? (
         <View pointerEvents="none" style={[c.abs, c.ring, { left: hx, top: hy, width: hw, height: hh, borderRadius: step.round ?? 14 }]}>
@@ -207,6 +220,11 @@ function Bubble({ run, step, lost }) {
         </View>
       ) : null}
       <View style={c.foot}>
+        {backIndex(run) >= 0 ? (
+          <Pressable onPress={prevStep} hitSlop={10} accessibilityRole="button" accessibilityHint="Goes back a step to try it again" style={{ marginRight: 'auto' }}>
+            <Text style={c.skip}>‹ Back</Text>
+          </Pressable>
+        ) : null}
         {step.info && !lost ? (
           <Pressable onPress={nextStep} style={({ pressed }) => [c.got, pressed && { opacity: 0.85 }]} accessibilityRole="button">
             <Text style={c.gotText}>Got it ›</Text>
@@ -311,8 +329,19 @@ function WelcomeCard() {
 // ---------------------------------------------------------------------------
 const TIERS = [[3, 'Bronze'], [6, 'Silver'], [9, 'Gold'], [10, 'Diamond']];
 
-function DoneCard({ ch }) {
+const TOUR_MEDAL = MEDALS.find((m) => m.id === 'tour');
+const TIER_NAME = { bronze: 'Bronze', silver: 'Silver', gold: 'Gold', diamond: 'Diamond' };
+
+function DoneCard({ ch, earned }) {
   const tour = useTour();
+  // A new Tour Guide tier from this chapter: the medal takes the stage.
+  const won = earned && earned.length ? earned[earned.length - 1] : null;
+  const pop = useRef(new Animated.Value(won ? 0.4 : 1)).current;
+  useEffect(() => {
+    if (!won) return;
+    pop.setValue(0.4);
+    Animated.spring(pop, { toValue: 1, friction: 4, tension: 120, useNativeDriver: true }).start();
+  }, [won?.earnedTier]);
   const chapters = getTourChapters();
   const ids = chapters.map((x) => x.id);
   const done = { ...(tour?.done || {}), [chapters[ch].id]: true };
@@ -326,8 +355,21 @@ function DoneCard({ ch }) {
   }
   return (
     <View style={[c.card, { backgroundColor: colors.card, borderColor: colors.line }]}>
-      <View style={c.bigCheck}><Ionicons name="checkmark" size={32} color="#FFFFFF" /></View>
-      <Text style={[c.cardTitle, { color: colors.ink }]}>Chapter {ch + 1} done</Text>
+      {won ? (
+        <>
+          <Text style={c.wonKick}>✦ MEDAL EARNED ✦</Text>
+          <Animated.View style={{ alignSelf: 'center', marginTop: 8, transform: [{ scale: pop }] }}>
+            <Medal medal={TOUR_MEDAL} tier={won.earnedTier} size={104} />
+          </Animated.View>
+          <Text style={[c.cardTitle, { color: colors.ink }]}>{TIER_NAME[won.earnedTier] || ''} Tour Guide</Text>
+          <Text style={[c.cardText, { color: colors.body, marginTop: 2 }]}>Chapter {ch + 1} done. You've finished {won.threshold} chapters of the tour!</Text>
+        </>
+      ) : (
+        <>
+          <View style={c.bigCheck}><Ionicons name="checkmark" size={32} color="#FFFFFF" /></View>
+          <Text style={[c.cardTitle, { color: colors.ink }]}>Chapter {ch + 1} done</Text>
+        </>
+      )}
       <Text style={[c.cardText, { color: colors.body }]}>
         {n} of {ids.length} chapters
         {nextTier ? <Text> · {nextTier[0] - n} more for the <Text style={{ fontWeight: '800', color: '#C8912B' }}>{nextTier[1]} Tour Guide</Text> medal</Text> : null}
@@ -338,7 +380,8 @@ function DoneCard({ ch }) {
           <Text style={[c.cardBtnText, { color: colors.royal }]}>Take a break</Text>
         </Pressable>
         <Pressable onPress={goNext} style={[c.cardBtn, c.cardBtnFill]} accessibilityRole="button">
-          <Text style={[c.cardBtnText, { color: '#FFFFFF' }]} numberOfLines={1}>{next ? `Next: ${next.short || next.title} ›` : 'All chapters ›'}</Text>
+          {next ? <Text style={c.nextKick}>NEXT</Text> : null}
+          <Text style={[c.cardBtnText, { color: '#FFFFFF' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{next ? `${next.short || next.title} ›` : 'All chapters ›'}</Text>
         </Pressable>
       </View>
       <Pressable onPress={() => { stopTour(); openTour('__list'); }} hitSlop={8} style={{ alignSelf: 'center', marginTop: 12 }} accessibilityRole="button">
@@ -375,7 +418,7 @@ const c = StyleSheet.create({
   prog: { fontSize: 11.5, fontWeight: '800', color: '#9BE3B0', marginTop: 1 },
   check: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: 'rgba(255,255,255,0.4)', alignItems: 'center', justifyContent: 'center' },
   checkOn: { backgroundColor: '#FFFFFF', borderColor: '#FFFFFF' },
-  foot: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginTop: 7, minHeight: 20 },
+  foot: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, alignItems: 'center', marginTop: 7, minHeight: 20 },
   skip: { fontSize: 12.5, fontWeight: '700', color: '#5A6484' },
   got: { backgroundColor: '#1B3FA0', borderRadius: 10, paddingVertical: 7, paddingHorizontal: 14 },
   gotText: { color: '#FFFFFF', fontWeight: '800', fontSize: 13 },
@@ -395,6 +438,8 @@ const c = StyleSheet.create({
   cardBtnFill: { backgroundColor: '#3352C4' },
   cardBtnText: { fontSize: 14.5, fontWeight: '800' },
   cardNote: { fontSize: 12, textAlign: 'center', marginTop: 12 },
+  wonKick: { fontSize: 11, fontWeight: '800', letterSpacing: 1.4, color: '#C8912B', textAlign: 'center' },
+  nextKick: { fontSize: 9.5, fontWeight: '800', letterSpacing: 1, color: 'rgba(255,255,255,0.75)' },
   bigCheck: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#1E7B3A', alignSelf: 'center', alignItems: 'center', justifyContent: 'center' },
   track: { height: 8, borderRadius: 4, marginTop: 14, overflow: 'hidden' },
   fill: { height: '100%', borderRadius: 4 },

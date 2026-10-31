@@ -6,11 +6,13 @@
 //   info (a "Got it ›" step), go ({ tab }), free (no dim: the writing page),
 //   place ('bottom' / 'top'), dim, round (outline corners), wait (the spot
 //   appears later, e.g. in a sheet), hold (ms before moving on), doneText.
-// The other chapters are still cards in a full-screen page (TourModal.js),
-// until they're moved onto the app too. Each of those is a few cards. A card is either hands-on (Step: a working
-// practice copy from TourSteps.js, plus the task to do) or a picture (art)
-// drawn with the app's own pieces. Both have a title, a few plain sentences,
-// and sometimes a "Try it" that opens the real thing. Edit the words here; TourModal.js does the rest.
+//   tab (the step's spot is on that tab: ‹ Back goes there), look (the spot
+//   can't be tapped, just looked at), lock (the sheet can't be closed),
+//   skipIf() (skip the step when it doesn't apply).
+// The last three chapters are still cards in a full-screen page
+// (TourModal.js), until they're moved onto the app too: a picture (art)
+// drawn with the app's own pieces, a title, a few plain sentences, and
+// sometimes a "Try it" that opens the real thing.
 //
 // try: { label, go } where go is one of the destinations in TourModal.js:
 //   'plan' (Brainstorm → today's goal), 'write', 'prompt', 'share' (Calendar →
@@ -21,16 +23,9 @@ import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Rings from './Rings';
-import Medal from './Medal';
-import Face from './Face';
-import { MedalBar } from './MedalProgress';
 import { BrandButton } from './LinkButtons';
-import { MEDALS } from '../medals';
-import { FEELINGS } from '../feelings';
 import { colors, gradients, radius, themed } from '../theme';
-import * as T from './TourSteps';
-
-const medal = (id) => MEDALS.find((m) => m.id === id);
+import { getTarget } from '../tourRun';
 
 // ---------------------------------------------------------------------------
 // Little pictures.
@@ -59,91 +54,12 @@ function Frame({ children, pad = 12, style }) {
 
 
 
-function FinishArt() {
-  return (
-    <Frame style={{ gap: 8 }}>
-      <Text style={s.cardTitle}>Session saved</Text>
-      <Text style={s.small}>45 words · 9:12 min · in My Writing</Text>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 }}>
-        <Rings minutes={100} words={45} sessions={100} size={42} />
-        <Text style={s.small}>Today: 55 words to go</Text>
-      </View>
-    </Frame>
-  );
-}
 
-function FeelArt() {
-  return (
-    <Frame>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}><Text style={s.cardTitle}>How do you feel?</Text><Text style={s.small}>Optional</Text></View>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 }}>
-        {FEELINGS.slice(0, 5).map((f, i) => (
-          <View key={f.id} style={[s.face, i === 0 && s.faceOn]}><Face id={f.id} size={34} /><Text style={s.faceLabel}>{f.label}</Text></View>
-        ))}
-      </View>
-    </Frame>
-  );
-}
 
-function SendArt() {
-  return (
-    <Frame style={{ flexDirection: 'row', gap: 10 }}>
-      <View style={[s.fakeBtn, { flex: 1, minHeight: 46 }]}><Text style={s.fakeBtnText}>Send to myself</Text></View>
-      <View style={[s.fakeBtn, s.fakeBtnFill, { flex: 1, minHeight: 46 }]}><Text style={[s.fakeBtnText, { color: '#FFFFFF' }]}>Done</Text></View>
-    </Frame>
-  );
-}
 
-function DayArt() {
-  return (
-    <Frame style={{ gap: 6 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><Text style={s.cardTitle}>Fri, Oct 30</Text><Text style={s.today}>TODAY</Text><Text style={[s.small, { marginLeft: 'auto' }]}>☺ Happy</Text></View>
-      <Text style={s.small}>120 words · 5:34 min · 2 sessions</Text>
-      <View style={s.track}><View style={{ width: '100%', height: '100%', borderRadius: 3, backgroundColor: colors.karma }} /></View>
-      <Text style={[s.small, { fontStyle: 'italic' }]}>"The kids are finally asleep…"</Text>
-      <Text style={s.link}>Tap to read ›</Text>
-    </Frame>
-  );
-}
 
-function MedalsArt() {
-  const row = [['words', 'gold'], ['time', 'silver'], ['streak', 'bronze'], ['goals', 'diamond'], ['vowels', null]];
-  return (
-    <Frame style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 16 }}>
-      {row.map(([id, tier]) => (
-        <View key={id} style={{ alignItems: 'center', width: 60 }}>
-          <Medal medal={medal(id)} tier={tier} size={50} />
-          <Text style={s.faceLabel} numberOfLines={1}>{medal(id).name}</Text>
-        </View>
-      ))}
-    </Frame>
-  );
-}
 
-function TiersArt() {
-  return (
-    <Frame style={{ gap: 10 }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
-        {['bronze', 'silver', 'gold', 'diamond'].map((t) => <Medal key={t} medal={medal('words')} tier={t} size={46} />)}
-      </View>
-      <View>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}><Text style={s.optTitle}>Wordsmith</Text><Text style={s.small}>800 / 1,000 words</Text></View>
-        <MedalBar now={80} tier="bronze" />
-        <Text style={s.small}>200 words to go for Silver</Text>
-      </View>
-    </Frame>
-  );
-}
 
-function DiamondArt() {
-  return (
-    <Frame style={{ alignItems: 'center', paddingVertical: 16, gap: 6 }}>
-      <Medal medal={medal('goals')} tier="diamond" size={84} />
-      <Text style={s.cardTitle}>Diamond Goal Getter</Text>
-      <View style={[s.fakeBtn, { backgroundColor: '#4B3FB8', borderColor: '#4B3FB8', paddingHorizontal: 16 }]}><Text style={[s.fakeBtnText, { color: '#FFFFFF' }]}>✉️  Email Pen Parentis</Text></View>
-    </Frame>
-  );
-}
 
 function CalendarArt({ star }) {
   const v = [1, 1, 0.6, 1, 1, 0, 0, 1, 1, 1, 0.4, 1, 1, 1];
@@ -238,13 +154,32 @@ function CommunityArt() {
 // The chapters.
 // ---------------------------------------------------------------------------
 
+// Shared steps.
+// Each chapter starts at the tab bar, so you learn where everything is.
+const tapTab = (name, title, text, extra = {}) => ({
+  target: `tab.${name}`, dim: 0.5, round: 16, title, text,
+  task: name === 'Brainstorm' ? 'Tap the pencil (Brainstorm) in the tab bar.' : `Tap ${name} in the tab bar.`,
+  on: (ev, v) => ev === 'tab' && v === name,
+  ...extra,
+});
+// Already on the writing page? Then these are skipped.
+const onWriter = () => !!getTarget('writer.page');
+const toWriter = (why) => [
+  tapTab('Brainstorm', 'Back to Brainstorm', why, { skipIf: onWriter }),
+  {
+    target: 'bs.start', tab: 'Brainstorm', skipIf: onWriter,
+    text: 'Open the writing page. It picks up where you left off today.',
+    task: 'Tap the big blue button.', on: (ev) => ev === 'writer-open',
+  },
+];
+
 export const CHAPTERS = [
   {
     id: 'welcome', title: 'Welcome & settings', short: 'Settings', sub: 'Light or dark, and finding your way',
     steps: [
       { kind: 'welcome', go: { tab: 'Home' } },
       {
-        target: 'home.settings', go: { tab: 'Home' }, round: 20,
+        target: 'home.settings', tab: 'Home', round: 20,
         title: 'Light or dark first?', text: 'Settings lives here on Home. It’s where you choose how the app looks.',
         task: 'Tap ⚙ Settings.', on: (ev, v) => ev === 'sheet-open' && v === 'settings',
       },
@@ -255,7 +190,7 @@ export const CHAPTERS = [
         on: (ev) => ev === 'appearance',
       },
       {
-        target: 'settings.tour', wait: true, info: true,
+        target: 'settings.tour', wait: true, info: true, look: true,
         title: 'This tour lives here', text: 'Come back any time to go over a chapter again, or start the tour over.',
       },
       {
@@ -279,8 +214,9 @@ export const CHAPTERS = [
   {
     id: 'home', title: 'Home', short: 'Home', sub: 'The blog, the website and socials',
     steps: [
+      tapTab('Home', 'Back to Home', 'Every chapter starts from the tab bar, so you get to know where everything is.'),
       {
-        target: 'home.blog', go: { tab: 'Home' },
+        target: 'home.blog', tab: 'Home',
         title: 'From the blog', text: 'The newest posts from penparentis.org. Tap a post to read it right in the app.',
         task: 'Swipe, or tap the arrows, to see 3 posts.',
         on: (ev, v, d) => {
@@ -291,12 +227,12 @@ export const CHAPTERS = [
         },
       },
       {
-        target: 'home.socials',
+        target: 'home.socials', tab: 'Home',
         title: 'The website and socials', text: 'Visit penparentis.org, or follow Pen Parentis. Each button shows the account it opens.',
         task: 'Tap one to see where it goes, then come back.', on: (ev) => ev === 'link-open',
       },
       {
-        target: 'home.supporters', info: true,
+        target: 'home.supporters', tab: 'Home', info: true, look: true,
         title: 'Our supporters', text: 'Get Karma keeps the salons free. The names scrolling here are the organizations and people who keep Pen Parentis going. Thank you!',
       },
     ],
@@ -304,8 +240,9 @@ export const CHAPTERS = [
   {
     id: 'goals', title: 'Your goals & rings', short: 'Goals', sub: 'Minutes, words and sessions',
     steps: [
+      tapTab('Brainstorm', 'Brainstorm', 'The pencil is Brainstorm: your goals, your rings and all your writing.'),
       {
-        target: 'bs.today', go: { tab: 'Brainstorm' },
+        target: 'bs.today', tab: 'Brainstorm',
         title: 'Your three rings', text: 'Minutes writing, words written and sessions (times you sat down). They fill as you write and close when you meet the day’s goal.',
         task: 'Tap Edit goals.', on: (ev, v) => ev === 'sheet-open' && v === 'plan',
       },
@@ -315,8 +252,8 @@ export const CHAPTERS = [
         task: 'Tap Edit on My usual.', on: (ev, v) => ev === 'sheet-open' && v === 'goals',
       },
       {
-        target: 'goals.card', wait: true, round: 20,
-        text: 'Use − and +, or tap a number and type it on the number pad.',
+        target: 'goals.card', wait: true, lock: true, round: 20,
+        text: 'Change each ring’s goal with − and +, or tap a number and type it.',
         task: 'Set your goals, then tap Save.', doneText: 'Saved. Those are your goals.',
         on: (ev) => {
           if (ev === 'pad-key') return { progress: 'Then Done, and Save' };
@@ -324,67 +261,114 @@ export const CHAPTERS = [
         },
       },
       {
-        target: 'plan.card', wait: true, round: 20,
+        target: 'plan.card', wait: true, lock: true, round: 20,
         text: 'Each day, pick how big today is: a lighter day, your usual, a stretch day, or rest. It resets at midnight.',
         task: 'Pick one, then tap Save today’s goal.', on: (ev) => ev === 'plan-saved',
       },
     ],
   },
   {
-    id: 'write', title: 'Your first entry', short: 'Your first entry', sub: 'Write for real',
+    id: 'write', title: 'Start writing', short: 'Start writing', sub: 'Your first entry, for real',
     steps: [
+      tapTab('Brainstorm', 'Where you write', 'The pencil takes you to Brainstorm, where all your writing lives.', { skipIf: onWriter }),
       {
-        target: 'tab.Brainstorm', go: { tab: 'Home' }, dim: 0.5, round: 999,
-        title: 'Where you write', text: 'The round pencil takes you to Brainstorm, where all your writing lives.',
-        task: 'Tap the pencil.', on: (ev, v) => ev === 'tab' && v === 'Brainstorm',
-      },
-      {
-        target: 'bs.start', go: { tab: 'Brainstorm' },
+        target: 'bs.start', tab: 'Brainstorm', skipIf: onWriter,
         title: 'Your first entry', text: 'This is the real thing: what you write is saved on your phone and counts toward your rings and medals.',
         task: 'Tap the big blue button to start.', on: (ev) => ev === 'writer-open',
       },
       {
         target: 'writer.page', free: true, place: 'bottom', wait: true,
         title: 'Just write', text: 'Anything on your mind: a line, a memory, an idea. The clock runs while you type and the rings fill as you go.',
-        task: 'Write at least 5 words.', doneText: 'Keep going as long as you like.',
+        task: 'Write at least 5 words.', doneText: 'That’s your first entry started.',
         on: (ev, v) => (ev === 'words' ? { progress: `${Math.min(v, 5)} of 5 words`, done: v >= 5 } : null),
       },
+    ],
+  },
+  {
+    id: 'tools', title: 'Prompts & tools', short: 'Prompts & tools', sub: 'Prompts, text size, focus, pause',
+    steps: [
+      ...toWriter('Prompts and tools live on the writing page.'),
+      {
+        target: 'writer.prompt', wait: true, round: 999, skipIf: () => !!getTarget('writer.promptCard'),
+        title: 'Stuck? Try a prompt', text: 'Prompts are short questions to get you going. They never count as your words, and they’re saved with what you write.',
+        task: 'Tap ✦ Prompt.', on: (ev) => ev === 'prompt-show',
+      },
+      {
+        target: 'writer.promptCard', wait: true,
+        text: 'Tap the level to switch between Simple, Thoughtful and Deep, or ↻ Refresh for a new one.',
+        task: 'Change the level, then tap ↻ Refresh.',
+        on: (ev, v, d) => {
+          if (ev !== 'prompt-level' && ev !== 'prompt-refresh') return null;
+          const data = { ...d, [ev]: true };
+          const both = data['prompt-level'] && data['prompt-refresh'];
+          return { data, progress: data['prompt-level'] ? 'Now tap ↻ Refresh' : 'Now change the level', done: !!both };
+        },
+      },
+      {
+        target: 'writer.aa', wait: true, round: 999,
+        title: 'Aa: text size and focus', text: 'Make the words bigger or smaller, and write without distractions.',
+        task: 'Tap Aa.', on: (ev) => ev === 'menu-open',
+      },
+      {
+        target: 'writer.menu', wait: true,
+        text: 'A− and A+ change the text size (it’s remembered). Focus mode hides everything but your words.',
+        task: 'Change the size, then turn on Focus mode.',
+        on: (ev) => {
+          if (ev === 'size') return { progress: 'Now turn on Focus mode' };
+          return ev === 'focus-on';
+        },
+      },
+      {
+        target: 'writer.exitFocus', wait: true, round: 999,
+        text: 'That’s Focus mode: just you and your words. The clock still runs.',
+        task: 'Tap ⤡ Exit focus.', on: (ev) => ev === 'focus-off',
+      },
+      {
+        target: 'writer.pause', wait: true, round: 999,
+        title: 'Pause any time', text: 'Kid needs you? Pause stops the clock. A quiet minute pauses it by itself too.',
+        task: 'Tap Pause.', on: (ev) => ev === 'pause',
+      },
+      {
+        target: 'writer.page', free: true, place: 'bottom', wait: true,
+        text: 'Paused. When you’re back, just type: the clock picks up again, no button needed.',
+        task: 'Type a word to start the clock again.', doneText: 'Back on the clock.',
+        on: (ev) => ev === 'resume',
+      },
+    ],
+  },
+  {
+    id: 'finish', title: 'Finish & check in', short: 'Finish', sub: 'Save it, and how you feel',
+    steps: [
+      ...toWriter('Finishing happens on the writing page.'),
       {
         target: 'writer.finish', free: true, ring: true, wait: true,
-        text: 'Write as much as you like. When you’re done, Finish & check in saves it.',
+        text: 'Write as much as you like. When you’re done, Finish & check in saves your entry.',
         task: 'Tap Finish & check in.', hold: 600, on: (ev) => ev === 'session-saved',
       },
       {
-        target: 'done.card', wait: true, round: 20, place: 'top',
-        title: 'Your first entry is saved', text: 'Here’s how today is going. Pick a face for how writing felt, if you like.',
+        target: 'done.feel', wait: true, lock: true, round: 16,
+        title: 'Saved! How do you feel?', text: 'Pick a face for how writing felt. It’s optional, and it shows on that day so you can look back.',
+        task: 'Pick a face.', on: (ev) => ev === 'feeling',
+      },
+      {
+        target: 'done.buttons', wait: true, lock: true, round: 16,
+        text: '“Send to myself” opens your phone’s share sheet: email it or save it to Notes. Done closes this.',
         task: 'Tap Done.', hold: 500, on: (ev) => ev === 'session-done',
       },
     ],
   },
   {
-    id: 'tools', title: 'Prompts & tools', sub: 'Prompts, text size, focus, pause',
-    cards: [
-      { Step: T.PromptStep, task: 'Show a prompt, change its level, then refresh it.', title: 'Never stare at a blank page', body: 'Prompts are short questions to get you going: Simple, Thoughtful or Deep. Your answer is saved with the prompt.', try: { label: 'Write with a prompt', go: 'prompt' } },
-      { Step: T.ToolsStep, task: 'Change the text size and turn on Focus.', title: 'Aa: text size and focus', body: 'Make the text bigger or smaller, or turn on Focus mode to hide everything except your words.' },
-      { Step: T.PauseStep, task: 'Type a word, tap Pause, then type again.', title: 'Pause any time', body: 'Kid needs you? Tap Pause. Typing starts the clock again, and a quiet minute pauses it by itself.' },
-      { Step: T.NudgeStep, task: 'Tap "+2 words" until Wordsmith turns Silver.', title: 'Almost there!', body: 'When a medal is within easy reach this session, a little note tells you how close you are.' },
-    ],
-  },
-  {
-    id: 'finish', title: 'Finish & check in', sub: 'How you feel, and sending it to yourself',
-    cards: [
-      { art: <FinishArt />, title: 'Finish & check in', body: 'Tap "Finish & check in" when you’re done. You’ll see what you wrote today and how your rings are doing.' },
-      { art: <FeelArt />, title: 'How do you feel?', body: 'Pick a face if you like. It’s optional, and it shows on that day so you can look back on how writing felt.' },
-      { art: <SendArt />, title: 'Send it to yourself', body: '"Send to myself" opens your phone’s share sheet: email it, save it to Notes, or message it. Then tap Done.' },
-      { art: <DayArt />, title: 'Read it again later', body: 'Every day you write shows under "Your writing" on Brainstorm. Tap a day to read everything you wrote, with your prompts and how you felt.' },
-    ],
-  },
-  {
-    id: 'medals', title: 'Medals', sub: 'Bronze, Silver, Gold, Diamond',
-    cards: [
-      { art: <MedalsArt />, title: 'Medals for showing up', body: 'Earn medals for words, time, sessions, streaks and goals met, plus four for your words themselves (vowels, consonants, punctuation, big words).' },
-      { art: <TiersArt />, title: 'Four tiers each', body: 'Every medal goes Bronze, Silver, Gold, Diamond. The bar is the colour of the medal you have, and shows how far it is to the next one.' },
-      { art: <DiamondArt />, title: 'Diamond', body: 'Reach Diamond and you can email Pen Parentis to celebrate. Tap "See all" any time to see every medal.' },
+    id: 'medals', title: 'Medals', short: 'Medals', sub: 'Bronze, Silver, Gold, Diamond',
+    steps: [
+      tapTab('Brainstorm', 'Brainstorm', 'Your medals are on Brainstorm too.'),
+      {
+        target: 'bs.medals', tab: 'Brainstorm', info: true, look: true,
+        title: 'Your medals', text: 'Medals live here, at the bottom of Brainstorm. You earn them for words, time, sessions, streaks and goals met, plus a few for your words themselves.',
+      },
+      {
+        target: 'bs.medals', tab: 'Brainstorm', info: true, look: true,
+        title: 'Bronze, Silver, Gold, Diamond', text: 'Every medal has four tiers. Its bar is the colour of the medal you have and shows how close the next one is. Tap this card any time to see them all.',
+      },
     ],
   },
   {

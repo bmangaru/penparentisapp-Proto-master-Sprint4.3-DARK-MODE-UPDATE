@@ -50,8 +50,8 @@ export default function BottomBar({ state, descriptors, navigation }) {
 
         const center = route.name === CENTER;
         return (
+          <TourTarget key={route.key} id={`tab.${route.name}`} style={s.slot}>
           <Pressable
-            key={route.key}
             onPress={onPress}
             onLongPress={onLongPress}
             style={s.item}
@@ -60,11 +60,11 @@ export default function BottomBar({ state, descriptors, navigation }) {
             accessibilityLabel={label}
           >
             {center ? (
-              <TourTarget id="tab.Brainstorm" style={s.circleWrap} pointerEvents="none">
+              <View style={s.circleWrap} pointerEvents="none">
                 <LinearGradient colors={gradients.button} style={s.circle}>
                   <Ionicons name="pencil" size={21} color="#FFFFFF" />
                 </LinearGradient>
-              </TourTarget>
+              </View>
             ) : (
               <Ionicons name={TAB_ICONS[route.name] || 'ellipse'} size={focused ? 23 : 22} color={color} style={s.icon} />
             )}
@@ -84,6 +84,7 @@ export default function BottomBar({ state, descriptors, navigation }) {
               </View>
             ) : null}
           </Pressable>
+          </TourTarget>
         );
       })}
     </TourTarget>
@@ -96,6 +97,7 @@ const s = themed(() => ({
     backgroundColor: colors.paper, borderTopWidth: 1, borderTopColor: colors.line,
     paddingTop: 10,
   },
+  slot: { flex: 1 },
   item: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', minHeight: 52 },
   icon: { height: 26, textAlign: 'center' },
   circleWrap: {

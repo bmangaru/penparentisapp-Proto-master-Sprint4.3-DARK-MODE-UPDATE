@@ -2,23 +2,21 @@
 // puts it above the navigation, outside the part an Appearance switch
 // redraws, so a switch doesn't stop the tour).
 //   • Moves the app for a step (e.g. to the Home tab first).
-//   • When a chapter finishes: ticks it, and pops up any new Tour Guide tier.
+//   • When a chapter finishes: ticks it; a new Tour Guide tier shows on the
+//     chapter's card.
 //     The first time every chapter is done, the thank-you & credits follow.
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import TourLayer from './TourLayer';
-import MedalPopup from './MedalPopup';
 import { CHAPTERS, CHAPTER_IDS } from './TourContent';
-import { setTourChapterDone, setTourChapters, setTourNavigator, stopTour } from '../tourRun';
+import { setTourChapterDone, setTourChapters, setTourEarned, setTourNavigator, stopTour } from '../tourRun';
 import { markChapter, openTour } from '../tour';
 import { syncMedals } from '../writingStore';
 
 setTourChapters(CHAPTERS);
 
 export default function TourOverlay({ navRef }) {
-  const [medals, setMedals] = useState([]);
-
   useEffect(() => {
     setTourNavigator((go) => {
       const nav = navRef?.current;
@@ -29,9 +27,11 @@ export default function TourOverlay({ navRef }) {
     setTourChapterDone(async (idx) => {
       const first = await markChapter(CHAPTERS[idx].id, CHAPTER_IDS);
       const { newlyEarned } = await syncMedals();
+      // A new Tour Guide tier shows on the chapter's card (not a pop-up,
+      // which iOS can't show while a sheet is closing).
       const tiers = newlyEarned.filter((m) => m.id === 'tour');
-      if (tiers.length) setMedals(tiers);
-      if (first) { stopTour(); setTimeout(() => openTour('__end'), tiers.length ? 0 : 300); }
+      if (tiers.length) setTourEarned(tiers);
+      if (first) { stopTour(); setTimeout(() => openTour('__end'), 300); }
     });
     return () => { setTourNavigator(null); setTourChapterDone(null); };
   }, [navRef]);
@@ -39,17 +39,6 @@ export default function TourOverlay({ navRef }) {
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       <TourLayer host="root" />
-      {medals.length ? (
-        <MedalPopup
-          medals={medals}
-          onClose={() => setMedals([])}
-          onSeeMedals={() => {
-            setMedals([]);
-            stopTour();
-            setTimeout(() => navRef?.current?.navigate('Brainstorm', { screen: 'Medals', initial: false }), 300);
-          }}
-        />
-      ) : null}
     </View>
   );
 }

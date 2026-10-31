@@ -82,11 +82,13 @@ export default function BrainstormWriterScreen({ navigation, route }) {
   const [backToast, setBackToast] = useState(false);
   const toastTimer = useRef(null);
   function pauseClock(reason) {
+    if (reason === 'you') tourEvent('pause');
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setPaused(true);
     setPauseReason(reason);
   }
   function resumeClock(withToast) {
+    tourEvent('resume');
     lastActive.current = Date.now();
     lastTyped.current = Date.now(); // a fresh start: browsing counts again
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -115,6 +117,7 @@ export default function BrainstormWriterScreen({ navigation, route }) {
   // Simple / Thoughtful / Deep — shared with Brainstorm and Home.
   const [level, setLevel] = usePromptLevel();
   function pickLevel(l) {
+    tourEvent('prompt-level', l);
     markActive();
     setLevel(l);
     setPrompt(promptForDay(session.day, l));
@@ -134,6 +137,7 @@ export default function BrainstormWriterScreen({ navigation, route }) {
     }).catch(() => {});
   }, []);
   function changeSize(dir) {
+    tourEvent('size', dir);
     setSizeIdx((i) => {
       const n = Math.min(TEXT_SIZES.length - 1, Math.max(0, i + dir));
       AsyncStorage.setItem(TEXT_SIZE_KEY, String(n)).catch(() => {});
@@ -141,6 +145,7 @@ export default function BrainstormWriterScreen({ navigation, route }) {
     });
   }
   function toggleFocus(on) {
+    tourEvent(on ? 'focus-on' : 'focus-off');
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setFocus(on);
     setMenuOpen(false);
@@ -337,6 +342,7 @@ export default function BrainstormWriterScreen({ navigation, route }) {
   const showNudge = ready && !prompt && !nudgeOff && !paused && !sheet && seconds - lastTypedAt.current >= STUCK_AFTER;
 
   function showPrompt() {
+    tourEvent('prompt-show');
     markActive();
     setPrompt((p) => p || promptForDay(session.day, level));
   }
@@ -432,14 +438,19 @@ export default function BrainstormWriterScreen({ navigation, route }) {
     tourEvent('session-saved');
     const { newlyEarned, medals } = await syncMedals();
     setNewMedals(newlyEarned);
-    setNextRows(nextMedals(medalBase.current?.stats, medals));
-    setAllRows(summaryRows(medalBase.current?.stats, medals));
+    // The Tour Guide medal isn't moved by writing: count it as it is now, so
+    // it never shows up as "+4 chapters" in a session's summary.
+    const tourNow = medals.find((m) => m.id === 'tour')?.value;
+    const base = medalBase.current?.stats ? { ...medalBase.current.stats, tour: tourNow } : null;
+    setNextRows(nextMedals(base, medals));
+    setAllRows(summaryRows(base, medals));
     // A new medal gets its own moment first; the check-in sheet follows.
     setSheet(newlyEarned.length ? 'medals' : 'done');
   }
 
   // Saved straight away, so the choice sticks even if the app is closed next.
   function pickFeeling(id) {
+    if (id) tourEvent('feeling', id);
     setFeeling(id);
     finishedRec.current = { ...finishedRec.current, feeling: id };
     saveSession(finishedRec.current);
@@ -463,11 +474,14 @@ export default function BrainstormWriterScreen({ navigation, route }) {
           <SaveBadge state={saveState} />
         </View>
         {focus ? (
-          <Pressable onPress={() => toggleFocus(false)} hitSlop={8} style={s.exitFocus} accessibilityRole="button">
-            <Text style={s.exitFocusText}>⤡ Exit focus</Text>
-          </Pressable>
+          <TourTarget id="writer.exitFocus">
+            <Pressable onPress={() => toggleFocus(false)} hitSlop={8} style={s.exitFocus} accessibilityRole="button">
+              <Text style={s.exitFocusText}>⤡ Exit focus</Text>
+            </Pressable>
+          </TourTarget>
         ) : (
           <View style={s.barRight}>
+            <TourTarget id="writer.prompt">
             <Pressable
               onPress={togglePrompt}
               hitSlop={6}
@@ -477,8 +491,10 @@ export default function BrainstormWriterScreen({ navigation, route }) {
             >
               <Text style={[s.promptBtnText, prompt && { color: '#FFFFFF' }]}>✦ Prompt</Text>
             </Pressable>
+            </TourTarget>
+            <TourTarget id="writer.aa">
             <Pressable
-              onPress={() => setMenuOpen((o) => !o)}
+              onPress={() => { if (!menuOpen) tourEvent('menu-open'); setMenuOpen((o) => !o); }}
               hitSlop={6}
               style={[s.aaBtn, menuOpen && s.aaBtnOn]}
               accessibilityRole="button"
@@ -486,6 +502,8 @@ export default function BrainstormWriterScreen({ navigation, route }) {
             >
               <Text style={s.aaText}>Aa</Text>
             </Pressable>
+            </TourTarget>
+            <TourTarget id="writer.pause">
             <Pressable
               onPress={() => (paused ? resumeClock(false) : pauseClock('you'))}
               hitSlop={8}
@@ -494,6 +512,7 @@ export default function BrainstormWriterScreen({ navigation, route }) {
             >
               <Text style={[s.pauseText, paused && { color: '#FFFFFF' }]}>{paused ? 'Resume' : 'Pause'}</Text>
             </Pressable>
+            </TourTarget>
           </View>
         )}
       </View>
@@ -529,7 +548,7 @@ export default function BrainstormWriterScreen({ navigation, route }) {
       ) : null}
 
       {focus ? null : prompt ? (
-        <View style={[s.prompt, { backgroundColor: ls.tint, borderLeftColor: ls.solid }]}>
+        <TourTarget id="writer.promptCard" style={[s.prompt, { backgroundColor: ls.tint, borderLeftColor: ls.solid }]}>
           <View style={s.promptTop}>
             <Pressable
               onPress={() => pickLevel(nextLevel(level))}
@@ -541,7 +560,7 @@ export default function BrainstormWriterScreen({ navigation, route }) {
               <Text style={[s.levelChipText, { color: ls.fg }]}>✦ {LEVEL_LABEL[level]} ▾</Text>
             </Pressable>
             <View style={{ flex: 1 }} />
-            <Pressable onPress={() => { markActive(); setPrompt(nextPrompt(prompt, level)); }} hitSlop={6} style={s.promptAct} accessibilityRole="button" accessibilityLabel="Refresh prompt">
+            <Pressable onPress={() => { tourEvent('prompt-refresh'); markActive(); setPrompt(nextPrompt(prompt, level)); }} hitSlop={6} style={s.promptAct} accessibilityRole="button" accessibilityLabel="Refresh prompt">
               <Text style={[s.promptActText, { color: ls.fg }]}>↻ Refresh</Text>
             </Pressable>
             <Pressable onPress={togglePrompt} hitSlop={6} style={s.promptAct} accessibilityRole="button" accessibilityLabel="Hide the prompt">
@@ -552,7 +571,7 @@ export default function BrainstormWriterScreen({ navigation, route }) {
           <Text style={[s.promptLink, { color: ls.fg }]}>
             {promptLinked ? '✓ Saved with your answer' : '✓ Saved with what you write next'}
           </Text>
-        </View>
+        </TourTarget>
       ) : ready && !text.trim() ? (
         <Pressable onPress={showPrompt} style={s.chip} accessibilityRole="button">
           <Text style={s.chipText}>✦ Stuck? Try a prompt</Text>
@@ -613,7 +632,7 @@ export default function BrainstormWriterScreen({ navigation, route }) {
       {menuOpen ? (
         <>
           <Pressable style={StyleSheet.absoluteFill} onPress={() => setMenuOpen(false)} accessibilityLabel="Close menu" />
-          <View style={[s.menu, { top: insets.top + 56 }]}>
+          <TourTarget id="writer.menu" style={[s.menu, { top: insets.top + 56 }]}>
             <Text style={s.menuLabel}>TEXT SIZE</Text>
             <View style={s.sizeRow}>
               <Pressable onPress={() => changeSize(-1)} disabled={sizeIdx === 0} style={[s.sizeBtn, sizeIdx === 0 && { opacity: 0.35 }]} accessibilityRole="button" accessibilityLabel="Smaller text">
@@ -640,7 +659,7 @@ export default function BrainstormWriterScreen({ navigation, route }) {
                 accessibilityLabel="Focus mode"
               />
             </View>
-          </View>
+          </TourTarget>
         </>
       ) : null}
 
