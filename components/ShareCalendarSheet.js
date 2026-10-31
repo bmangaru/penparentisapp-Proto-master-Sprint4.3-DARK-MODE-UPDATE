@@ -1,5 +1,5 @@
 // components/ShareCalendarSheet.js — Calendar → ⇪ Share: "Share your rings".
-// A picture of your rings for This month / 3 months / This year, in the
+// A picture of your rings for This month / 3 months / 6 months, in the
 // app's blue with the Pen Parentis logo, plus (switchable) totals: days with
 // every ring closed, words, best streak. Never any of your writing.
 // "Share image…" turns the preview into a picture (react-native-view-shot)
@@ -19,7 +19,7 @@ import { calendarDay, dayKey, monthGrid, shareMonths, shareStats, shareTitle } f
 const RANGES = [
   { id: 'month', label: 'This month' },
   { id: '3months', label: '3 months' },
-  { id: 'year', label: 'This year' },
+  { id: '6months', label: '6 months' },
 ];
 
 export default function ShareCalendarSheet({ visible, onClose, sessions = [], dailyGoals = {}, goals = null }) {
@@ -36,10 +36,12 @@ export default function ShareCalendarSheet({ visible, onClose, sessions = [], da
     [visible, sessions, dailyGoals, goals, months, today],
   );
 
-  // Picture width: the sheet's width less its padding; a year is 3 months a row.
+  // Picture width: the sheet's width less its padding. One month fills the
+  // width; 3 and 6 months sit 3 to a row, so the picture stays short enough
+  // to share (one row for 3 months, two for 6).
   const imgW = Math.min(width, 520) - 44;
   const inner = imgW - 32;
-  const perRow = range === 'year' ? 3 : 1;
+  const perRow = range === 'month' ? 1 : 3;
   const gap = 10;
   const monthW = (inner - gap * (perRow - 1)) / perRow;
   const ring = Math.floor(monthW / 7) - (perRow === 1 ? 6 : 2);

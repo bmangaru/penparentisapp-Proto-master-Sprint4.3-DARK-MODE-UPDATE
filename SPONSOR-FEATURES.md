@@ -619,3 +619,4 @@ Also: writing you're picking up from earlier today never counts twice. If you ta
   - **Share image…** turns the preview into a picture and opens the phone's share sheet (Messages, Instagram, Save Image…). Only rings and totals, never any writing.
 - **Logic** (`writingLogic.js`): `shareMonths`, `shareTitle`, `shareStats`. Tested in `test29`.
 - **Needs** two add-ons that work in Expo Go: `npx expo install react-native-view-shot expo-sharing`.
+- **Revised ranges:** **This month · 3 months · 6 months** (no full year: too big to read). This month fills the width; 3 months sit side by side in one row, and 6 months in two rows of three, so the picture stays short enough to share without running into the phone's notch.
