@@ -90,8 +90,9 @@ export default function IntroSplash({ onDone }) {
   }, [reduceMotion, fontReady, textW]);
 
   const font = fontsLoaded ? { fontFamily: 'Caveat_600SemiBold' } : { fontStyle: 'italic', fontFamily: Platform.select({ ios: 'Georgia', default: 'serif' }) };
-  const revealW = write.interpolate({ inputRange: [0, 1], outputRange: [0, textW + OVERHANG] });
-  const penX = write.interpolate({ inputRange: [0, 1], outputRange: [-TIP.x, textW - TIP.x] });
+  const revealW = write.interpolate({ inputRange: [0, 1], outputRange: [0, textW + OVERHANG], extrapolate: 'clamp' });
+  // The pen writes the words, then carries on past the full stop.
+  const penX = write.interpolate({ inputRange: [0, 1], outputRange: [-TIP.x, textW + DOT_GAP + 14 - TIP.x] });
   const penY = wobble.interpolate({ inputRange: [0, 1], outputRange: [0, -3] });
   const penTurn = wobble.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-4deg'] });
 

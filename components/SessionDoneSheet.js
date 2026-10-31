@@ -89,9 +89,11 @@ export default function SessionDoneSheet({
           <View style={s.medHead}>
             <Text style={s.medKicker}>✦  {all ? 'ALL MEDALS' : 'NEXT MEDALS'}</Text>
             {allRows.length > nextRows.length ? (
-              <Pressable onPress={() => setAll((a) => !a)} hitSlop={8} accessibilityRole="button" accessibilityState={{ expanded: all }}>
-                <Text style={s.medToggle}>{all ? 'Show less  ⌃' : `See all ${allRows.length}  ⌄`}</Text>
-              </Pressable>
+              <TourTarget id="done.seeAll">
+                <Pressable onPress={() => { if (!all) tourEvent('medals-all'); setAll((a) => !a); }} hitSlop={8} accessibilityRole="button" accessibilityState={{ expanded: all }}>
+                  <Text style={s.medToggle}>{all ? 'Show less  ⌃' : `See all ${allRows.length}  ⌄`}</Text>
+                </Pressable>
+              </TourTarget>
             ) : null}
           </View>
           <TourTarget id="done.medals" style={s.medPanel}>

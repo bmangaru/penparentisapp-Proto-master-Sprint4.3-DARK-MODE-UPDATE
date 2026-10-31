@@ -231,6 +231,12 @@ export const CHAPTERS = [
         on: (ev) => ev === 'medal-note',
       },
       {
+        target: 'done.medals', wait: true, lock: true, noRing: true, marks: ['done.seeAll'], markRound: 10,
+        title: 'Every medal', text: 'These were just the ones this session moved. “See all” shows every medal and how close you are to each.',
+        task: 'Tap See all.', doneText: 'Have a look through them, then go on.', manual: true,
+        on: (ev) => ev === 'medals-all',
+      },
+      {
         target: 'done.feel', wait: true, lock: true, round: 16, section: 'How you feel', jump: false,
         title: 'How do you feel?', text: 'Pick a face for how writing felt. It’s optional, and it shows on that day so you can look back.',
         task: 'Pick a face.', on: (ev) => ev === 'feeling',
@@ -316,12 +322,14 @@ export const CHAPTERS = [
       },
       {
         target: 'cal.share', tab: 'Calendar', round: 999, section: 'Share your rings',
-        text: 'Proud of your streak? Make a picture of your calendar decked out in rings.',
+        text: 'Show off your streak: turn your calendar, filled with your rings, into a picture to send to friends or family.',
         task: 'Tap Share.', on: (ev, v) => ev === 'sheet-open' && v === 'share',
       },
       {
-        target: 'share.card', wait: true, lock: true, info: true, noRing: true, place: 'top',
-        text: 'Pick this month, 3 months or 6 months and see the picture change. It shows only rings and totals, never your writing.',
+        target: 'share.card', wait: true, lock: true, noRing: true, place: 'top', marks: ['share.month', 'share.3months', 'share.6months'],
+        text: 'Pick how much to show and watch the picture change. It shows only rings and totals, never your writing. (Share image is off during the tour.)',
+        task: 'Tap This month, 3 months or 6 months.', doneText: 'Try the others too, then go on.', manual: true,
+        on: (ev) => ev === 'share-range',
       },
       {
         target: 'share.close', wait: true, round: 18,

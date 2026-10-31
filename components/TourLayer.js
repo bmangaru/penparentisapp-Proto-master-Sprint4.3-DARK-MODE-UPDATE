@@ -28,6 +28,7 @@ import {
 import { openTour, useTour } from '../tour';
 
 const DIM = 'rgba(3,6,15,';
+const TOUR_MEDAL = MEDALS.find((m) => m.id === 'tour');
 const GOLD = '#F2C14E';
 const PAD = 6; // space between the spot and its outline
 
@@ -477,8 +478,22 @@ function WelcomeCard() {
       <WrittenTagline play={play} />
       <Text style={[c.cardTitle, { color: colors.ink }]}>Welcome to Pen Parentis</Text>
       <Text style={[c.cardText, { color: colors.body }]}>
-        A hands-on tour of the real app. You'll tap the real buttons, and in chapter 4 you'll write your first entry.
+        Thank you for downloading our app! This is an interactive tour: you tap the real buttons as you go.
       </Text>
+      <View style={[c.medalList, { borderColor: colors.line }]}>
+        <Text style={[c.medalHead, { color: colors.muted }]}>EARN THE TOUR GUIDE MEDAL</Text>
+        {[
+          ['bronze', 'Bronze', 'when you set today’s goal'],
+          ['silver', 'Silver', 'when you save your first entry'],
+          ['gold', 'Gold', 'when you’ve explored the Calendar'],
+          ['diamond', 'Diamond', 'when you finish the tour'],
+        ].map(([tier, name, when]) => (
+          <View key={tier} style={c.medalRow}>
+            <Medal medal={TOUR_MEDAL} tier={tier} size={26} />
+            <Text style={[c.medalText, { color: colors.body }]}><Text style={{ fontWeight: '800', color: colors.ink }}>{name}</Text> {when}</Text>
+          </View>
+        ))}
+      </View>
       <View style={c.cardRow}>
         <Pressable onPress={stopTour} style={[c.cardBtn, { borderColor: colors.royal, borderWidth: 1.5 }]} accessibilityRole="button">
           <Text style={[c.cardBtnText, { color: colors.royal }]}>Not now</Text>
@@ -497,8 +512,14 @@ function WelcomeCard() {
 // ---------------------------------------------------------------------------
 const TIERS = [[3, 'Bronze'], [6, 'Silver'], [9, 'Gold'], [10, 'Diamond']];
 
-const TOUR_MEDAL = MEDALS.find((m) => m.id === 'tour');
 const TIER_NAME = { bronze: 'Bronze', silver: 'Silver', gold: 'Gold', diamond: 'Diamond' };
+// What each Tour Guide tier celebrates (Bronze 3 · Silver 6 · Gold 9 · Diamond 10 chapters).
+const TIER_CHEER = {
+  bronze: 'Congratulations, you set your first goals! Cheers to many more to come.',
+  silver: 'Congrats on your first Brainstorm entry! Many more on the way.',
+  gold: 'You’ve seen your calendar and everything you’ve built. Nearly there!',
+  diamond: 'You finished the whole tour. Welcome to Pen Parentis!',
+};
 
 function DoneCard({ ch, earned }) {
   const tour = useTour();
@@ -530,7 +551,7 @@ function DoneCard({ ch, earned }) {
             <Medal medal={TOUR_MEDAL} tier={won.earnedTier} size={104} />
           </Animated.View>
           <Text style={[c.cardTitle, { color: colors.ink }]}>{TIER_NAME[won.earnedTier] || ''} Tour Guide</Text>
-          <Text style={[c.cardText, { color: colors.body, marginTop: 2 }]}>Chapter {ch + 1} done. You've finished {won.threshold} chapters of the tour!</Text>
+          <Text style={[c.cardText, { color: colors.body, marginTop: 2 }]}>{TIER_CHEER[won.earnedTier] || `Chapter ${ch + 1} done.`}</Text>
         </>
       ) : (
         <>
@@ -621,6 +642,10 @@ const c = StyleSheet.create({
   cardBtnFill: { backgroundColor: '#3352C4' },
   cardBtnText: { fontSize: 14.5, fontWeight: '800' },
   cardNote: { fontSize: 12, textAlign: 'center', marginTop: 12 },
+  medalList: { borderWidth: 1, borderRadius: 14, padding: 10, marginTop: 14, gap: 6 },
+  medalHead: { fontSize: 10.5, fontWeight: '800', letterSpacing: 1, marginBottom: 2 },
+  medalRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  medalText: { flex: 1, fontSize: 13.5 },
   wonKick: { fontSize: 11, fontWeight: '800', letterSpacing: 1.4, color: '#C8912B', textAlign: 'center' },
   nextKick: { fontSize: 9.5, fontWeight: '800', letterSpacing: 1, color: 'rgba(255,255,255,0.75)' },
   cardLinks: { flexDirection: 'row', justifyContent: 'center', gap: 22, marginTop: 14 },

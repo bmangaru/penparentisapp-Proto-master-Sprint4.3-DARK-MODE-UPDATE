@@ -777,3 +777,11 @@ No new behaviour: this zip has every file the on-app tour touches (rounds 56–5
 - **After that, the writing page can't be typed in for the rest of the tour** (5.1 prompts, 5.2 tools, 6.1 Finish), so it stays calm: 6.1 is just "tap Finish & check in".
 - **5.2a → back to 5.2:** tapping Exit focus returns to 5.2, so you can still try Pause; Got it ends the chapter.
 - **1.2 Settings:** Open the tour and Start over are greyed out while the tour runs ("You're in the tour now, so these are off until it's done.").
+
+## Round 68 — tour: welcome with the medal plan, medal cheers, See all, share chips
+
+- **Opening animation:** the pen now carries on past the full stop.
+- **Welcome card:** "Thank you for downloading our app! This is an interactive tour: you tap the real buttons as you go." plus the Tour Guide medal plan: Bronze when you set today's goal (end of ch. 3), Silver when you save your first entry (ch. 6), Gold when you've explored the Calendar (ch. 9), Diamond when you finish (ch. 10). Change the tiers in `medals.js` (tour: [3, 6, 9, 10]) and the lines in `TourLayer.js` together.
+- **Medal earned cards:** Bronze "Congratulations, you set your first goals! Cheers to many more to come." · Silver "Congrats on your first Brainstorm entry! Many more on the way." · Gold and Diamond have their own lines too.
+- **6.2:** after tapping a medal, tap **See all** (pulsing) to see every medal, then on to How do you feel.
+- **9.3 Share your rings:** reworded; This month / 3 months / 6 months pulse gold; **Share image is off during the tour** (a note under it says so).

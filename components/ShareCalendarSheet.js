@@ -12,6 +12,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import Sheet from './Sheet';
+import TourTarget from './TourTarget';
+import { tourEvent, useRun } from '../tourRun';
 import Rings from './Rings';
 import { colors, radius, themed } from '../theme';
 import { calendarDay, dayKey, monthGrid, shareMonths, shareStats, shareTitle } from '../writingLogic';
@@ -23,6 +25,7 @@ const RANGES = [
 ];
 
 export default function ShareCalendarSheet({ visible, onClose, sessions = [], dailyGoals = {}, goals = null }) {
+  const touring = !!useRun();
   const [range, setRange] = useState('3months');
   const [totals, setTotals] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -69,9 +72,11 @@ export default function ShareCalendarSheet({ visible, onClose, sessions = [], da
         {RANGES.map((r) => {
           const on = r.id === range;
           return (
-            <Pressable key={r.id} onPress={() => setRange(r.id)} style={[s.chip, on && s.chipOn]} accessibilityRole="button" accessibilityState={{ selected: on }}>
+            <TourTarget key={r.id} id={`share.${r.id}`}>
+            <Pressable onPress={() => { setRange(r.id); tourEvent('share-range', r.id); }} style={[s.chip, on && s.chipOn]} accessibilityRole="button" accessibilityState={{ selected: on }}>
               <Text style={[s.chipText, on && { color: '#FFFFFF' }]}>{r.label}</Text>
             </Pressable>
+            </TourTarget>
           );
         })}
       </View>
@@ -125,10 +130,11 @@ export default function ShareCalendarSheet({ visible, onClose, sessions = [], da
         <Switch value={totals} onValueChange={setTotals} trackColor={{ true: colors.royal, false: '#C8CEDE' }} thumbColor="#FFFFFF" ios_backgroundColor="#C8CEDE" />
       </View>
 
-      <Pressable onPress={share} disabled={busy} style={[s.btn, busy && { opacity: 0.6 }]} accessibilityRole="button">
+      {/* Off during the app tour (it would leave the app). */}
+      <Pressable onPress={share} disabled={busy || touring} style={[s.btn, (busy || touring) && { opacity: 0.45 }]} accessibilityRole="button" accessibilityState={{ disabled: busy || touring }}>
         <Text style={s.btnText}>{busy ? 'Making the picture…' : 'Share image…'}</Text>
       </Pressable>
-      <Text style={s.hint}>Opens your phone's share sheet: Messages, Instagram, Save Image…</Text>
+      <Text style={s.hint}>{touring ? 'Sharing is off during the tour. Come back any time to share yours.' : "Opens your phone's share sheet: Messages, Instagram, Save Image…"}</Text>
     </Sheet>
   );
 }
