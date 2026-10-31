@@ -96,8 +96,8 @@ const BG_DARK = {
   '#EEF8F1': '#173225', '#E7F8EE': '#173225', '#E6F6EA': '#173225', '#FDECEA': '#3A1E22', '#FDE7E7': '#3A1E22',
   '#FFEDED': '#3A1E22', '#F7F5FF': '#231F45',
   // brand tints: Instagram, LinkedIn, X, Bluesky
-  '#FDEBF3': '#3A1E2E', '#E8F1FA': '#1A2B48', '#F1F1F2': '#22262F', '#E6F1FF': '#1A2B48',
-  '#F4B3CF': '#6B2E4A', '#A9CBEA': '#2D4E80', '#C9CBD1': '#4A4E58', '#A8CDFB': '#2D4E80',
+  '#FDEBF3': '#3A1E2E', '#E4F5F2': '#14332F', '#F1F1F2': '#22262F', '#E2F6FD': '#123140',
+  '#F4B3CF': '#6B2E4A', '#93D4C9': '#2B6A60', '#C9CBD1': '#4A4E58', '#8FD6F0': '#2A6C86',
   // greys used for tracks, lines and input edges
   '#ECEEF3': LINE_DK, '#EEF0F5': LINE_DK, '#D9DEEA': LINE_DK, '#D7DDEA': LINE_DK, '#D5DAE4': LINE_DK,
   '#CBD1DC': LINE_DK, '#C8CEDE': 'rgba(255,255,255,0.22)', '#E2DCCB': LINE_DK, '#D9DDE7': 'rgba(255,255,255,0.22)',

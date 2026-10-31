@@ -22,9 +22,9 @@ const TINT = {
   discord: { backgroundColor: '#EEF0FF', borderColor: '#C3C8FB' },
   facebook: { backgroundColor: '#E9F2FE', borderColor: '#ADCDF8' },
   instagram: { backgroundColor: '#FDEBF3', borderColor: '#F4B3CF' },
-  linkedin: { backgroundColor: '#E8F1FA', borderColor: '#A9CBEA' },
+  linkedin: { backgroundColor: '#E4F5F2', borderColor: '#93D4C9' },   // teal
   x: { backgroundColor: '#F1F1F2', borderColor: '#C9CBD1' },
-  bluesky: { backgroundColor: '#E6F1FF', borderColor: '#A8CDFB' },
+  bluesky: { backgroundColor: '#E2F6FD', borderColor: '#8FD6F0' },    // sky
 };
 
 export function BrandButton({ icon, label, sub, onPress, live, brand }) {

@@ -39,10 +39,28 @@ export function excerptOf(html, max = 110) {
 }
 
 // WordPress REST post (with _embed) → our post.
+// The first picture in a piece of HTML (lazy-loaded ones keep the real
+// address in data-src / data-lazy-src / srcset).
+export function firstImage(html) {
+  const tag = String(html || '').match(/<img\b[^>]*>/i);
+  if (!tag) return null;
+  const attr = (n) => (tag[0].match(new RegExp(`\\s${n}=["']([^"']+)["']`, 'i')) || [])[1];
+  let src = attr('data-lazy-src') || attr('data-src') || attr('src');
+  if (!src || src.startsWith('data:')) {
+    const set = attr('data-srcset') || attr('srcset');
+    src = set ? set.split(',')[0].trim().split(/\s+/)[0] : null;
+  }
+  return src && !src.startsWith('data:') ? decodeEntities(src) : null;
+}
+
 export function fromWordPress(p) {
   const media = p?._embedded?.['wp:featuredmedia']?.[0];
   const sizes = media?.media_details?.sizes || {};
-  const image = sizes.medium_large?.source_url || sizes.large?.source_url || sizes.medium?.source_url || media?.source_url || null;
+  // The featured image if the site gives one; otherwise the picture the site
+  // shares on social media; otherwise the first picture in the post.
+  const image = sizes.medium_large?.source_url || sizes.large?.source_url || sizes.medium?.source_url
+    || media?.source_url || p?.jetpack_featured_media_url || p?.yoast_head_json?.og_image?.[0]?.url
+    || firstImage(p?.content?.rendered) || firstImage(p?.excerpt?.rendered) || null;
   return {
     id: String(p.id),
     title: plainText(p?.title?.rendered),
@@ -62,7 +80,7 @@ export function fromRss(xml) {
       return m ? m[1].replace(/^<!\[CDATA\[|\]\]>$/g, '') : '';
     };
     const content = tag('content:encoded') || tag('description');
-    const img = (it.match(/<media:content[^>]+url="([^"]+)"/i) || content.match(/<img[^>]+src="([^"]+)"/i) || [])[1] || null;
+    const img = (it.match(/<media:content[^>]+url="([^"]+)"/i) || [])[1] || firstImage(content) || null;
     const date = new Date(tag('pubDate'));
     return {
       id: tag('guid') || String(i),

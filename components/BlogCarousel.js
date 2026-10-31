@@ -52,7 +52,13 @@ export default function BlogCarousel() {
             decelerationRate="fast"
             contentContainerStyle={{ gap: GAP, paddingRight: 22 }}
             style={s.scroller}
-            onScroll={(e) => setI(Math.round(e.nativeEvent.contentOffset.x / (CARD_W + GAP)))}
+            // The last card can't scroll to the left edge (there's nothing after
+            // it), so reaching the end counts as the last card.
+            onScroll={(e) => {
+              const { contentOffset, layoutMeasurement, contentSize } = e.nativeEvent;
+              const atEnd = contentOffset.x >= contentSize.width - layoutMeasurement.width - 8;
+              setI(atEnd ? posts.length - 1 : Math.round(contentOffset.x / (CARD_W + GAP)));
+            }}
             scrollEventThrottle={32}
           >
             {posts.map((p) => (

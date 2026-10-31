@@ -589,3 +589,10 @@ Also: writing you're picking up from earlier today never counts twice. If you ta
 - **Always current** (`blogService.js`): the app reads the site's public WordPress post list (no key needed): it finds the "blog" category, then its newest posts with their pictures. If that isn't reachable it reads the blog's RSS feed instead. The last list is saved on the phone, so it still shows offline. A post without a picture shows the Pen Parentis logo.
 - **Needs** `expo-web-browser`: run `npx expo install expo-web-browser` once.
 - **Tested:** `test28` (WordPress posts, pictures, excerpts, RSS fallback, dates).
+
+## Round 49 — blog fixes, website link moved, social colours
+
+- **Blog dots:** the last card now lights the last dot (it can't scroll to the left edge, so reaching the end counts as the last card).
+- **Blog pictures:** if a post has no featured image in the site's list, the app looks for the picture the site shares on social media, then the first picture in the post itself (including lazy-loaded ones). The Pen Parentis logo is only the last resort. Tested in `test28`.
+- **Home order:** From the blog → Visit penparentis.org → Follow Pen Parentis → Get Karma → thank-you scroll, so the two website things sit together.
+- **Social colours:** each button has its own tint: Facebook blue, Instagram pink, LinkedIn teal, X grey, Bluesky sky blue (with matching dark-mode versions).

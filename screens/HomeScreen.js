@@ -4,7 +4,8 @@
 //   • Follow Pen Parentis: Facebook, Instagram, LinkedIn, X and Bluesky as
 //     brand buttons (same style as Discord / YouTube / Spotify), each with its
 //     handle.
-//   • Visit penparentis.org (with the Pen Parentis logo), then Get Karma.
+//   • From the blog + Visit penparentis.org together (both from the website).
+//   • Get Karma.
 //   • "Thank you to all of our supporters" over the donor scroll.
 // (Today's goal and Today's prompt live on Brainstorm and Calendar.)
 
@@ -70,17 +71,17 @@ export default function HomeScreen() {
 
       <View style={s.pad}>
         <BlogCarousel />
+        <Pressable onPress={() => openLink(LINKS.website)} style={({ pressed }) => [s.web, { marginTop: space.md }, pressed && { opacity: 0.85 }]} accessibilityRole="link" accessibilityLabel="Visit penparentis.org">
+          <Image source={require('../assets/pen-parentis-logo.png')} style={s.webLogo} resizeMode="cover" accessibilityIgnoresInvertColors />
+          <Text style={s.webText}>Visit penparentis.org</Text>
+          <Ionicons name="arrow-up-outline" size={16} color={colors.royal} style={{ transform: [{ rotate: '45deg' }] }} />
+        </Pressable>
 
         <Text style={[s.h, { marginTop: space.md }]}>Follow Pen Parentis</Text>
         {SOCIALS.map((n) => (
           <BrandButton key={n.brand} brand={n.brand} icon={n.icon} label={n.label} sub={n.handle} onPress={() => openLink(n.url)} />
         ))}
 
-        <Pressable onPress={() => openLink(LINKS.website)} style={({ pressed }) => [s.web, pressed && { opacity: 0.85 }]} accessibilityRole="link" accessibilityLabel="Visit penparentis.org">
-          <Image source={require('../assets/pen-parentis-logo.png')} style={s.webLogo} resizeMode="cover" accessibilityIgnoresInvertColors />
-          <Text style={s.webText}>Visit penparentis.org</Text>
-          <Ionicons name="arrow-up-outline" size={16} color={colors.royal} style={{ transform: [{ rotate: '45deg' }] }} />
-        </Pressable>
 
         <Pressable onPress={() => openLink(LINKS.donate)}>
           <LinearGradient
