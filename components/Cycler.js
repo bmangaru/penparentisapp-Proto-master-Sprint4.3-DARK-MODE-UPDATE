@@ -1,6 +1,8 @@
-// components/Cycler.js — cards that take turns in one spot (the Calendar tab's
-// top card: today's rings ↔ the next event's countdown).
-//   • Switches every `every` ms (6 s); swipe either way; dots show which card.
+// components/Cycler.js — cards that take turns in one spot, full width (the
+// Calendar tab's top card: today's rings ↔ the next event's countdown; Home's
+// blog posts).
+//   • Switches every `every` ms (10 s); swipe either way; dots show which card.
+//   • arrows: round ‹ › buttons either side of the dots (they wrap around).
 //   • Touching it pauses the switching for a while, so it never moves under
 //     your finger. `paused` stops it (e.g. while another day is selected).
 //   • When `resetKey` changes it goes back to the first card (e.g. a day tapped).
@@ -8,11 +10,12 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { View, ScrollView, StyleSheet, Pressable, AccessibilityInfo } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, themed } from '../theme';
 
 const HOLD_AFTER_TOUCH = 12000;
 
-export default function Cycler({ children, every = 6000, paused = false, resetKey }) {
+export default function Cycler({ children, every = 10000, paused = false, resetKey, arrows = false }) {
   const pages = React.Children.toArray(children).filter(Boolean);
   const [w, setW] = useState(0);
   const [i, setI] = useState(0);
@@ -71,6 +74,7 @@ export default function Cycler({ children, every = 6000, paused = false, resetKe
         ))}
       </ScrollView>
       <View style={s.dots}>
+        {arrows ? <Arrow dir={-1} onPress={() => { hold(); show(i - 1); }} /> : null}
         {pages.map((_, k) => (
           <Pressable
             key={k}
@@ -83,12 +87,28 @@ export default function Cycler({ children, every = 6000, paused = false, resetKe
             <View style={[s.dot, k === i && s.dotOn]} />
           </Pressable>
         ))}
+        {arrows ? <Arrow dir={1} onPress={() => { hold(); show(i + 1); }} /> : null}
       </View>
     </View>
   );
 }
 
+function Arrow({ dir, onPress }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      hitSlop={8}
+      style={({ pressed }) => [s.arrow, dir < 0 ? { marginRight: 8 } : { marginLeft: 8 }, pressed && { opacity: 0.6 }]}
+      accessibilityRole="button"
+      accessibilityLabel={dir < 0 ? 'Previous' : 'Next'}
+    >
+      <Ionicons name={dir < 0 ? 'chevron-back' : 'chevron-forward'} size={18} color={colors.royal} />
+    </Pressable>
+  );
+}
+
 const s = themed(() => ({
+  arrow: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF', borderWidth: 1.5, borderColor: colors.line },
   dots: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, marginTop: 10 },
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#C8CEDE' },
   dotOn: { width: 18, backgroundColor: colors.royal },

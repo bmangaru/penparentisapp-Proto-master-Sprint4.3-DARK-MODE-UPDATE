@@ -1,16 +1,15 @@
 // components/BlogCarousel.js — Home's "From the blog": the newest posts from
-// penparentis.org as cards you swipe through (picture, date, title, first
-// line). Tapping one opens the post inside the app (✕ / Done to come back,
+// penparentis.org as full-width cards (big picture, date, title, a few lines)
+// that take turns every 10 s; swipe or tap ‹ ›. Tapping one opens the post inside the app (✕ / Done to come back,
 // with a button to open it in Safari); "See all ›" opens the whole blog.
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, Pressable, ScrollView, Image, ActivityIndicator, Linking } from 'react-native';
+import Cycler from './Cycler';
+import { View, Text, Pressable, Image, ActivityIndicator, Linking } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { colors, isDark, radius, themed } from '../theme';
 import { BLOG_URL, loadBlog, postDate } from '../blogService';
 
-const CARD_W = 250;
-const GAP = 10;
 
 export function openPost(url) {
   WebBrowser.openBrowserAsync(url, {
@@ -22,7 +21,6 @@ export function openPost(url) {
 
 export default function BlogCarousel() {
   const [posts, setPosts] = useState(null); // null = loading
-  const [i, setI] = useState(0);
   useEffect(() => {
     let live = true;
     loadBlog().then((r) => live && setPosts(r.posts));
@@ -44,50 +42,32 @@ export default function BlogCarousel() {
       {!posts ? (
         <View style={s.loading}><ActivityIndicator color={colors.royal} /></View>
       ) : (
-        <>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            snapToInterval={CARD_W + GAP}
-            decelerationRate="fast"
-            contentContainerStyle={{ gap: GAP, paddingRight: 22 }}
-            style={s.scroller}
-            // The last card can't scroll to the left edge (there's nothing after
-            // it), so reaching the end counts as the last card.
-            onScroll={(e) => {
-              const { contentOffset, layoutMeasurement, contentSize } = e.nativeEvent;
-              const atEnd = contentOffset.x >= contentSize.width - layoutMeasurement.width - 8;
-              setI(atEnd ? posts.length - 1 : Math.round(contentOffset.x / (CARD_W + GAP)));
-            }}
-            scrollEventThrottle={32}
-          >
-            {posts.map((p) => (
-              <Pressable
-                key={p.id}
-                onPress={() => openPost(p.url)}
-                style={({ pressed }) => [s.card, pressed && { opacity: 0.85 }]}
-                accessibilityRole="link"
-                accessibilityLabel={`${p.title}. ${postDate(p.date)}`}
-              >
-                {p.image ? (
-                  <Image source={{ uri: p.image }} style={s.img} resizeMode="cover" accessibilityIgnoresInvertColors />
-                ) : (
-                  <View style={[s.img, s.noImg]}>
-                    <Image source={require('../assets/pen-parentis-logo.png')} style={s.noImgLogo} resizeMode="contain" />
-                  </View>
-                )}
+        // Full-width cards that take turns every 10 s; swipe, or tap ‹ ›.
+        <Cycler arrows>
+          {posts.map((p) => (
+            <Pressable
+              key={p.id}
+              onPress={() => openPost(p.url)}
+              style={({ pressed }) => [s.card, pressed && { opacity: 0.85 }]}
+              accessibilityRole="link"
+              accessibilityLabel={`${p.title}. ${postDate(p.date)}`}
+            >
+              {p.image ? (
+                <Image source={{ uri: p.image }} style={s.img} resizeMode="cover" accessibilityIgnoresInvertColors />
+              ) : (
+                <View style={[s.img, s.noImg]}>
+                  <Image source={require('../assets/pen-parentis-logo.png')} style={s.noImgLogo} resizeMode="contain" />
+                </View>
+              )}
+              <View style={s.body}>
                 {p.date ? <Text style={s.date}>{postDate(p.date)}</Text> : null}
                 <Text style={s.title} numberOfLines={2}>{p.title}</Text>
-                {p.excerpt ? <Text style={s.excerpt} numberOfLines={3}>{p.excerpt}</Text> : null}
-              </Pressable>
-            ))}
-          </ScrollView>
-          {posts.length > 1 ? (
-            <View style={s.dots}>
-              {posts.map((p, k) => <View key={p.id} style={[s.dot, k === Math.min(i, posts.length - 1) && s.dotOn]} />)}
-            </View>
-          ) : null}
-        </>
+                {p.excerpt ? <Text style={s.excerpt} numberOfLines={4}>{p.excerpt}</Text> : null}
+                <Text style={s.read}>Read post ›</Text>
+              </View>
+            </Pressable>
+          ))}
+        </Cycler>
       )}
     </View>
   );
@@ -97,16 +77,15 @@ const s = themed(() => ({
   head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 },
   h: { fontSize: 17, fontWeight: '700', color: colors.ink },
   all: { fontSize: 13, fontWeight: '800', color: colors.royal },
-  scroller: { marginRight: -22 },
-  loading: { height: 220, alignItems: 'center', justifyContent: 'center' },
-  card: { width: CARD_W, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: colors.line, borderRadius: radius.md, padding: 10 },
-  img: { width: '100%', height: 120, borderRadius: 10, backgroundColor: '#E6ECFA' },
+  loading: { height: 300, alignItems: 'center', justifyContent: 'center' },
+  // flex: 1 so every card is as tall as the tallest one.
+  card: { flex: 1, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: colors.line, borderRadius: radius.md, overflow: 'hidden' },
+  img: { width: '100%', height: 190, backgroundColor: '#E6ECFA' },
   noImg: { alignItems: 'center', justifyContent: 'center' },
-  noImgLogo: { width: 70, height: 60, borderRadius: 8 },
-  date: { fontSize: 10.5, fontWeight: '800', letterSpacing: 0.8, color: '#8A5E12', marginTop: 8 },
-  title: { fontSize: 15, fontWeight: '800', color: colors.ink, marginTop: 2, lineHeight: 20 },
-  excerpt: { fontSize: 12.5, lineHeight: 18, color: colors.muted, marginTop: 3 },
-  dots: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 10 },
-  dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#C8CEDE' },
-  dotOn: { width: 18, backgroundColor: colors.royal },
+  noImgLogo: { width: 100, height: 86, borderRadius: 10 },
+  body: { padding: 14, paddingTop: 10 },
+  date: { fontSize: 10.5, fontWeight: '800', letterSpacing: 0.8, color: '#8A5E12' },
+  title: { fontSize: 17, fontWeight: '800', color: colors.ink, marginTop: 3, lineHeight: 22 },
+  excerpt: { fontSize: 13.5, lineHeight: 19.5, color: colors.muted, marginTop: 4 },
+  read: { fontSize: 13, fontWeight: '800', color: colors.royal, marginTop: 8 },
 }));
