@@ -1,0 +1,59 @@
+// components/usePromptLevel.js — the prompt level you picked (Simple,
+// Thoughtful or Deep), saved on this phone and shared by every screen: change
+// it in the Brainstorm header and the writing page and Home follow.
+
+import { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { DEFAULT_LEVEL, normalizeLevel } from '../prompts';
+import { isDark } from '../theme';
+
+export const PROMPT_LEVEL_KEY = 'pp.promptLevel.v1';
+
+// Level colours: green = Simple, gold = Thoughtful, violet = Deep.
+//   bg/fg — the small level chip
+//   tint  — the prompt card on the writing page
+//   solid — its left edge, and the ✦ Prompt button while a prompt is open
+const LEVEL_LIGHT = {
+  // onDark / dot: the label and dot on the blue Brainstorm header.
+  simple: { bg: '#E6F6EA', fg: '#1E7B3A', tint: '#EEF8F0', solid: '#2E9150', onDark: '#9BE3B0', dot: '#5BC27A' },
+  thoughtful: { bg: '#FFF4D6', fg: '#8A5E12', tint: '#FFF6DF', solid: '#C8912B', onDark: '#F6CF72', dot: '#E0AE45' },
+  deep: { bg: '#EDE7FF', fg: '#4B3FB8', tint: '#F1ECFF', solid: '#6B5BD6', onDark: '#C9BEFF', dot: '#9D8CFF' },
+};
+// Dark versions: deep tints with lighter text, so prompts stay readable.
+const LEVEL_DARK = {
+  simple: { bg: '#173225', fg: '#6FD49A', tint: '#142A20', solid: '#2E9150', onDark: '#9BE3B0', dot: '#5BC27A' },
+  thoughtful: { bg: '#2E2817', fg: '#E7B85A', tint: '#26210F', solid: '#C8912B', onDark: '#F6CF72', dot: '#E0AE45' },
+  deep: { bg: '#262150', fg: '#B7AAFF', tint: '#1E1A40', solid: '#6B5BD6', onDark: '#C9BEFF', dot: '#9D8CFF' },
+};
+export const LEVEL_STYLE = new Proxy({}, { get: (_, k) => (isDark() ? LEVEL_DARK : LEVEL_LIGHT)[k] });
+
+let current = null; // in-memory copy
+const listeners = new Set();
+
+async function read() {
+  if (current) return current;
+  try {
+    current = normalizeLevel(await AsyncStorage.getItem(PROMPT_LEVEL_KEY));
+  } catch {
+    current = DEFAULT_LEVEL;
+  }
+  return current;
+}
+
+export function setPromptLevel(level) {
+  current = normalizeLevel(level);
+  AsyncStorage.setItem(PROMPT_LEVEL_KEY, current).catch(() => {});
+  for (const fn of listeners) fn(current);
+}
+
+// [level, setLevel]
+export default function usePromptLevel() {
+  const [level, setLevel] = useState(current || DEFAULT_LEVEL);
+  useEffect(() => {
+    let live = true;
+    read().then((l) => live && setLevel(l));
+    listeners.add(setLevel);
+    return () => { live = false; listeners.delete(setLevel); };
+  }, []);
+  return [level, setPromptLevel];
+}
