@@ -4,7 +4,7 @@
 //   • Switches every `every` ms (10 s); swipe either way; dots show which card.
 //   • It goes round and round: swiping on from the last card brings back the
 //     first, and back from the first shows the last (a copy of each sits at
-//     the far ends, and we jump to the real one once the slide finishes).
+//     the far ends; the moment a slide lands on one, it swaps to the real card).
 //   • arrows: round ‹ › buttons either side of the dots, a little in from the edges.
 //   • Touching it pauses the switching for a while, so it never moves under
 //     your finger. `paused` stops it (e.g. while another day is selected).
@@ -17,7 +17,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, themed } from '../theme';
 
 const HOLD_AFTER_TOUCH = 12000;
-const SLIDE_MS = 420; // about how long an animated scroll takes
 
 export default function Cycler({ children, every = 10000, paused = false, resetKey, arrows = false }) {
   const pages = React.Children.toArray(children).filter(Boolean);
@@ -27,10 +26,11 @@ export default function Cycler({ children, every = 10000, paused = false, resetK
   const iRef = useRef(0);
   const ref = useRef(null);
   const heldUntil = useRef(0);
-  const jumpTimer = useRef(null);
+  // Where the strip starts (the real first card). Set once: changing it on
+  // every redraw made iOS jump mid-slide.
+  const startOffset = useRef({ x: 0, y: 0 });
   const [reduceMotion, setReduceMotion] = useState(false);
   useEffect(() => { AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion).catch(() => {}); }, []);
-  useEffect(() => () => clearTimeout(jumpTimer.current), []);
 
   // Scroll positions: [copy of last] [card 0] … [card n-1] [copy of first]
   const xOf = (slot) => slot * w;
@@ -39,14 +39,15 @@ export default function Cycler({ children, every = 10000, paused = false, resetK
   // Go to card k; k = n or -1 wraps round through the copy at that end.
   function show(k, animated = true) {
     if (!n || !w) { setIndex(((k % (n || 1)) + (n || 1)) % (n || 1)); return; }
-    clearTimeout(jumpTimer.current);
     const anim = animated && !reduceMotion;
     const real = ((k % n) + n) % n;
     setIndex(real);
     if (k >= n || k < 0) {
+      // Slide on to the copy at that end; onScroll swaps to the real card the
+      // moment the slide arrives (no timer, so it never jumps mid-slide).
       const copySlot = k >= n ? n + 1 : 0;
-      ref.current?.scrollTo({ x: xOf(copySlot), animated: anim });
-      jumpTimer.current = setTimeout(() => ref.current?.scrollTo({ x: xOf(real + 1), animated: false }), anim ? SLIDE_MS : 0);
+      if (anim) ref.current?.scrollTo({ x: xOf(copySlot), animated: true });
+      else ref.current?.scrollTo({ x: xOf(real + 1), animated: false });
     } else {
       ref.current?.scrollTo({ x: xOf(real + 1), animated: anim });
     }
@@ -72,6 +73,15 @@ export default function Cycler({ children, every = 10000, paused = false, resetK
 
   const hold = () => { heldUntil.current = Date.now() + HOLD_AFTER_TOUCH; };
 
+  // Arriving on a copy at either end (by swipe, arrow or timer): swap to the
+  // real card it shows, which looks identical, so nothing visibly moves.
+  function onScroll(e) {
+    if (!w) return;
+    const x = e.nativeEvent.contentOffset.x;
+    if (x >= xOf(n + 1) - 0.5) ref.current?.scrollTo({ x: xOf(1), animated: false });
+    else if (x <= 0.5) ref.current?.scrollTo({ x: xOf(n), animated: false });
+  }
+
   // After a swipe: landing on a copy jumps to the real card it shows.
   function onSwipeEnd(e) {
     if (!w) return;
@@ -84,7 +94,7 @@ export default function Cycler({ children, every = 10000, paused = false, resetK
   if (n < 2) return <View>{pages[0] || null}</View>;
   // Until the width is known, show the first card on its own, so nothing is
   // laid out unconstrained (text running off the card).
-  if (!w) return <View onLayout={(e) => setW(Math.round(e.nativeEvent.layout.width))}>{pages[0]}</View>;
+  if (!w) return <View onLayout={(e) => { const ww = Math.round(e.nativeEvent.layout.width); startOffset.current = { x: ww, y: 0 }; setW(ww); }}>{pages[0]}</View>;
 
   const slots = [pages[n - 1], ...pages, pages[0]];
   return (
@@ -94,9 +104,10 @@ export default function Cycler({ children, every = 10000, paused = false, resetK
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        contentOffset={{ x: xOf(i + 1), y: 0 }}
+        contentOffset={startOffset.current}
         onTouchStart={hold}
-        onScrollBeginDrag={() => { hold(); clearTimeout(jumpTimer.current); }}
+        onScrollBeginDrag={hold}
+        onScroll={onScroll}
         onMomentumScrollEnd={onSwipeEnd}
         scrollEventThrottle={16}
       >
