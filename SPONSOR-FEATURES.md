@@ -647,3 +647,17 @@ Also: writing you're picking up from earlier today never counts twice. If you ta
 - **⚙ Settings → The app tour:** **Open the tour** (review any chapter) and **Start over** (clears the ticks; the medal stays earned).
 - **New medal: Tour Guide** (`medals.js`): one tier only, earned straight at Diamond when every chapter is done. Medals now total 37. The medal page shows just the Diamond tier.
 - **Progress** is saved on the phone (`tour.js`). Tested in `test24` (the medal) and `test30` (chapters, finishing once, starting over, hiding).
+
+## Round 55 — the tour goes hands-on (part 1 of 2) and a tiered Tour Guide medal
+
+- **Every step has a task** in a dark bar under the dots: "Your turn: …" with live progress ("3 of 5 tabs seen"). Do it and the bar turns green ✓ and **Next** unlocks; until then the button reads **Skip ›** (grey) so nobody gets stuck. All practice: nothing done in the tour is saved.
+- **Hands-on chapters 1–5** (`components/TourSteps.js`, working practice copies of the app):
+  1. **Welcome & settings:** tap the logo (it pops and writes "parenting done, write."); pick Light / Dark / System and the whole app, tour included, changes; tap "Open the tour" in a practice Settings; **the tab bar at the bottom**: swipe the page above it or tap each tab to preview Home, Calendar, Brainstorm, Eventbrite and Community (each gets a ✓).
+  2. **Home:** swipe or use the arrows through 3 blog cards; tap two social buttons (it says what each opens); say thanks to the supporters under the real scrolling list.
+  3. **Goals & rings:** tap + until all three rings close (gold "Goal met" appears); try two kinds of day and watch the targets change; tap a number and type a new goal on the app's number pad.
+  4. **Start writing:** tap the pencil in a practice tab bar; type 5 words in a practice writing page (real word counting, a running clock, rings filling); add 2 words to earlier writing ("Picking up where you left off").
+  5. **Prompts & tools:** show a prompt, change its level, refresh it; change the text size and turn on Focus; type, Pause, then type again to restart the clock; tap "+2 words" until the "Almost there!" note flips to Silver Wordsmith.
+- **"Try it" is now "Open ›"** under the hands-on part, for the real feature (today's goal, writing, a prompt).
+- Chapters 6–10 keep their picture cards for now (no task); they become hands-on in part 2.
+- **Tour Guide medal is tiered** (`medals.js`): Bronze at 3 chapters, Silver at 6, Gold at 9, Diamond at all 10. Each new tier pops up over the tour. Counted from chapters ever finished (`ever` in `tour.js`), so Start over doesn't take it away. Medals total 40 again. Home's welcome card shows the tier so far.
+- **Tested:** `test24` (tiers 3/6/9/10), `test30` (progress kept after Start over).

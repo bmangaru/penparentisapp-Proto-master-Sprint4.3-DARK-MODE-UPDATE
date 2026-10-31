@@ -124,7 +124,7 @@ export const MEDALS_KEY = 'pp.medals.v1';
 export async function syncMedals(data) {
   const { sessions, dailyGoals, goals } = data || (await loadAll());
   const tour = await readJSON(TOUR_KEY, {});
-  const medals = allMedalProgress(sessions, dailyGoals, goals, { tour: !!tour?.finished });
+  const medals = allMedalProgress(sessions, dailyGoals, goals, { tour: Object.keys(tour?.ever || tour?.done || {}).length });
   const stored = await readJSON(MEDALS_KEY, null);
   const { record, newlyEarned } = diffMedals(medals, stored || {});
   if (!stored || newlyEarned.length) await AsyncStorage.setItem(MEDALS_KEY, JSON.stringify(record));

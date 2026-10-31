@@ -3,8 +3,11 @@
 //   • A chapter: its cards one at a time (picture, title, words, Try it),
 //     with dots, ‹ Back and Next ›. The last card's "Done ✓" ticks the chapter
 //     and moves on to the next one.
-//   • The end (after the last chapter, or once every chapter is ticked): the
-//     Diamond Tour Guide medal the first time, then a thank-you with Get Karma,
+//   • Each card's task sits in a dark bar ("Your turn: …", with progress);
+//     it turns green ✓ when done and Next unlocks (or Skip ›).
+//   • Finished chapters earn the Tour Guide medal: Bronze 3 · Silver 6 ·
+//     Gold 9 · Diamond 10 (pops up over the tour).
+//   • The end (after the last chapter, or once every chapter is ticked): then a thank-you with Get Karma,
 //     the credits, and "Start writing".
 // "Try it" closes the tour and opens the real thing; Home's card (or
 // Settings) brings you back to the same chapter.
@@ -12,7 +15,7 @@
 // with openTour() in tour.js.
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Modal, View, Text, Pressable, ScrollView } from 'react-native';
+import { Modal, View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -39,6 +42,10 @@ export default function TourModal({ navRef }) {
   const [ch, setCh] = useState(0);
   const [card, setCard] = useState(0);
   const [medals, setMedals] = useState([]);
+  // The current card's task: done yet, and the progress line ("3 of 5 tabs seen").
+  const [taskDone, setTaskDone] = useState(false);
+  const [progress, setProgress] = useState('');
+  useEffect(() => { setTaskDone(false); setProgress(''); }, [ch, card, view]);
   const scroll = useRef(null);
 
   // openTour(chapterId?) from Home, Settings… Without an id: the next
@@ -62,13 +69,12 @@ export default function TourModal({ navRef }) {
   async function finishChapter() {
     const first = await markChapter(chapter.id, CHAPTER_IDS);
     const nowDone = { ...done, [chapter.id]: true };
-    if (first) {
-      // The whole tour, for the first time: the Diamond Tour Guide medal.
-      const { newlyEarned } = await syncMedals();
-      setMedals(newlyEarned.filter((m) => m.id === 'tour'));
-      setView('end');
-      return;
-    }
+    // Chapters count toward the Tour Guide medal: Bronze 3 · Silver 6 · Gold 9 ·
+    // Diamond 10. A new tier pops up over the tour.
+    const { newlyEarned } = await syncMedals();
+    const tourTiers = newlyEarned.filter((m) => m.id === 'tour');
+    if (tourTiers.length) setMedals(tourTiers);
+    if (first) { setView('end'); return; }
     // Otherwise: on to the next chapter; after the last one, the end (or the
     // list, if some chapters were skipped).
     if (ch + 1 < CHAPTERS.length) { setCh(ch + 1); setCard(0); return; }
@@ -141,8 +147,22 @@ export default function TourModal({ navRef }) {
   } else if (view === 'chapter') {
     const c = chapter.cards[card];
     const last = card === chapter.cards.length - 1;
-    body = (
+    const locked = !!c.task && !taskDone;
+    const Step = c.Step;
+    const words = (
       <>
+        <Text style={[s.title, c.fill && { marginTop: 4, fontSize: 18 }]}>{c.title}</Text>
+        <Text style={[s.body, c.fill && { fontSize: 14, lineHeight: 20 }]}>{c.body}</Text>
+      </>
+    );
+    const tryBox = c.try ? (
+      <Pressable onPress={() => tryIt(c.try.go)} style={({ pressed }) => [s.try, pressed && { opacity: 0.85 }]} accessibilityRole="button">
+        <Text style={s.tryText}>Ready for the real thing? {c.try.label}.</Text>
+        <Text style={s.tryBtn}>Open ›</Text>
+      </Pressable>
+    ) : null;
+    body = (
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         {header(
           <Pressable onPress={() => setView('list')} hitSlop={10} accessibilityRole="button"><Text style={s.topLink}>‹ Chapters</Text></Pressable>,
           `${ch + 1} · ${chapter.title}`,
@@ -151,27 +171,48 @@ export default function TourModal({ navRef }) {
         <View style={s.steps}>
           {chapter.cards.map((_, i) => <View key={i} style={[s.step, i < card && s.stepDone, i === card && s.stepOn]} />)}
         </View>
-        <ScrollView ref={scroll} contentContainerStyle={[s.pad, { paddingBottom: 30 }]}>
-          <View style={s.art}>{c.art}</View>
-          <Text style={s.title}>{c.title}</Text>
-          <Text style={s.body}>{c.body}</Text>
-          {c.try ? (
-            <Pressable onPress={() => tryIt(c.try.go)} style={({ pressed }) => [s.try, pressed && { opacity: 0.85 }]} accessibilityRole="button">
-              <Text style={s.tryText}>Try it now: {c.try.label.toLowerCase()}</Text>
-              <Text style={s.tryBtn}>Try it ›</Text>
-            </Pressable>
-          ) : null}
-          {c.try ? <Text style={s.tryNote}>Your place in the tour is saved. Come back with "Continue the tour" on Home.</Text> : null}
-        </ScrollView>
+        {c.task ? (
+          <View style={[s.task, taskDone && s.taskDone]} accessibilityLiveRegion="polite">
+            <View style={{ flex: 1 }}>
+              <Text style={s.taskText}>
+                {taskDone ? <Text style={{ fontWeight: '800' }}>Nice! </Text> : <Text style={s.taskYour}>Your turn: </Text>}
+                {taskDone ? 'Tap Next when you’re ready.' : c.task}
+              </Text>
+              {!taskDone && progress ? <Text style={s.taskProg}>{progress}</Text> : null}
+            </View>
+            <View style={[s.check, taskDone && s.checkOn]}>{taskDone ? <Ionicons name="checkmark" size={16} color="#1E7B3A" /> : null}</View>
+          </View>
+        ) : null}
+        {c.fill ? (
+          <View style={[s.pad, { flex: 1, paddingBottom: 8 }]}>
+            {words}
+            <View style={{ flex: 1, marginTop: 10 }}>
+              <Step key={`${ch}-${card}`} onDone={() => setTaskDone(true)} onProgress={setProgress} />
+            </View>
+          </View>
+        ) : (
+          <ScrollView ref={scroll} contentContainerStyle={[s.pad, { paddingBottom: 30 }]} keyboardShouldPersistTaps="handled">
+            <View style={Step ? null : s.art}>
+              {Step ? <Step key={`${ch}-${card}`} onDone={() => setTaskDone(true)} onProgress={setProgress} /> : c.art}
+            </View>
+            {words}
+            {tryBox}
+          </ScrollView>
+        )}
         <View style={[s.nav, { paddingBottom: insets.bottom + 14 }]}>
           <Pressable onPress={() => (card ? setCard(card - 1) : setView('list'))} style={[s.navBtn, s.navOut]} accessibilityRole="button">
             <Text style={[s.navText, { color: colors.royal }]}>‹ Back</Text>
           </Pressable>
-          <Pressable onPress={() => (last ? finishChapter() : setCard(card + 1))} style={[s.navBtn, s.navFill]} accessibilityRole="button">
-            <Text style={[s.navText, { color: '#FFFFFF' }]}>{last ? 'Done ✓' : 'Next ›'}</Text>
+          <Pressable
+            onPress={() => (last ? finishChapter() : setCard(card + 1))}
+            style={[s.navBtn, locked ? s.navLocked : s.navFill]}
+            accessibilityRole="button"
+            accessibilityHint={locked ? 'Do the task first, or skip it' : undefined}
+          >
+            <Text style={[s.navText, { color: '#FFFFFF' }]}>{locked ? 'Skip ›' : last ? 'Done ✓' : 'Next ›'}</Text>
           </Pressable>
         </View>
-      </>
+      </KeyboardAvoidingView>
     );
   } else {
     body = (
@@ -186,7 +227,7 @@ export default function TourModal({ navRef }) {
             <Medal medal={TOUR_MEDAL} tier="diamond" size={76} />
             <View style={{ flex: 1 }}>
               <Text style={s.kick}>💎 DIAMOND TOUR GUIDE</Text>
-              <Text style={s.small}>You've seen everything Pen Parentis can do. Welcome in!</Text>
+              <Text style={s.small}>Every chapter done. You've seen everything Pen Parentis can do. Welcome in!</Text>
             </View>
           </View>
 
@@ -260,6 +301,14 @@ const s = themed(() => ({
   navBtn: { flex: 1, minHeight: 50, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
   navOut: { borderWidth: 2, borderColor: colors.royal },
   navFill: { backgroundColor: colors.royal },
+  navLocked: { backgroundColor: '#9AA3BA' },
+  task: { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: space.lg, marginBottom: 6, backgroundColor: '#0A1633', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 12 },
+  taskDone: { backgroundColor: '#1E7B3A' },
+  taskText: { fontSize: 13.5, lineHeight: 19, color: '#FFFFFF' },
+  taskYour: { fontWeight: '800', color: '#F2C14E' },
+  taskProg: { fontSize: 11.5, fontWeight: '800', color: '#9BE3B0', marginTop: 2 },
+  check: { width: 26, height: 26, borderRadius: 13, borderWidth: 2, borderColor: 'rgba(255,255,255,0.4)', alignItems: 'center', justifyContent: 'center' },
+  checkOn: { backgroundColor: '#FFFFFF', borderColor: '#FFFFFF' },
   navText: { fontSize: 15, fontWeight: '700' },
   medalRow: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: '#F7F5FF', borderRadius: 18, padding: 14 },
   kick: { fontSize: 11, fontWeight: '800', letterSpacing: 1, color: '#4B3FB8' },

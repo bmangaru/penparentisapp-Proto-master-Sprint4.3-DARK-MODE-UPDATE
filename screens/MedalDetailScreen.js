@@ -72,8 +72,6 @@ export default function MedalDetailScreen({ navigation, route }) {
 
         <Text style={s.h}>Tiers</Text>
         {TIERS.map((t, i) => {
-          // The Tour Guide has one tier: Diamond.
-          if (m.single && t !== 'diamond') return null;
           const earned = i <= m.tierIndex;
           const current = i === m.tierIndex;
           return (
@@ -84,7 +82,7 @@ export default function MedalDetailScreen({ navigation, route }) {
                 <Text style={s.tierSub}>
                   {earned
                     ? `Earned ${shortDate(dates[i]) || 'before medals were added'}${current ? ' · current tier' : ''}`
-                    : m.single ? 'Finish the app tour (⚙ Settings → The app tour)' : i === m.tierIndex + 1 ? `Not yet — ${m.pct}% there` : 'Not yet'}
+                    : i === m.tierIndex + 1 ? `Not yet — ${m.pct}% there` : 'Not yet'}
                 </Text>
               </View>
               <Ionicons

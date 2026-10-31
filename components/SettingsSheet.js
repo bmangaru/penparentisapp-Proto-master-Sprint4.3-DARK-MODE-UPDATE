@@ -18,7 +18,7 @@ const OPTIONS = [
 ];
 
 // The three picture tiles (also used in the app tour's first chapter).
-export function AppearancePicker() {
+export function AppearancePicker({ onPick }) {
   const choice = useAppearance() || 'system';
   return (
     <View style={s.row} accessibilityRole="radiogroup">
@@ -27,7 +27,7 @@ export function AppearancePicker() {
         return (
           <Pressable
             key={o.id}
-            onPress={() => { if (o.id !== choice) setAppearance(o.id); }}
+            onPress={() => { if (onPick) onPick(o.id); if (o.id !== choice) setAppearance(o.id); }}
             style={[s.opt, on && s.optOn]}
             accessibilityRole="radio"
             accessibilityState={{ checked: on }}

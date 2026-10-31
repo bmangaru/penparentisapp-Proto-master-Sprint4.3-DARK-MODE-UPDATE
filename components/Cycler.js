@@ -18,7 +18,7 @@ import { colors, themed } from '../theme';
 
 const HOLD_AFTER_TOUCH = 12000;
 
-export default function Cycler({ children, every = 10000, paused = false, resetKey, arrows = false }) {
+export default function Cycler({ children, every = 10000, paused = false, resetKey, arrows = false, onIndex }) {
   const pages = React.Children.toArray(children).filter(Boolean);
   const n = pages.length;
   const [w, setW] = useState(0);
@@ -34,7 +34,7 @@ export default function Cycler({ children, every = 10000, paused = false, resetK
 
   // Scroll positions: [copy of last] [card 0] … [card n-1] [copy of first]
   const xOf = (slot) => slot * w;
-  const setIndex = (k) => { iRef.current = k; setI(k); };
+  const setIndex = (k) => { iRef.current = k; setI(k); if (onIndex) onIndex(k); };
 
   // Go to card k; k = n or -1 wraps round through the copy at that end.
   function show(k, animated = true) {

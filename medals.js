@@ -64,10 +64,11 @@ export const MEDALS = [
     tiers: [10, 100, 500, 2000],
   },
   {
-    // One tier only: finishing the app tour earns it straight at Diamond.
-    id: 'tour', name: 'Tour Guide', icon: 'compass-outline', unit: 'tour', single: true,
-    desc: 'Finish every chapter of the app tour. It goes straight to Diamond.',
-    tiers: [1, 1, 1, 1],
+    // The app tour: chapters finished (ever; starting over doesn't take it away).
+    // Bronze 3 · Silver 6 · Gold 9 · Diamond 10 (all of them). Change here.
+    id: 'tour', name: 'Tour Guide', icon: 'compass-outline', unit: 'chapters',
+    desc: 'Finish chapters of the app tour. Every chapter counts toward the next tier; all ten earn Diamond.',
+    tiers: [3, 6, 9, 10],
   },
 ];
 
@@ -101,7 +102,7 @@ export function textStats(text) {
 }
 
 // Everything the medals measure, from all saved sessions.
-// extra: { tour: true } once the app tour is finished.
+// extra: { tour: n } chapters of the app tour finished (ever).
 export function medalStats(sessions, dailyGoals = {}, goals = null, extra = {}) {
   const sum = summarize(sessions);
   const days = [...new Set(sessions.map((s) => s.day))];
@@ -124,7 +125,7 @@ export function medalStats(sessions, dailyGoals = {}, goals = null, extra = {}) 
     sessions: sum.count,
     streak: longestStreak(sessions),
     goals: goalsMet,
-    tour: extra.tour ? 1 : 0,
+    tour: Number(extra.tour) || 0,
     ...totals,
   };
 }

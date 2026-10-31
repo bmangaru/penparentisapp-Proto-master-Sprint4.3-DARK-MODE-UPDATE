@@ -1,5 +1,7 @@
 // tour.js — the app tour's progress, saved on this phone.
-//   { done: { chapterId: true }, hidden: bool, finished: bool }
+//   { done: { chapterId: true }, ever: { chapterId: true }, hidden: bool, finished: bool }
+// ever = chapters ever finished (the Tour Guide medal counts these; Start
+// over clears done, not ever).
 // finished = every chapter done at least once (earns the Diamond Tour Guide
 // medal; the Home card goes away). Replaying from Settings keeps the medal.
 // Any screen can open the tour with openTour(chapterId?) — App.js shows it.
@@ -8,7 +10,7 @@ import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const TOUR_KEY = 'pp.tour.v1';
-const EMPTY = { done: {}, hidden: false, finished: false };
+const EMPTY = { done: {}, ever: {}, hidden: false, finished: false };
 
 let state = null;
 const listeners = new Set();
@@ -44,9 +46,10 @@ export function allDone(done, chapterIds) {
 export async function markChapter(id, chapterIds) {
   const cur = await loadTour();
   const done = { ...cur.done, [id]: true };
+  const ever = { ...(cur.ever || cur.done || {}), [id]: true };
   const nowFinished = allDone(done, chapterIds);
   const first = nowFinished && !cur.finished;
-  await save({ ...cur, done, finished: cur.finished || nowFinished });
+  await save({ ...cur, done, ever, finished: cur.finished || nowFinished });
   return first;
 }
 

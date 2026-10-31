@@ -21,7 +21,7 @@ export default function TourCard() {
   return (
     <View style={s.card}>
       <View style={s.row}>
-        <Medal medal={TOUR_MEDAL} tier="diamond" size={46} />
+        <Medal medal={TOUR_MEDAL} tier={n >= 9 ? 'gold' : n >= 6 ? 'silver' : n >= 3 ? 'bronze' : null} size={46} />
         <View style={{ flex: 1 }}>
           <Text style={s.kick}>{started ? 'YOUR TOUR' : 'NEW HERE? START WITH THE TOUR'}</Text>
           <Text style={s.title}>Welcome to Pen Parentis</Text>
@@ -29,7 +29,7 @@ export default function TourCard() {
       </View>
       <Text style={s.body}>A short walk through everything: settings, your goals and rings, writing, medals, the calendar, salons and community.</Text>
       <View style={s.track}><View style={[s.fill, { width: `${Math.max(3, (n / CHAPTER_IDS.length) * 100)}%` }]} /></View>
-      <Text style={s.count}>{n} of {CHAPTER_IDS.length} chapters · ✦ finish them all for a Diamond medal</Text>
+      <Text style={s.count}>{n} of {CHAPTER_IDS.length} chapters · ✦ earn the Tour Guide medal as you go</Text>
       <Pressable onPress={() => openTour()} style={({ pressed }) => [s.btn, pressed && { opacity: 0.85 }]} accessibilityRole="button">
         <Text style={s.btnText}>{started ? 'Continue the tour  ›' : 'Start the tour  ›'}</Text>
       </Pressable>
