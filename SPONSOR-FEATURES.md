@@ -690,3 +690,27 @@ How it's built: `tourRun.js` (the run), `components/TourTarget.js` (marks a spot
 - **Start over resets the medal:** Settings → Start over clears every chapter and the Tour Guide medal, so it's earned (and celebrated) again.
 - Session saved no longer lists "Tour Guide +4" as if writing had moved it.
 - `components/TourSteps.js` (the old practice copies) is no longer used: delete it.
+
+## Round 58 — tour: time to read, prompt spotlight, scroll-down chapter
+
+- **No more abrupt endings:** steps where you'd want to read or keep going now wait for you once done. The bubble turns green and shows a button:
+  - Chapter 1, five tabs: read about the last tab (Community), then **Next ›**.
+  - Chapter 4, write 5 words: keep writing as long as you like, then **I'm ready to go on ›**.
+  - Chapter 5, type to restart the clock after Pause: see what you typed, then **Next ›**.
+- **Prompt spotlight:** gold rings go around just the level chip and ↻ Refresh (not the whole prompt card), and the ✕ can't be tapped during that step.
+- **Prompt card in dark mode:** ↻ Refresh and ✕ are now see-through pills with a light edge, so the level colour and ✕ are easy to read (they were pale pills before).
+- **Chapter 7 is now "Your week, writing & medals":** tap the pencil, then scroll down yourself (the tour waits at the top without dimming):
+  - This week, with a tip: a day with all three rings closed is a day you met your goal; tap a day to read it.
+  - Your writing: everything is saved on your phone, each day has a card with how you felt, and "See all my writing" has every day, by week.
+  - Medals: two short notes, look only.
+
+## Round 59 — tour: pulsing "tap here" rings, safer writing step, prompt lesson
+
+- **Pulsing gold rings show what to tap:** the blog's ‹ › arrows; on today's goal, A lighter day, My usual and A stretch day pulse, and once you pick one, "Save today's goal" pulses instead (no gold border round the whole sheet any more).
+- **Writing your first entry:** the bubble now sits at the top (away from the keyboard), and after 5 words its button says **I'm done writing ›**. It only works a moment after it appears, so a tap meant for the keyboard can't end the chapter. Same for "type to restart the clock" in chapter 5.
+- **The prompt lesson is two clear steps** on the real prompt card: the level button pulses ("Tap the level to switch it: Simple, Thoughtful, Deep"), then ↻ Refresh pulses. The prompt's ✕ is hidden during these steps, so it can't be closed by mistake.
+- **Never stuck:** if a step is waiting for something that doesn't appear within a few seconds, the bubble says so and offers Skip.
+
+## Round 60 — one full set of the tour files
+
+No new behaviour: this zip has every file the on-app tour touches (rounds 56–59), so no file is left at an older version. In particular `tourRun.js` is the file that makes "tap all 5 tabs" and "write 5 words" wait for **Next ›** / **I'm done writing ›** instead of moving on by themselves.

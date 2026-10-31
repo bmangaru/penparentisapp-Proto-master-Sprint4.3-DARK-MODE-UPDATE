@@ -157,7 +157,8 @@ export function tourEvent(name, value) {
     progress: res.progress !== undefined ? res.progress : run.progress,
     taskDone: !!res.done,
   });
-  if (res.done) advanceTimer = setTimeout(nextStep, st.hold ?? 900);
+  // manual steps wait for "Next ›" (time to read, or to keep writing).
+  if (res.done && !st.manual) advanceTimer = setTimeout(nextStep, st.hold ?? 900);
 }
 
 // ---------------------------------------------------------------------------
