@@ -58,7 +58,10 @@ export function AppearancePicker({ onPick }) {
 
 export default function SettingsSheet({ visible, onClose }) {
   // The tour opens over everything, so close Settings first.
+  // Not while the tour is running (it would restart it from under you).
+  const touring = !!useRun();
   const go = (restart) => {
+    if (touring) return;
     onClose();
     setTimeout(async () => { if (restart) await restartTour(); openTour(); }, 350);
   };
@@ -74,15 +77,16 @@ export default function SettingsSheet({ visible, onClose }) {
       <Text style={[s.label, { marginTop: 18 }]}>THE APP TOUR</Text>
       <Text style={s.note}>A short, step-by-step guide to everything in the app. Review any chapter, or start over from the beginning.</Text>
       <View style={[s.row, { marginTop: 10 }]}>
-        <Pressable onPress={() => go(false)} style={[s.tourBtn, s.tourBtnFill]} accessibilityRole="button">
+        <Pressable onPress={() => go(false)} disabled={touring} style={[s.tourBtn, s.tourBtnFill, touring && { opacity: 0.4 }]} accessibilityRole="button" accessibilityState={{ disabled: touring }}>
           <Ionicons name="compass-outline" size={17} color="#FFFFFF" />
           <Text style={[s.tourText, { color: '#FFFFFF' }]}>Open the tour</Text>
         </Pressable>
-        <Pressable onPress={() => go(true)} style={s.tourBtn} accessibilityRole="button">
+        <Pressable onPress={() => go(true)} disabled={touring} style={[s.tourBtn, touring && { opacity: 0.4 }]} accessibilityRole="button" accessibilityState={{ disabled: touring }}>
           <Ionicons name="refresh" size={16} color={colors.royal} />
           <Text style={s.tourText}>Start over</Text>
         </Pressable>
       </View>
+      {touring ? <Text style={s.note}>You're in the tour now, so these are off until it's done.</Text> : null}
       </TourTarget>
     </Sheet>
   );

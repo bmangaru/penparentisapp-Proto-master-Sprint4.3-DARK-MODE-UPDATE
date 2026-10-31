@@ -112,7 +112,7 @@ export default function BrainstormHomeScreen({ navigation, route }) {
     // Came from "Set today's goal & start" → go straight to the page.
     if (startAfterPlan.current) {
       startAfterPlan.current = false;
-      setTimeout(() => navigation.navigate('BrainstormWriter'), 300);
+      setTimeout(() => navigation.navigate('BrainstormWriter', tourRunning() ? { fresh: true } : undefined), 300);
     }
   }
 
@@ -143,7 +143,8 @@ export default function BrainstormHomeScreen({ navigation, route }) {
       startAfterPlan.current = true;
       openPlan('daily');
     } else {
-      navigation.navigate('BrainstormWriter');
+      // In the app tour the writing page opens blank.
+      navigation.navigate('BrainstormWriter', tourRunning() ? { fresh: true } : undefined);
     }
   }
 

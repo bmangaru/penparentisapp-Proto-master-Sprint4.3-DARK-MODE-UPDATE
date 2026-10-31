@@ -770,3 +770,10 @@ No new behaviour: this zip has every file the on-app tour touches (rounds 56–5
 - **2.1** now says "The newest blog posts… Tap a blog post to read it right in the app."
 - **7.2** no longer says "Tap any day to read it".
 - Everything is hands-on now, so the old picture cards are gone from the tour.
+
+## Round 67 — tour: a blank page to write on, then just looking
+
+- **4.2 Your first words** opens a blank writing page (anything you already wrote today still counts for today). Write at least 5 words, keep going if you like, then **I'm done writing ›**.
+- **After that, the writing page can't be typed in for the rest of the tour** (5.1 prompts, 5.2 tools, 6.1 Finish), so it stays calm: 6.1 is just "tap Finish & check in".
+- **5.2a → back to 5.2:** tapping Exit focus returns to 5.2, so you can still try Pause; Got it ends the chapter.
+- **1.2 Settings:** Open the tour and Start over are greyed out while the tour runs ("You're in the tour now, so these are off until it's done.").

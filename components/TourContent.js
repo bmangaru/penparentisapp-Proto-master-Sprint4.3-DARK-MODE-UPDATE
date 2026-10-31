@@ -157,8 +157,8 @@ export const CHAPTERS = [
       },
       {
         target: 'writer.page', inline: true, wait: true, section: 'Your first words', freshLine: true,
-        title: 'Just write', text: 'Anything on your mind: a line, a memory, an idea. Watch the rings above fill as you type.',
-        task: 'Write at least 5 words.', doneText: 'Keep writing as long as you like. Tap the button when you’re done.', manual: true, nextLabel: 'I’m done writing ›',
+        title: 'Just write', text: 'A blank page, just for this. Anything on your mind: a line, a memory, an idea. Watch the rings above fill as you type.',
+        task: 'Write at least 5 words.', doneText: 'Keep writing as long as you like. Tap the button when you’re done (the rest of the tour is just looking).', manual: true, nextLabel: 'I’m done writing ›',
         on: (ev, v, d) => {
           if (ev !== 'words') return null;
           const base = d.base ?? v - 1; // words already written today, before this step
@@ -173,12 +173,12 @@ export const CHAPTERS = [
     steps: [
       ...toWriter('Prompts and tools live on the writing page.'),
       {
-        target: 'writer.prompt', inline: true, section: 'Prompts', marks: ['writer.prompt'], wait: true, skipIf: () => !!getTarget('writer.promptCard'),
+        target: 'writer.prompt', inline: true, section: 'Prompts', noTyping: true, marks: ['writer.prompt'], wait: true, skipIf: () => !!getTarget('writer.promptCard'),
         title: 'Stuck? Try a prompt', text: 'Prompts are short questions to get you going. They never count as your words, and they’re saved with what you write.',
         task: 'Tap ✦ Prompt.', on: (ev) => ev === 'prompt-show',
       },
       {
-        target: 'writer.promptCard', inline: true, wait: true, marks: ['writer.level'],
+        target: 'writer.promptCard', inline: true, wait: true, marks: ['writer.level'], noTyping: true,
         title: 'How deep?', text: 'The button on the left is the prompt’s level. Each tap switches it: Simple, then Thoughtful, then Deep. Deeper prompts ask more of you.',
         task: 'Tap the level to try all three: Simple, Thoughtful and Deep.',
         doneText: 'You’ve tried all three. Pick the one you like, then go on.', manual: true, nextLabel: 'Ready to go on ›',
@@ -190,16 +190,16 @@ export const CHAPTERS = [
         },
       },
       {
-        target: 'writer.promptCard', inline: true, wait: true, marks: ['writer.refresh'],
+        target: 'writer.promptCard', inline: true, wait: true, marks: ['writer.refresh'], noTyping: true,
         title: 'Not this one?', text: '↻ Refresh gives you another prompt at the same level. Whatever you write next is saved with the prompt on screen.',
         task: 'Tap ↻ Refresh.', doneText: 'Refresh as many times as you like, then go on.', manual: true, nextLabel: 'Ready to go on ›',
         on: (ev) => ev === 'prompt-refresh',
       },
       {
-        target: 'writer.page', inline: true, wait: true, info: true, section: 'More writing tools',
+        target: 'writer.page', inline: true, wait: true, info: true, section: 'More writing tools', noTyping: true,
         marks: ['writer.aa', 'writer.pause'],
         title: 'Aa and Pause',
-        text: 'Aa makes the words bigger or smaller, and turns on Focus mode: just you and your words. Pause stops the clock when life calls; typing starts it again, and a quiet minute pauses it by itself. Try them whenever you like.',
+        text: 'Aa makes the words bigger or smaller, and turns on Focus mode: just you and your words. Pause stops the clock when life calls; typing starts it again, and a quiet minute pauses it by itself. Try them, then tap Got it.',
         hold: 500, on: (ev) => ev === 'focus-on', // turning on Focus shows 5.2a
       },
       {
@@ -207,7 +207,7 @@ export const CHAPTERS = [
         target: 'writer.exitFocus', inline: true, wait: true, subsection: 'Focus mode', noTyping: true,
         skipIf: () => !getTarget('writer.exitFocus'), marks: ['writer.exitFocus'],
         title: 'You’re in Focus mode', text: 'Everything but your words is hidden: no clock, prompts or rings on screen (the clock still runs). It’s for when you want nothing in the way.',
-        task: 'Tap ⤡ Exit focus to bring everything back.', on: (ev) => ev === 'focus-off',
+        task: 'Tap ⤡ Exit focus to bring everything back.', back: true, on: (ev) => ev === 'focus-off', // then back to 5.2
       },
     ],
   },
@@ -216,8 +216,8 @@ export const CHAPTERS = [
     steps: [
       ...toWriter('Finishing happens on the writing page.'),
       {
-        target: 'writer.finish', inline: true, section: 'Finish', marks: ['writer.finish'], markRound: 14, wait: true,
-        text: 'Write as much as you like. When you’re done, Finish & check in saves your entry.',
+        target: 'writer.finish', inline: true, section: 'Finish', marks: ['writer.finish'], markRound: 14, wait: true, noTyping: true,
+        text: 'When you’re done writing, Finish & check in saves your entry.',
         task: 'Tap Finish & check in.', hold: 600, on: (ev) => ev === 'session-saved',
       },
       {

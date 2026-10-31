@@ -139,6 +139,14 @@ export function sectionsOf(idx) {
   return out;
 }
 
+// Back one step in this run's order (for steps marked back: true).
+function stepBack() {
+  if (!run) return;
+  const order = run.order || CHAPTERS[run.ch].steps.map((_, i) => i);
+  const pos = Math.max(0, (run.pos ?? order.indexOf(run.step)) - 1);
+  set({ ...run, ...fresh, order, pos, step: order[pos] });
+}
+
 // ‹ Back: the nearest earlier step you can do again from where you are now.
 // Its spot has to be on screen in the same place you are (over the app, or
 // the same sheet). A step that names its tab (`tab`) is reached by going to
@@ -209,7 +217,8 @@ export function tourEvent(name, value) {
     taskDone: !!res.done,
   });
   // manual steps wait for "Next ›" (time to read, or to keep writing).
-  if (res.done && !st.manual) advanceTimer = setTimeout(nextStep, st.hold ?? 900);
+  // back: when done, return to the step before (e.g. 5.2a → 5.2).
+  if (res.done && !st.manual) advanceTimer = setTimeout(st.back ? stepBack : nextStep, st.hold ?? 900);
 }
 
 // ---------------------------------------------------------------------------

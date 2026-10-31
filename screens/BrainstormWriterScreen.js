@@ -206,7 +206,9 @@ export default function BrainstormWriterScreen({ navigation, route }) {
         stats: medalStats(sessions, dailyGoals, goals),
         goalMetBefore: (dailyPct(goal, earlier) ?? 0) >= 100,
       };
-      const piece = textToContinue(sessions, session.day);
+      // From the app tour: a blank page (today's earlier writing still counts
+      // toward today; it just isn't shown here).
+      const piece = route?.params?.fresh ? null : textToContinue(sessions, session.day);
       if (piece && piece.text.trim()) {
         const t = piece.text.replace(/\s*$/, ' ');
         textRef.current = t;
