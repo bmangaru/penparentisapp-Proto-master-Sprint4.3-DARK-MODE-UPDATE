@@ -785,3 +785,10 @@ No new behaviour: this zip has every file the on-app tour touches (rounds 56–5
 - **Medal earned cards:** Bronze "Congratulations, you set your first goals! Cheers to many more to come." · Silver "Congrats on your first Brainstorm entry! Many more on the way." · Gold and Diamond have their own lines too.
 - **6.2:** after tapping a medal, tap **See all** (pulsing) to see every medal, then on to How do you feel.
 - **9.3 Share your rings:** reworded; This month / 3 months / 6 months pulse gold; **Share image is off during the tour** (a note under it says so).
+
+## Round 69 — tour: start to finish, cleaner chapter card
+
+- **Welcome:** "This is an interactive tutorial: you tap the real buttons as you go. Upon completion, you'll have earned the following medals:" — Diamond reads "upon completion of this tour".
+- **No ‹ Back or Skip › inside a chapter** — each chapter is done start to finish, which keeps it stable. (Only if a step's spot can't be found does "Skip this step ›" appear, so the tour can never get stuck. ✕ still tucks it away.)
+- **Chapter card:** big buttons are **↺ Redo chapter** and **Next**; Take a break and See all chapters are small links under them.
+- **6.2:** the "See all medals" step from round 68 is removed (it made the sheet jumpy). See all still works normally outside the tour.
