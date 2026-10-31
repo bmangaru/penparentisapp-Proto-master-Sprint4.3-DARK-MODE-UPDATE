@@ -9,16 +9,18 @@
 //   • Touching it pauses the switching for a while, so it never moves under
 //     your finger. `paused` stops it (e.g. while another day is selected).
 //   • When `resetKey` changes it goes back to the first card (e.g. a day tapped).
+//   • tourId: the app tour can point at the arrows ('<tourId>.prev' / '.next').
 // With one card there are no dots and nothing moves.
 
 import React, { useEffect, useRef, useState } from 'react';
 import { View, ScrollView, Pressable, AccessibilityInfo } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, themed } from '../theme';
+import TourTarget from './TourTarget';
 
 const HOLD_AFTER_TOUCH = 12000;
 
-export default function Cycler({ children, every = 10000, paused = false, resetKey, arrows = false, onIndex }) {
+export default function Cycler({ children, every = 10000, paused = false, resetKey, arrows = false, onIndex, tourId }) {
   const pages = React.Children.toArray(children).filter(Boolean);
   const n = pages.length;
   const [w, setW] = useState(0);
@@ -124,7 +126,7 @@ export default function Cycler({ children, every = 10000, paused = false, resetK
         ))}
       </ScrollView>
       <View style={s.bar}>
-        {arrows ? <Arrow dir={-1} onPress={() => { hold(); show(i - 1); }} /> : null}
+        {arrows ? <TourTarget id={tourId ? `${tourId}.prev` : null}><Arrow dir={-1} onPress={() => { hold(); show(i - 1); }} /></TourTarget> : null}
         <View style={s.dots}>
           {pages.map((_, k) => (
             <Pressable
@@ -139,7 +141,7 @@ export default function Cycler({ children, every = 10000, paused = false, resetK
             </Pressable>
           ))}
         </View>
-        {arrows ? <Arrow dir={1} onPress={() => { hold(); show(i + 1); }} /> : null}
+        {arrows ? <TourTarget id={tourId ? `${tourId}.next` : null}><Arrow dir={1} onPress={() => { hold(); show(i + 1); }} /></TourTarget> : null}
       </View>
     </View>
   );

@@ -22,7 +22,7 @@ import { colors, isDark } from '../theme';
 import Medal from './Medal';
 import { MEDALS } from '../medals';
 import {
-  backIndex, getTarget, tourEvent, getTourChapters, nextStep, prevStep, startChapter, stepOf, stopTour, topHost, useRun,
+  backIndex, getRun, getTarget, tourEvent, getTourChapters, nextStep, prevStep, startChapter, stepOf, stopTour, topHost, useRun,
 } from '../tourRun';
 import { openTour, useTour } from '../tour';
 
@@ -39,6 +39,8 @@ export default function TourLayer({ host = 'root' }) {
   const [kb, setKb] = useState(0);
   const [bubbleH, setBubbleH] = useState(0);
   const [ringRects, setRingRects] = useState(null); // step.rings: outline these spots one by one
+  const [markRects, setMarkRects] = useState(null); // step.marks: pulsing gold rings ("tap here")
+  const pulse = useRef(new Animated.Value(1)).current;
   const scrolledFor = useRef(null);
 
   const step = stepOf(run);
@@ -58,6 +60,7 @@ export default function TourLayer({ host = 'root' }) {
     setMissing(false);
     setBubbleH(0);
     setRingRects(null);
+    setMarkRects(null);
     if (!step?.target) return undefined;
     const since = Date.now();
     const tick = () => {
@@ -65,7 +68,8 @@ export default function TourLayer({ host = 'root' }) {
       if (!t || t.host !== host) {
         setRect(null);
         // Not on screen for a while: the app layer offers to skip the step.
-        setMissing(host === 'root' && !t && !step.wait && Date.now() - since > 1800);
+        // (Steps that wait for a sheet or page get longer, but never wait forever.)
+        setMissing(host === 'root' && !t && Date.now() - since > (step.wait ? 6000 : 1800));
         return;
       }
       setMissing(false);
@@ -76,7 +80,7 @@ export default function TourLayer({ host = 'root' }) {
         // On another tab (the pages sit side by side): not on screen.
         if (x >= W - 1 || x + w <= 1) {
           setRect(null);
-          setMissing(host === 'root' && !step.wait && Date.now() - since > 1800);
+          setMissing(host === 'root' && Date.now() - since > (step.wait ? 6000 : 1800));
           return;
         }
         setRect((r) => (r && r.x === x && r.y === y && r.w === w && r.h === h ? r : { x, y, w, h }));
@@ -104,6 +108,25 @@ export default function TourLayer({ host = 'root' }) {
             });
           });
         }
+        // "Tap here" marks: pulsing rings on small spots inside the bright area
+        // (they can change as you go, e.g. the day options, then Save).
+        const markIds = typeof step.marks === 'function' ? step.marks(getRun()?.data || {}) : step.marks;
+        if (markIds && markIds.length) {
+          const out = [];
+          let left = markIds.length;
+          const done = () => {
+            left -= 1;
+            if (left === 0) {
+              const list = out.filter(Boolean);
+              setMarkRects((prev) => (prev && JSON.stringify(prev) === JSON.stringify(list) ? prev : list));
+            }
+          };
+          markIds.forEach((id, i) => {
+            const n = getTarget(id)?.ref.current;
+            if (!n?.measureInWindow) { done(); return; }
+            n.measureInWindow((mx, my, mw, mh) => { if (mw || mh) out[i] = { x: mx, y: my, w: mw, h: mh }; done(); });
+          });
+        } else setMarkRects((prev) => (prev ? null : prev));
         // Below the fold (or under the header)? Scroll the page to it, once.
         if (t.scroll && scrolledFor.current !== key) {
           scrolledFor.current = key;
@@ -122,6 +145,18 @@ export default function TourLayer({ host = 'root' }) {
   }, [key, host]);
 
   useEffect(() => { if (run?.phase === 'done') Keyboard.dismiss(); }, [run?.phase]);
+
+  // The marks breathe, so they read as "tap me".
+  const marking = !!(markRects && markRects.length);
+  useEffect(() => {
+    if (!marking) return undefined;
+    const loop = Animated.loop(Animated.sequence([
+      Animated.timing(pulse, { toValue: 0.2, duration: 600, useNativeDriver: true }),
+      Animated.timing(pulse, { toValue: 1, duration: 600, useNativeDriver: true }),
+    ]));
+    loop.start();
+    return () => loop.stop();
+  }, [marking]);
 
   if (!run) return null;
   const chapters = getTourChapters();
@@ -195,7 +230,7 @@ export default function TourLayer({ host = 'root' }) {
   else if (above >= bh + 14) top = hy - 12 - bh;
   else if (below >= above) top = Math.max(insets.top + 6, floor - bh);
   else top = insets.top + 6;
-  const ring = !step.free || step.ring;
+  const ring = (!step.free || step.ring) && !step.noRing;
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
@@ -219,6 +254,9 @@ export default function TourLayer({ host = 'root' }) {
           <View style={[StyleSheet.absoluteFill, c.ringGlow, { borderRadius: (step.round ?? 14) + 4 }]} />
         </View>
       ) : null}
+      {marking ? markRects.map((r, i) => (
+        <Animated.View key={`m${i}`} pointerEvents="none" style={[c.abs, c.mark, { left: r.x - 5, top: r.y - 5, width: r.w + 10, height: r.h + 10, borderRadius: step.markRound ?? 999, opacity: pulse }]} />
+      )) : null}
       <View
         key={key} // a fresh bubble per step, so it's always measured (and shown)
         style={[c.abs, { left: 14, right: 14, top, opacity: bubbleH ? 1 : 0 }]}
@@ -241,6 +279,15 @@ function Bubble({ run, step, lost }) {
   const text = typeof step.text === 'function' ? step.text(run.data || {}) : step.text;
   const title = typeof step.title === 'function' ? step.title(run.data || {}) : step.title;
   const done = run.taskDone;
+  // A manual "Next ›" only works a moment after it appears, so a tap meant for
+  // the keyboard or the page can't end the step by accident.
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    setArmed(false);
+    if (!done || !step.manual) return undefined;
+    const id = setTimeout(() => setArmed(true), 1200);
+    return () => clearTimeout(id);
+  }, [done]);
   return (
     <View style={c.bubble} accessibilityLiveRegion="polite">
       <View style={c.head}>
@@ -275,7 +322,7 @@ function Bubble({ run, step, lost }) {
           </Pressable>
         ) : null}
         {done && step.manual && !lost ? (
-          <Pressable onPress={nextStep} style={({ pressed }) => [c.got, pressed && { opacity: 0.85 }]} accessibilityRole="button">
+          <Pressable onPress={() => armed && nextStep()} style={({ pressed }) => [c.got, !armed && { opacity: 0.45 }, pressed && { opacity: 0.85 }]} accessibilityRole="button" accessibilityState={{ disabled: !armed }}>
             <Text style={c.gotText}>{step.nextLabel || 'Next ›'}</Text>
           </Pressable>
         ) : step.info && !lost ? (
@@ -449,6 +496,7 @@ function DoneCard({ ch, earned }) {
 const c = StyleSheet.create({
   abs: { position: 'absolute' },
   ring: { borderWidth: 2.5, borderColor: GOLD },
+  mark: { borderWidth: 3, borderColor: GOLD, backgroundColor: 'rgba(242,193,78,0.10)' },
   ringGlow: { margin: -6, borderWidth: 4, borderColor: 'rgba(242,193,78,0.28)' },
   centerWrap: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', paddingHorizontal: 18 },
   bubble: {

@@ -220,7 +220,7 @@ export const CHAPTERS = [
       {
         target: 'home.blog', tab: 'Home',
         title: 'From the blog', text: 'The newest posts from penparentis.org. Tap a post to read it right in the app.',
-        task: 'Swipe, or tap the arrows, to see 3 posts.',
+        task: 'Swipe, or tap the arrows, to see 3 posts.', marks: ['blog.prev', 'blog.next'],
         on: (ev, v, d) => {
           if (ev !== 'blog-index') return null;
           const seen = { ...(d.seen || { 0: true }), [v]: true };
@@ -263,9 +263,14 @@ export const CHAPTERS = [
         },
       },
       {
-        target: 'plan.card', wait: true, lock: true, round: 20,
-        text: 'Each day, pick how big today is: a lighter day, your usual, a stretch day, or rest. It resets at midnight.',
-        task: 'Pick one, then tap Save today’s goal.', on: (ev) => ev === 'plan-saved',
+        target: 'plan.card', wait: true, lock: true, noRing: true, markRound: 16,
+        marks: (d) => (d.picked ? ['plan.save'] : ['plan.light', 'plan.usual', 'plan.stretch']),
+        text: 'Each day, pick how big today is: a lighter day, your usual, or a stretch day (or rest). It resets at midnight.',
+        task: 'Pick one, then tap Save today’s goal.',
+        on: (ev) => {
+          if (ev === 'plan-pick') return { data: { picked: true }, progress: 'Now tap Save today’s goal' };
+          return ev === 'plan-saved';
+        },
       },
     ],
   },
@@ -279,9 +284,9 @@ export const CHAPTERS = [
         task: 'Tap the big blue button to start.', on: (ev) => ev === 'writer-open',
       },
       {
-        target: 'writer.page', free: true, place: 'bottom', wait: true,
+        target: 'writer.page', free: true, place: 'top', wait: true,
         title: 'Just write', text: 'Anything on your mind: a line, a memory, an idea. The clock runs while you type and the rings fill as you go.',
-        task: 'Write at least 5 words.', doneText: 'Keep writing as long as you like.', manual: true, nextLabel: 'I’m ready to go on ›',
+        task: 'Write at least 5 words.', doneText: 'Keep writing as long as you like. Tap the button when you’re done.', manual: true, nextLabel: 'I’m done writing ›',
         on: (ev, v) => (ev === 'words' ? { progress: `${Math.min(v, 5)} of 5 words`, done: v >= 5 } : null),
       },
     ],
@@ -296,15 +301,16 @@ export const CHAPTERS = [
         task: 'Tap ✦ Prompt.', on: (ev) => ev === 'prompt-show',
       },
       {
-        target: 'writer.level', rings: ['writer.level', 'writer.refresh'], wait: true,
-        text: 'Tap the level to switch between Simple, Thoughtful and Deep, or ↻ Refresh for a new one.',
-        task: 'Change the level, then tap ↻ Refresh.',
-        on: (ev, v, d) => {
-          if (ev !== 'prompt-level' && ev !== 'prompt-refresh') return null;
-          const data = { ...d, [ev]: true };
-          const both = data['prompt-level'] && data['prompt-refresh'];
-          return { data, progress: data['prompt-level'] ? 'Now tap ↻ Refresh' : 'Now change the level', done: !!both };
-        },
+        target: 'writer.promptCard', wait: true, noRing: true, marks: ['writer.level'],
+        title: 'How deep?', text: 'The button on the left is the prompt’s level. Each tap switches it: Simple, then Thoughtful, then Deep. Deeper prompts ask more of you.',
+        task: 'Tap the level to switch it.', hold: 1200, doneText: 'New level, new prompt.',
+        on: (ev) => ev === 'prompt-level',
+      },
+      {
+        target: 'writer.promptCard', wait: true, noRing: true, marks: ['writer.refresh'],
+        title: 'Not this one?', text: '↻ Refresh gives you another prompt at the same level. Whatever you write next is saved with the prompt on screen.',
+        task: 'Tap ↻ Refresh.', hold: 1200, doneText: 'A fresh prompt.',
+        on: (ev) => ev === 'prompt-refresh',
       },
       {
         target: 'writer.aa', wait: true, round: 999,
@@ -331,7 +337,7 @@ export const CHAPTERS = [
         task: 'Tap Pause.', on: (ev) => ev === 'pause',
       },
       {
-        target: 'writer.page', free: true, place: 'bottom', wait: true,
+        target: 'writer.page', free: true, place: 'top', wait: true,
         text: 'Paused. When you’re back, just type: the clock picks up again, no button needed.',
         task: 'Type a word to start the clock again.', doneText: 'Back on the clock. Keep going, or tap Next.', manual: true,
         on: (ev) => ev === 'resume',

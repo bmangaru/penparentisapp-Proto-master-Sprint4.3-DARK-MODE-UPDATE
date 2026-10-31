@@ -53,9 +53,9 @@ export default function TodayPlanSheet({ visible, goals, current, onPick, onEdit
           const rest = o.id === 'rest';
           const on = picked === o.id;
           return (
+            <TourTarget key={o.id} id={`plan.${o.id}`}>
             <Pressable
-              key={o.id}
-              onPress={() => setPicked(o.id)}
+              onPress={() => { setPicked(o.id); tourEvent('plan-pick', o.id); }}
               style={[s.option, on && s.optionOn]}
               accessibilityRole="button"
               accessibilityState={{ selected: on }}
@@ -87,15 +87,18 @@ export default function TodayPlanSheet({ visible, goals, current, onPick, onEdit
                 </TourTarget>
               ) : null}
             </Pressable>
+            </TourTarget>
           );
         })}
       </View>
       <View style={s.tip}>
         <Text style={s.tipText}>✏️  To change your goals, tap <Text style={{ fontWeight: '700' }}>Edit</Text> on My usual. The others follow it.</Text>
       </View>
-      <Pressable style={s.cta} onPress={() => { tourEvent('plan-saved', picked); onPick(planFor(picked, goals)); }}>
-        <Text style={s.ctaText}>{cta}</Text>
-      </Pressable>
+      <TourTarget id="plan.save">
+        <Pressable style={s.cta} onPress={() => { tourEvent('plan-saved', picked); onPick(planFor(picked, goals)); }}>
+          <Text style={s.ctaText}>{cta}</Text>
+        </Pressable>
+      </TourTarget>
     </Sheet>
   );
 }

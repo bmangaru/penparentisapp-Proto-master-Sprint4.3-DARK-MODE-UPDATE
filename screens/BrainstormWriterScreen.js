@@ -42,7 +42,7 @@ import { LEVEL_LABEL, nextLevel, nextPrompt, promptForDay } from '../prompts';
 import usePromptLevel, { LEVEL_STYLE } from '../components/usePromptLevel';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TourTarget from '../components/TourTarget';
-import { tourEvent } from '../tourRun';
+import { isTourTarget, tourEvent, useRun } from '../tourRun';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function BrainstormWriterScreen({ navigation, route }) {
@@ -284,7 +284,10 @@ export default function BrainstormWriterScreen({ navigation, route }) {
     // Deleting text does NOT reduce the count — effort already spent stays counted.
   }
 
-  // The app tour follows along (your first entry is a real one).
+  // The app tour follows along (your first entry is a real one). While it's
+  // showing the prompt's level and Refresh, the prompt's ✕ is hidden.
+  const tourRun = useRun();
+  const tourOnPrompt = isTourTarget('writer.promptCard', tourRun);
   useEffect(() => { tourEvent('writer-open'); }, []);
   useEffect(() => { if (effortWords > 0) tourEvent('words', effortWords); }, [effortWords]);
 
@@ -550,6 +553,7 @@ export default function BrainstormWriterScreen({ navigation, route }) {
       {focus ? null : prompt ? (
         <TourTarget id="writer.promptCard" style={[s.prompt, { backgroundColor: ls.tint, borderLeftColor: ls.solid }]}>
           <View style={s.promptTop}>
+            <TourTarget id="writer.level">
             <Pressable
               onPress={() => pickLevel(nextLevel(level))}
               hitSlop={6}
@@ -559,13 +563,18 @@ export default function BrainstormWriterScreen({ navigation, route }) {
             >
               <Text style={[s.levelChipText, { color: ls.fg }]}>✦ {LEVEL_LABEL[level]} ▾</Text>
             </Pressable>
+            </TourTarget>
             <View style={{ flex: 1 }} />
+            <TourTarget id="writer.refresh">
             <Pressable onPress={() => { tourEvent('prompt-refresh'); markActive(); setPrompt(nextPrompt(prompt, level)); }} hitSlop={6} style={s.promptAct} accessibilityRole="button" accessibilityLabel="Refresh prompt">
               <Text style={[s.promptActText, { color: ls.fg }]}>↻ Refresh</Text>
             </Pressable>
-            <Pressable onPress={togglePrompt} hitSlop={6} style={s.promptAct} accessibilityRole="button" accessibilityLabel="Hide the prompt">
-              <Text style={[s.promptActText, { color: colors.muted }]}>✕</Text>
-            </Pressable>
+            </TourTarget>
+            {tourOnPrompt ? null : (
+              <Pressable onPress={togglePrompt} hitSlop={6} style={s.promptAct} accessibilityRole="button" accessibilityLabel="Hide the prompt">
+                <Text style={[s.promptActText, { color: dk(colors.muted, '#C9D1E6') }]}>✕</Text>
+              </Pressable>
+            )}
           </View>
           <Text style={s.promptText}>“{prompt}”</Text>
           <Text style={[s.promptLink, { color: ls.fg }]}>
@@ -774,7 +783,9 @@ const s = themed(() => ({
   promptTop: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   levelChip: { backgroundColor: '#FFFFFF', borderRadius: radius.pill, borderWidth: 1.5, paddingHorizontal: 10, minHeight: 28, justifyContent: 'center' },
   levelChipText: { fontSize: 12, fontWeight: '800' },
-  promptAct: { minHeight: 30, paddingHorizontal: 9, borderRadius: radius.pill, justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.75)' },
+  // Light: a soft white pill on the tint. Dark: a see-through pill with an
+  // edge, so the level colour and ✕ stay readable.
+  promptAct: { minHeight: 30, paddingHorizontal: 10, borderRadius: radius.pill, justifyContent: 'center', backgroundColor: dk('rgba(255,255,255,0.75)', 'rgba(255,255,255,0.08)'), borderWidth: 1, borderColor: dk('transparent', 'rgba(255,255,255,0.28)') },
   promptActText: { fontSize: 12.5, fontWeight: '800' },
   promptLink: { fontSize: 11.5, fontWeight: '600', marginTop: 6, opacity: 0.85 },
   promptText: { fontSize: 16, lineHeight: 23, color: colors.ink, marginTop: 8, fontFamily: Platform.select({ ios: 'Georgia', default: 'serif' }) },

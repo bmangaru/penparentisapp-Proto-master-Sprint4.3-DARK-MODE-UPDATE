@@ -44,7 +44,7 @@ export default function BlogCarousel() {
         <View style={s.loading}><ActivityIndicator color={colors.royal} /></View>
       ) : (
         // Full-width cards that take turns every 10 s; swipe, or tap ‹ ›.
-        <Cycler arrows onIndex={(k) => tourEvent('blog-index', k)}>
+        <Cycler arrows tourId="blog" onIndex={(k) => tourEvent('blog-index', k)}>
           {posts.map((p) => (
             <Pressable
               key={p.id}

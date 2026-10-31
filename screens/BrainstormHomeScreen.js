@@ -205,12 +205,15 @@ export default function BrainstormHomeScreen({ navigation, route }) {
         </Pressable>
 
         {/* This week: seven ring sets */}
-        <WeekRings
-          week={week}
-          onPressDay={(d) => navigation.navigate('BrainstormDay', { day: d.key })}
-        />
+        <TourTarget id="bs.week">
+          <WeekRings
+            week={week}
+            onPressDay={(d) => navigation.navigate('BrainstormDay', { day: d.key })}
+          />
+        </TourTarget>
 
-        {/* One bubble per day */}
+        {/* One bubble per day (one spot for the tour, with See all) */}
+        <TourTarget id="bs.history" style={{ gap: space.md }}>
         <View style={s.titleRow}>
           <Text style={s.h}>Your writing</Text>
           <Text style={s.meta}>tap a day to read it</Text>
@@ -229,6 +232,7 @@ export default function BrainstormHomeScreen({ navigation, route }) {
         <Pressable onPress={() => navigation.navigate('MyWriting')} style={s.allLink}>
           <Text style={s.link}>See all my writing  ›</Text>
         </Pressable>
+        </TourTarget>
 
         <TourTarget id="bs.medals">
           <MedalsCard medals={medalState.medals} record={medalState.record} onPress={() => navigation.navigate('Medals')} />
