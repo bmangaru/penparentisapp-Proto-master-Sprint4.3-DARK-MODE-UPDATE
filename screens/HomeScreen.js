@@ -22,6 +22,8 @@ import { takeSettingsOpen } from '../appearance';
 import DonorCrawl from '../components/DonorCrawl';
 import BlogCarousel from '../components/BlogCarousel';
 import TourCard from '../components/TourCard';
+import TourTarget from '../components/TourTarget';
+import { tourEvent } from '../tourRun';
 import { colors, lift, radius, space, themed } from '../theme';
 import { LINKS } from '../links';
 
@@ -55,6 +57,9 @@ const SOCIALS = [
 ];
 
 export default function HomeScreen() {
+  // Links (the tour notices you tried one).
+  const go = (url) => { tourEvent('link-open', url); openLink(url); };
+
   // ⚙ Settings.
   const [settingsOpen, setSettingsOpen] = useState(takeSettingsOpen);
 
@@ -64,17 +69,20 @@ export default function HomeScreen() {
         title="Pen Parentis"
         subtitle="parenting done, write."
         right={(
-          <Pressable onPress={() => setSettingsOpen(true)} hitSlop={6} style={s.settings} accessibilityRole="button" accessibilityLabel="Settings">
-            <Ionicons name="settings-outline" size={14} color="#F2C14E" />
-            <Text style={s.settingsText}>Settings</Text>
-          </Pressable>
+          <TourTarget id="home.settings">
+            <Pressable onPress={() => setSettingsOpen(true)} hitSlop={6} style={s.settings} accessibilityRole="button" accessibilityLabel="Settings">
+              <Ionicons name="settings-outline" size={14} color="#F2C14E" />
+              <Text style={s.settingsText}>Settings</Text>
+            </Pressable>
+          </TourTarget>
         )}
       />
 
-      <View style={s.pad}>
+      <View style={[s.pad, { paddingBottom: 0 }]}>
         <TourCard />
-        <BlogCarousel />
-        <Pressable onPress={() => openLink(LINKS.website)} style={({ pressed }) => [s.web, { marginTop: space.md }, pressed && { opacity: 0.85 }]} accessibilityRole="link" accessibilityLabel="Visit penparentis.org">
+        <TourTarget id="home.blog"><BlogCarousel /></TourTarget>
+        <TourTarget id="home.socials" style={{ gap: 9, marginTop: space.md }}>
+        <Pressable onPress={() => go(LINKS.website)} style={({ pressed }) => [s.web, pressed && { opacity: 0.85 }]} accessibilityRole="link" accessibilityLabel="Visit penparentis.org">
           <Image source={require('../assets/pen-parentis-logo.png')} style={s.webLogo} resizeMode="cover" accessibilityIgnoresInvertColors />
           <Text style={s.webText}>Visit penparentis.org</Text>
           <Ionicons name="arrow-up-outline" size={16} color={colors.royal} style={{ transform: [{ rotate: '45deg' }] }} />
@@ -82,10 +90,14 @@ export default function HomeScreen() {
 
         <Text style={[s.h, { marginTop: space.md }]}>Follow Pen Parentis</Text>
         {SOCIALS.map((n) => (
-          <BrandButton key={n.brand} brand={n.brand} icon={n.icon} label={n.label} sub={n.handle} onPress={() => openLink(n.url)} />
+          <BrandButton key={n.brand} brand={n.brand} icon={n.icon} label={n.label} sub={n.handle} onPress={() => go(n.url)} />
         ))}
+        </TourTarget>
+      </View>
 
-
+      {/* Get Karma, the thank-you and the supporters scroll (one spot for the tour). */}
+      <TourTarget id="home.supporters">
+      <View style={[s.pad, { paddingTop: 9 }]}>
         <Pressable onPress={() => openLink(LINKS.donate)}>
           <LinearGradient
             colors={[colors.karmaLight, colors.karma]}
@@ -105,6 +117,7 @@ export default function HomeScreen() {
       </View>
 
       <DonorCrawl />
+      </TourTarget>
 
       <SettingsSheet visible={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </Screen>

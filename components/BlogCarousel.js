@@ -5,6 +5,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Cycler from './Cycler';
+import { tourEvent } from '../tourRun';
 import { View, Text, Pressable, Image, ActivityIndicator, Linking } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { colors, isDark, radius, themed } from '../theme';
@@ -43,7 +44,7 @@ export default function BlogCarousel() {
         <View style={s.loading}><ActivityIndicator color={colors.royal} /></View>
       ) : (
         // Full-width cards that take turns every 10 s; swipe, or tap ‹ ›.
-        <Cycler arrows>
+        <Cycler arrows onIndex={(k) => tourEvent('blog-index', k)}>
           {posts.map((p) => (
             <Pressable
               key={p.id}

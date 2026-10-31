@@ -26,6 +26,7 @@ import CommunitiesScreen from './screens/CommunitiesScreen';
 import BottomBar from './components/BottomBar';
 import IntroSplash from './components/IntroSplash';
 import TourModal from './components/TourModal';
+import TourOverlay from './components/TourOverlay';
 import { loadEvents, upcoming } from './eventsService';
 import { onNotificationTap, syncNotifications } from './notify';
 import { openLink } from './components/ui';
@@ -132,6 +133,9 @@ export default function App() {
           </NavigationContainer>
         ) : null}
       </View>
+      {/* The app tour running on top of the real app (spotlight + speech
+          bubble). Outside the part an Appearance switch redraws. */}
+      {choice ? <TourOverlay navRef={navRef} /> : null}
       {/* The app tour (Home's welcome card, Settings → The app tour). Outside
           the part that redraws on an Appearance switch, so it stays open. */}
       {choice ? <TourModal navRef={navRef} /> : null}

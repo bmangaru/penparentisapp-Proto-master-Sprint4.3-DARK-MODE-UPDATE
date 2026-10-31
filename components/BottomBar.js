@@ -14,6 +14,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, gradients, themed } from '../theme';
+import TourTarget from './TourTarget';
+import { isTourTarget, tourEvent, useRun } from '../tourRun';
 
 export const TAB_ICONS = {
   Home: 'book',
@@ -26,8 +28,11 @@ const CIRCLE = 46;
 
 export default function BottomBar({ state, descriptors, navigation }) {
   const insets = useSafeAreaInsets();
+  // The app tour's "tap each tab" step: a ✓ on each tab you've opened.
+  const run = useRun();
+  const seen = isTourTarget('tabbar', run) ? run.data?.seen || {} : null;
   return (
-    <View style={[s.bar, { paddingBottom: Math.max(insets.bottom - 4, 8) }]}>
+    <TourTarget id="tabbar" style={[s.bar, { paddingBottom: Math.max(insets.bottom - 4, 8) }]}>
       {state.routes.map((route, index) => {
         const focused = state.index === index;
         const { options } = descriptors[route.key];
@@ -35,6 +40,7 @@ export default function BottomBar({ state, descriptors, navigation }) {
         const color = focused ? colors.royalDeep : colors.tabIdle;
 
         function onPress() {
+          tourEvent('tab', route.name);
           const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
           if (!focused && !event.defaultPrevented) navigation.navigate(route.name, route.params);
         }
@@ -54,11 +60,11 @@ export default function BottomBar({ state, descriptors, navigation }) {
             accessibilityLabel={label}
           >
             {center ? (
-              <View style={s.circleWrap} pointerEvents="none">
+              <TourTarget id="tab.Brainstorm" style={s.circleWrap} pointerEvents="none">
                 <LinearGradient colors={gradients.button} style={s.circle}>
                   <Ionicons name="pencil" size={21} color="#FFFFFF" />
                 </LinearGradient>
-              </View>
+              </TourTarget>
             ) : (
               <Ionicons name={TAB_ICONS[route.name] || 'ellipse'} size={focused ? 23 : 22} color={color} style={s.icon} />
             )}
@@ -72,10 +78,15 @@ export default function BottomBar({ state, descriptors, navigation }) {
               {label}
             </Text>
             <View style={[s.mark, focused && s.markOn]} />
+            {seen && seen[route.name] ? (
+              <View style={[s.seen, center && { right: '18%', top: -6 }]} pointerEvents="none">
+                <Ionicons name="checkmark" size={10} color="#FFFFFF" />
+              </View>
+            ) : null}
           </Pressable>
         );
       })}
-    </View>
+    </TourTarget>
   );
 }
 
@@ -97,4 +108,5 @@ const s = themed(() => ({
   labelOn: { fontWeight: '800' },
   mark: { width: 22, height: 3, borderRadius: 2, marginTop: 4, backgroundColor: 'transparent' },
   markOn: { backgroundColor: colors.royalDeep },
+  seen: { position: 'absolute', top: -2, right: '24%', width: 16, height: 16, borderRadius: 8, backgroundColor: '#1E9E50', alignItems: 'center', justifyContent: 'center' },
 }));

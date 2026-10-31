@@ -28,6 +28,8 @@ import {
 } from '../writingLogic';
 import { addOfflineSession, loadAll, saveDailyGoal, saveGoals, syncMedals, useToday } from '../writingStore';
 import PromptHeader from '../components/PromptHeader';
+import TourTarget from '../components/TourTarget';
+import { tourRunning } from '../tourRun';
 
 export default function BrainstormHomeScreen({ navigation, route }) {
   const today = useToday();
@@ -62,7 +64,9 @@ export default function BrainstormHomeScreen({ navigation, route }) {
   }, []);
 
   // First run → set goals once. After that, ask "What's your goal today?" once a day.
+  // Not while the app tour is running: it shows these itself, when you're ready.
   function maybePrompt(d) {
+    if (tourRunning()) return;
     if (!d.hasGoals) { setGoalsKind('usual'); setGoalsFromPlan(false); setGoalsOpen(true); }
     else if (!d.dailyGoals[today] && dismissedFor.current !== today) openPlan('daily');
   }
@@ -134,7 +138,8 @@ export default function BrainstormHomeScreen({ navigation, route }) {
   }
 
   function onStartPress() {
-    if (button.state === 'setGoal') {
+    // In the tour, straight to the page (today uses your usual goal).
+    if (button.state === 'setGoal' && !tourRunning()) {
       startAfterPlan.current = true;
       openPlan('daily');
     } else {
@@ -166,6 +171,7 @@ export default function BrainstormHomeScreen({ navigation, route }) {
       <PromptHeader title="Brainstorm" onWrite={(prompt) => navigation.navigate('BrainstormWriter', { prompt })} />
       <View style={s.pad}>
         {/* Today: the three rings */}
+        <TourTarget id="bs.today">
         <LinearGradient colors={gradients.header} style={[s.today, lift]}>
           <View style={s.todayHead}>
             <Text style={s.todayLabel}>Today · {todayLabel}{rest ? ' · rest day' : ''}</Text>
@@ -176,14 +182,17 @@ export default function BrainstormHomeScreen({ navigation, route }) {
           </View>
           <RingStats summary={todaySum} rings={rings} off={rest} playKey={playKey} />
         </LinearGradient>
+        </TourTarget>
 
         {/* Start writing — label and action change with the day */}
+        <TourTarget id="bs.start">
         <Pressable onPress={onStartPress} style={({ pressed }) => [lift, s.startWrap, pressed && { opacity: 0.92 }]}>
           <LinearGradient colors={button.state === 'met' ? gradients.gold : gradients.button} style={s.start}>
             <Text style={[s.startTitle, button.state === 'met' && { color: '#231702' }]}>{button.title}</Text>
             <Text style={[s.startSub, button.state === 'met' && { color: '#3D2A05' }]}>{button.sub}</Text>
           </LinearGradient>
         </Pressable>
+        </TourTarget>
 
         {/* Writing done outside the app, on the honor system */}
         <Pressable onPress={() => setOfflineOpen(true)} style={({ pressed }) => [s.offline, pressed && { opacity: 0.85 }]} accessibilityRole="button" accessibilityLabel="Log offline writing">

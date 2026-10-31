@@ -19,8 +19,8 @@ import { colors, themed, dk, isDark } from '../theme';
 const TAGLINE = 'parenting done, write';
 // Ink colour: black on the light page, white on the dark one.
 const ink = () => (isDark() ? '#F4F6FB' : '#16171C');
-const PEN = 56;          // pen drawing size
-const TIP = { x: 11, y: 45 }; // where the point is inside the drawing (after the 45° tilt)
+export const PEN = 56;          // pen drawing size
+export const TIP = { x: 11, y: 45 }; // where the point is inside the drawing (after the 45° tilt)
 // Handwriting letters (the final "e") curl a little past the width the phone
 // reports for the text, so the reveal runs this much further to show it all.
 const OVERHANG = 16;
@@ -149,7 +149,7 @@ export default function IntroSplash({ onDone }) {
 // A black ballpoint: black barrel, silver clip and bands, silver point.
 // The pen: black barrel with silver bands on the light page; in dark mode a
 // light silver barrel with grey bands, so it shows on the navy.
-function BlackPen() {
+export function BlackPen() {
   const d = isDark();
   const barrel = d ? '#E9ECF3' : '#1D1E23';
   const band = d ? '#8E97AE' : '#C9CDD6';

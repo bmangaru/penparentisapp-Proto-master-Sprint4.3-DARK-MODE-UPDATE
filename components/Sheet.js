@@ -2,40 +2,68 @@
 // footer: pinned under the scrolling part (the number pad). While it's
 // showing, the sheet grows upward and its scrolling part gets shorter, so
 // the sheet + pad always fit on screen. scrollRef: to scroll the content.
+// tourId: names the sheet for the app tour ('settings' → targets
+// 'settings.card' and 'settings.close', and tourEvent('sheet-open',
+// 'settings') / ('sheet-close', …)). Each open sheet draws its own tour
+// layer, since nothing can sit above a Modal.
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Modal, View, Text, Pressable, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
+import TourTarget from './TourTarget';
+import TourLayer from './TourLayer';
 import { colors, lift, radius, space, themed } from '../theme';
+import { TourHostContext, TourScrollContext, registerHost, tourEvent } from '../tourRun';
 
-export default function Sheet({ visible, onClose, title, subtitle, children, footer, scrollRef }) {
+let sheetCount = 0;
+
+export default function Sheet({ visible, onClose, title, subtitle, children, footer, scrollRef, tourId }) {
+  const hostId = useRef(null);
+  if (!hostId.current) { sheetCount += 1; hostId.current = `sheet${sheetCount}`; }
+  useEffect(() => {
+    if (!visible) return undefined;
+    const off = registerHost(hostId.current);
+    if (tourId) tourEvent('sheet-open', tourId);
+    return off;
+  }, [visible]);
+  const close = () => {
+    if (tourId) tourEvent('sheet-close', tourId);
+    if (onClose) onClose();
+  };
   // Tall enough for the end-of-session sheet on small phones; scrolls past that.
   const { height } = useWindowDimensions();
   const [footerH, setFooterH] = useState(0);
   const maxH = footer ? Math.max(180, height * 0.9 - footerH - 110) : Math.max(420, height * 0.72);
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={s.backdrop}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={[s.card, lift]}>
-          <View style={s.head}>
-            <View style={{ flex: 1 }}>
-              <Text style={s.title}>{title}</Text>
-              {subtitle ? <Text style={s.subtitle}>{subtitle}</Text> : null}
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={close}>
+      <TourHostContext.Provider value={hostId.current}>
+      <TourScrollContext.Provider value={null}>
+        <View style={s.backdrop}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={close} />
+          <TourTarget id={tourId ? `${tourId}.card` : null} style={[s.card, lift]}>
+            <View style={s.head}>
+              <View style={{ flex: 1 }}>
+                <Text style={s.title}>{title}</Text>
+                {subtitle ? <Text style={s.subtitle}>{subtitle}</Text> : null}
+              </View>
+              <TourTarget id={tourId ? `${tourId}.close` : null}>
+                <Pressable onPress={close} style={s.close} hitSlop={10} accessibilityRole="button" accessibilityLabel="Close">
+                  <Text style={s.closeText}>×</Text>
+                </Pressable>
+              </TourTarget>
             </View>
-            <Pressable onPress={onClose} style={s.close} hitSlop={10}>
-              <Text style={s.closeText}>×</Text>
-            </Pressable>
-          </View>
-          <ScrollView ref={scrollRef} style={{ maxHeight: maxH }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-            {children}
-          </ScrollView>
-          {footer ? (
-            <View style={s.footer} onLayout={(e) => setFooterH(Math.round(e.nativeEvent.layout.height))}>
-              {footer}
-            </View>
-          ) : null}
+            <ScrollView ref={scrollRef} style={{ maxHeight: maxH }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+              {children}
+            </ScrollView>
+            {footer ? (
+              <View style={s.footer} onLayout={(e) => setFooterH(Math.round(e.nativeEvent.layout.height))}>
+                {footer}
+              </View>
+            ) : null}
+          </TourTarget>
         </View>
-      </View>
+        <TourLayer host={hostId.current} />
+      </TourScrollContext.Provider>
+      </TourHostContext.Provider>
     </Modal>
   );
 }

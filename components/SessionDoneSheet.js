@@ -59,6 +59,7 @@ export default function SessionDoneSheet({
     <Sheet
       visible={visible}
       onClose={onDone}
+      tourId="done"
       title="Session saved"
       subtitle={`${words.toLocaleString()} word${words === 1 ? '' : 's'} · ${timeText(seconds)} · in My Writing`}
     >

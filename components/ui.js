@@ -1,21 +1,31 @@
 // components/ui.js — the small set of pieces every screen is built from.
 
-import React from 'react';
+import React, { useMemo, useRef } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet, Linking } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, gradients, lift, radius, space, themed } from '../theme';
+import { TourScrollContext } from '../tourRun';
 
+// The app tour can scroll a page to the spot it's pointing at.
 export function Screen({ children, scrollRef }) {
+  const own = useRef(null);
+  const ref = scrollRef || own;
+  const y = useRef(0);
+  const tour = useMemo(() => ({ ref, y }), [ref]);
   return (
-    <ScrollView
-      ref={scrollRef}
-      style={{ flex: 1, backgroundColor: colors.paper }}
-      contentContainerStyle={{ paddingBottom: 40 }}
-      showsVerticalScrollIndicator={false}
-    >
-      {children}
-    </ScrollView>
+    <TourScrollContext.Provider value={tour}>
+      <ScrollView
+        ref={ref}
+        style={{ flex: 1, backgroundColor: colors.paper }}
+        contentContainerStyle={{ paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
+        onScroll={(e) => { y.current = e.nativeEvent.contentOffset.y; }}
+        scrollEventThrottle={32}
+      >
+        {children}
+      </ScrollView>
+    </TourScrollContext.Provider>
   );
 }
 

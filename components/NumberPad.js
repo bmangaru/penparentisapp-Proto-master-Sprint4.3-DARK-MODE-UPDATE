@@ -19,6 +19,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Animated, AccessibilityInfo } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, themed, dk } from '../theme';
+import { tourEvent } from '../tourRun';
 
 const CREAM = '#F1EDE3';
 
@@ -52,6 +53,7 @@ export function useNumberPad({ fields, values, onChange }) {
   }
   function digit(d) {
     if (!field) return;
+    tourEvent('pad-key', d);
     const cur = fresh ? '' : String(values[active] ?? '');
     let n = Number(`${cur}${d}`.replace(/^0+(?=\d)/, ''));
     if (n > field.max) { n = field.max; setWarn(true); } else setWarn(false);

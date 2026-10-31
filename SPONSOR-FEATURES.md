@@ -661,3 +661,19 @@ Also: writing you're picking up from earlier today never counts twice. If you ta
 - Chapters 6–10 keep their picture cards for now (no task); they become hands-on in part 2.
 - **Tour Guide medal is tiered** (`medals.js`): Bronze at 3 chapters, Silver at 6, Gold at 9, Diamond at all 10. Each new tier pops up over the tour. Counted from chapters ever finished (`ever` in `tour.js`), so Start over doesn't take it away. Medals total 40 again. Home's welcome card shows the tier so far.
 - **Tested:** `test24` (tiers 3/6/9/10), `test30` (progress kept after Start over).
+
+## Round 56 — the tour runs on the real app (chapters 1–4)
+
+The tour no longer uses practice copies for chapters 1–4. It sits **on top of the real app**: everything is dimmed except one spot (gold outline), and a speech bubble says what it is and what to do. You tap the real button and the real screen reacts.
+
+- **Chapter 1, Welcome & settings:** a welcome card over Home with the logo and the pen from the opening writing "parenting done, write." Then tap the real ⚙ Settings, pick an appearance, see where the tour lives in Settings, close Settings, and tap each of the five real tabs (a ✓ appears on each one).
+- **Chapter 2, Home:** swipe the real blog to 3 posts, tap a website or social button, then the supporters.
+- **Chapter 3, Goals & rings:** the real Today card, then Edit goals → Edit on My usual → set goals with − / + or the number pad → Save → pick today's goal → Save today's goal. These are your real goals.
+- **Chapter 4, Your first entry:** tap the pencil, Start writing, write at least 5 words, Finish & check in, then Done. **This is a real entry**: it's saved and counts toward rings and medals.
+- **Appearance in the tour:** nothing is highlighted until you tap; the current one has a small gold "now" tag.
+- Each bubble has Skip ›, and ✕ leaves the tour. If a step's spot isn't on screen, the bubble says so and offers Skip.
+- After each chapter, a "Chapter done" card shows progress toward the next Tour Guide tier: Take a break, or go on to the next chapter.
+- While the tour runs, Brainstorm's automatic "set your goals" and "today's goal" pop-ups wait, so they don't get in the way.
+- Chapters 5–10 are still the card pages for now (next round).
+
+How it's built: `tourRun.js` (the run), `components/TourTarget.js` (marks a spot), `components/TourLayer.js` (spotlight, bubble, cards; one over the app, one inside each sheet), `components/TourOverlay.js` (in App.js), and the steps in `components/TourContent.js`.

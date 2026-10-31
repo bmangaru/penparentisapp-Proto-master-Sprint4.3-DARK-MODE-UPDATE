@@ -1,4 +1,6 @@
-// components/TourModal.js — the app tour, full screen over everything.
+// components/TourModal.js — the app tour's full-screen page: the chapter
+// list, the chapters that are still cards, and the thank-you at the end.
+// (Chapters with steps run on the real app instead: tourRun.js / TourLayer.js.)
 //   • Chapters: the list, with ✓ on finished ones (tap any to do or redo it).
 //   • A chapter: its cards one at a time (picture, title, words, Try it),
 //     with dots, ‹ Back and Next ›. The last card's "Done ✓" ticks the chapter
@@ -28,6 +30,7 @@ import { colors, gradients, lift, radius, space, themed } from '../theme';
 import { LINKS } from '../links';
 import { MEDALS } from '../medals';
 import { markChapter, setTourOpener, useTour } from '../tour';
+import { startChapter, stopTour } from '../tourRun';
 import { syncMedals } from '../writingStore';
 import { promptForDay } from '../prompts';
 import { dayKey } from '../writingLogic';
@@ -50,15 +53,31 @@ export default function TourModal({ navRef }) {
 
   // openTour(chapterId?) from Home, Settings… Without an id: the next
   // unfinished chapter (or the list once they're all done).
+  // Chapters that run on the real app (components/TourLayer.js) start there;
+  // this page closes first.
+  function begin(idx) {
+    if (CHAPTERS[idx]?.steps) {
+      setOpen(false);
+      setTimeout(() => startChapter(idx), open ? 400 : 0);
+      return;
+    }
+    stopTour();
+    setCh(idx); setCard(0); setView('chapter'); setOpen(true);
+  }
+
+  // openTour(chapterId?) from Home, Settings… Without an id: the next
+  // unfinished chapter (or the list once they're all done). '__list' and
+  // '__end' open the chapter list and the thank-you.
   useEffect(() => {
     setTourOpener((id) => {
+      if (id === '__list' || id === '__end') { stopTour(); setView(id === '__end' ? 'end' : 'list'); setOpen(true); return; }
       const done = tour?.done || {};
       const idx = id ? CHAPTER_IDS.indexOf(id) : CHAPTER_IDS.findIndex((c) => !done[c]);
-      if (idx >= 0 && (id || Object.keys(done).length)) { setCh(idx); setCard(0); setView('chapter'); } else setView('list');
-      setOpen(true);
+      if (idx >= 0) begin(idx);
+      else { stopTour(); setView('list'); setOpen(true); }
     });
     return () => setTourOpener(null);
-  }, [tour]);
+  }, [tour, open]);
 
   useEffect(() => { scroll.current?.scrollTo({ y: 0, animated: false }); }, [view, ch, card]);
 
@@ -77,7 +96,7 @@ export default function TourModal({ navRef }) {
     if (first) { setView('end'); return; }
     // Otherwise: on to the next chapter; after the last one, the end (or the
     // list, if some chapters were skipped).
-    if (ch + 1 < CHAPTERS.length) { setCh(ch + 1); setCard(0); return; }
+    if (ch + 1 < CHAPTERS.length) { begin(ch + 1); return; }
     setView(CHAPTER_IDS.every((id) => nowDone[id]) ? 'end' : 'list');
   }
 
@@ -124,7 +143,7 @@ export default function TourModal({ navRef }) {
           {CHAPTERS.map((c, i) => {
             const isDone = !!done[c.id];
             return (
-              <Pressable key={c.id} onPress={() => { setCh(i); setCard(0); setView('chapter'); }} style={({ pressed }) => [s.ch, pressed && { opacity: 0.8 }]} accessibilityRole="button" accessibilityLabel={`${c.title}${isDone ? ', done' : ''}`}>
+              <Pressable key={c.id} onPress={() => begin(i)} style={({ pressed }) => [s.ch, pressed && { opacity: 0.8 }]} accessibilityRole="button" accessibilityLabel={`${c.title}${isDone ? ', done' : ''}`}>
                 <View style={[s.num, isDone ? s.numDone : s.numTodo]}>
                   {isDone ? <Ionicons name="checkmark" size={17} color="#FFFFFF" /> : <Text style={s.numText}>{i + 1}</Text>}
                 </View>
@@ -144,7 +163,7 @@ export default function TourModal({ navRef }) {
         </ScrollView>
       </>
     );
-  } else if (view === 'chapter') {
+  } else if (view === 'chapter' && chapter.cards) {
     const c = chapter.cards[card];
     const last = card === chapter.cards.length - 1;
     const locked = !!c.task && !taskDone;
@@ -214,7 +233,7 @@ export default function TourModal({ navRef }) {
         </View>
       </KeyboardAvoidingView>
     );
-  } else {
+  } else if (view === 'end') {
     body = (
       <>
         {header(

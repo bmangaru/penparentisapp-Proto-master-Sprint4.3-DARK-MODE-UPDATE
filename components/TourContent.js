@@ -1,5 +1,13 @@
-// components/TourContent.js — the app tour's chapters and their pictures.
-// Each chapter is a few cards. A card is either hands-on (Step: a working
+// components/TourContent.js — the app tour's chapters.
+// Chapters with `steps` run ON the real app (components/TourLayer.js): each
+// step points at a TourTarget, says what it is, and waits for the real app to
+// report the task done (tourEvent in tourRun.js). Step fields:
+//   target, title, text (or functions of the step's data), task, on(ev, v, data),
+//   info (a "Got it ›" step), go ({ tab }), free (no dim: the writing page),
+//   place ('bottom' / 'top'), dim, round (outline corners), wait (the spot
+//   appears later, e.g. in a sheet), hold (ms before moving on), doneText.
+// The other chapters are still cards in a full-screen page (TourModal.js),
+// until they're moved onto the app too. Each of those is a few cards. A card is either hands-on (Step: a working
 // practice copy from TourSteps.js, plus the task to do) or a picture (art)
 // drawn with the app's own pieces. Both have a title, a few plain sentences,
 // and sometimes a "Try it" that opens the real thing. Edit the words here; TourModal.js does the rest.
@@ -232,36 +240,125 @@ function CommunityArt() {
 
 export const CHAPTERS = [
   {
-    id: 'welcome', title: 'Welcome & settings', sub: 'Light or dark, and finding your way',
-    cards: [
-      { Step: T.WelcomeStep, task: 'Tap the Pen Parentis logo.', title: 'Welcome to Pen Parentis', body: 'An app for writer-parents: set small daily goals, write in the minutes you have, and watch your progress add up. Your writing stays on your phone.' },
-      { Step: T.AppearanceStep, task: 'Pick Light, Dark or System. Watch the whole app change.', title: 'Light or dark?', body: '"System" follows your phone, so the app turns dark when your phone does. You can change it any time with ⚙ Settings on Home.' },
-      { Step: T.TourHereStep, task: 'Tap "Open the tour" in Settings.', title: 'This tour is always here', body: 'Want a refresher later? ⚙ Settings → The app tour lets you review any chapter or start over.' },
-      { Step: T.TabsStep, fill: true, task: 'Swipe across, or tap each tab at the bottom, to peek inside.', title: 'Five tabs', body: 'The tab bar is always at the bottom of the app. The round pencil in the middle is where you write.' },
+    id: 'welcome', title: 'Welcome & settings', short: 'Settings', sub: 'Light or dark, and finding your way',
+    steps: [
+      { kind: 'welcome', go: { tab: 'Home' } },
+      {
+        target: 'home.settings', go: { tab: 'Home' }, round: 20,
+        title: 'Light or dark first?', text: 'Settings lives here on Home. It’s where you choose how the app looks.',
+        task: 'Tap ⚙ Settings.', on: (ev, v) => ev === 'sheet-open' && v === 'settings',
+      },
+      {
+        target: 'settings.appearance', wait: true,
+        text: 'Pick how the app looks. System follows your phone, so the app turns dark when your phone does.',
+        task: 'Tap Light, Dark or System.', doneText: 'The whole app changed.', hold: 1300,
+        on: (ev) => ev === 'appearance',
+      },
+      {
+        target: 'settings.tour', wait: true, info: true,
+        title: 'This tour lives here', text: 'Come back any time to go over a chapter again, or start the tour over.',
+      },
+      {
+        target: 'settings.close', wait: true, round: 18,
+        text: 'That’s Settings.', task: 'Close it with ×.', on: (ev, v) => ev === 'sheet-close' && v === 'settings',
+      },
+      {
+        target: 'tabbar', dim: 0.3, round: 0,
+        title: (d) => (d.last ? d.last : 'Five tabs'),
+        text: (d) => (d.last ? TAB_INFO[d.last] : 'The tab bar is always at the bottom of the app. The round pencil in the middle is where you write.'),
+        task: 'Tap each tab at the bottom to open it.', doneText: 'You’ve seen all five tabs.', hold: 2200,
+        on: (ev, v, d) => {
+          if (ev !== 'tab' || !TAB_INFO[v]) return null;
+          const seen = { ...(d.seen || {}), [v]: true };
+          const n = Object.keys(seen).length;
+          return { data: { seen, last: v }, progress: `${n} of 5 tabs seen`, done: n >= 5 };
+        },
+      },
     ],
   },
   {
-    id: 'home', title: 'Home', sub: 'The blog, the website and socials',
-    cards: [
-      { Step: T.BlogStep, task: 'Swipe, or tap the arrows, to see 3 posts.', title: 'From the blog', body: 'The newest posts from penparentis.org. In the app, tap a post to read it right there; "See all" opens the whole blog.' },
-      { Step: T.SocialsStep, task: 'Tap two of the buttons.', title: 'The website and socials', body: 'Visit penparentis.org, or follow Pen Parentis on Facebook, Instagram, LinkedIn, X and Bluesky. Each button shows the account it opens.' },
-      { Step: T.SupportersStep, task: 'Say thanks to our supporters.', title: 'Our supporters', body: 'The line scrolling along the bottom of Home thanks the organizations and people who keep Pen Parentis going.' },
+    id: 'home', title: 'Home', short: 'Home', sub: 'The blog, the website and socials',
+    steps: [
+      {
+        target: 'home.blog', go: { tab: 'Home' },
+        title: 'From the blog', text: 'The newest posts from penparentis.org. Tap a post to read it right in the app.',
+        task: 'Swipe, or tap the arrows, to see 3 posts.',
+        on: (ev, v, d) => {
+          if (ev !== 'blog-index') return null;
+          const seen = { ...(d.seen || { 0: true }), [v]: true };
+          const n = Object.keys(seen).length;
+          return { data: { seen }, progress: `${Math.min(n, 3)} of 3 posts`, done: n >= 3 };
+        },
+      },
+      {
+        target: 'home.socials',
+        title: 'The website and socials', text: 'Visit penparentis.org, or follow Pen Parentis. Each button shows the account it opens.',
+        task: 'Tap one to see where it goes, then come back.', on: (ev) => ev === 'link-open',
+      },
+      {
+        target: 'home.supporters', info: true,
+        title: 'Our supporters', text: 'Get Karma keeps the salons free. The names scrolling here are the organizations and people who keep Pen Parentis going. Thank you!',
+      },
     ],
   },
   {
-    id: 'goals', title: 'Your goals & rings', sub: 'Minutes, words and sessions',
-    cards: [
-      { Step: T.RingsStep, task: 'Tap + until all three rings close.', title: 'Three rings', body: 'Every day has three rings: minutes writing, words written and sessions (times you sat down). Close all three and the gold "Goal met" card appears.' },
-      { Step: T.PlanStep, task: 'Try two different kinds of day.', title: "Today's goal", body: 'Each day, pick how big today is: a lighter day (half your usual), your usual, a stretch day (1.5×), or rest. Watch the targets change.', try: { label: "Set today's goal", go: 'plan' } },
-      { Step: T.PadStep, task: 'Tap a number and type a new goal.', title: 'Your usual goals', body: '"Edit goals" on Brainstorm sets your usual minutes, words and sessions. Use − and +, or tap a number to type it.' },
+    id: 'goals', title: 'Your goals & rings', short: 'Goals', sub: 'Minutes, words and sessions',
+    steps: [
+      {
+        target: 'bs.today', go: { tab: 'Brainstorm' },
+        title: 'Your three rings', text: 'Minutes writing, words written and sessions (times you sat down). They fill as you write and close when you meet the day’s goal.',
+        task: 'Tap Edit goals.', on: (ev, v) => ev === 'sheet-open' && v === 'plan',
+      },
+      {
+        target: 'plan.edit', wait: true, round: 999,
+        text: '“My usual” is your goal on a normal day. A lighter day is half of it, a stretch day 1.5×.',
+        task: 'Tap Edit on My usual.', on: (ev, v) => ev === 'sheet-open' && v === 'goals',
+      },
+      {
+        target: 'goals.card', wait: true, round: 20,
+        text: 'Use − and +, or tap a number and type it on the number pad.',
+        task: 'Set your goals, then tap Save.', doneText: 'Saved. Those are your goals.',
+        on: (ev) => {
+          if (ev === 'pad-key') return { progress: 'Then Done, and Save' };
+          return ev === 'goals-saved';
+        },
+      },
+      {
+        target: 'plan.card', wait: true, round: 20,
+        text: 'Each day, pick how big today is: a lighter day, your usual, a stretch day, or rest. It resets at midnight.',
+        task: 'Pick one, then tap Save today’s goal.', on: (ev) => ev === 'plan-saved',
+      },
     ],
   },
   {
-    id: 'write', title: 'Start writing', sub: 'The writing page',
-    cards: [
-      { Step: T.PencilStep, task: 'Tap the pencil in the tab bar.', title: 'Where you write', body: 'The pencil takes you to Brainstorm. Tap "Start writing" there to begin.' },
-      { Step: T.WriteStep, task: 'Type 5 words. Watch the clock and rings.', title: 'Just write', body: 'The clock runs while you write and the rings fill as you go. Pasted text doesn’t count, so it’s all yours. Everything saves by itself.', try: { label: 'Start writing for real', go: 'write' } },
-      { Step: T.ResumeStep, task: 'Add 2 more words to the earlier writing.', title: 'Pick up where you left off', body: 'Come back later the same day and your writing is waiting. Only the new words count toward the new session.' },
+    id: 'write', title: 'Your first entry', short: 'Your first entry', sub: 'Write for real',
+    steps: [
+      {
+        target: 'tab.Brainstorm', go: { tab: 'Home' }, dim: 0.5, round: 999,
+        title: 'Where you write', text: 'The round pencil takes you to Brainstorm, where all your writing lives.',
+        task: 'Tap the pencil.', on: (ev, v) => ev === 'tab' && v === 'Brainstorm',
+      },
+      {
+        target: 'bs.start', go: { tab: 'Brainstorm' },
+        title: 'Your first entry', text: 'This is the real thing: what you write is saved on your phone and counts toward your rings and medals.',
+        task: 'Tap the big blue button to start.', on: (ev) => ev === 'writer-open',
+      },
+      {
+        target: 'writer.page', free: true, place: 'bottom', wait: true,
+        title: 'Just write', text: 'Anything on your mind: a line, a memory, an idea. The clock runs while you type and the rings fill as you go.',
+        task: 'Write at least 5 words.', doneText: 'Keep going as long as you like.',
+        on: (ev, v) => (ev === 'words' ? { progress: `${Math.min(v, 5)} of 5 words`, done: v >= 5 } : null),
+      },
+      {
+        target: 'writer.finish', free: true, ring: true, wait: true,
+        text: 'Write as much as you like. When you’re done, Finish & check in saves it.',
+        task: 'Tap Finish & check in.', hold: 600, on: (ev) => ev === 'session-saved',
+      },
+      {
+        target: 'done.card', wait: true, round: 20, place: 'top',
+        title: 'Your first entry is saved', text: 'Here’s how today is going. Pick a face for how writing felt, if you like.',
+        task: 'Tap Done.', hold: 500, on: (ev) => ev === 'session-done',
+      },
     ],
   },
   {
@@ -313,6 +410,15 @@ export const CHAPTERS = [
     ],
   },
 ];
+
+// What each tab is for (chapter 1's tab bar step).
+const TAB_INFO = {
+  Home: 'News from the blog, the website, our socials and Get Karma.',
+  Calendar: 'Every day you wrote, as rings, and a countdown to the next salon.',
+  Brainstorm: 'Where you write: today’s rings, Start writing, your week and everything you’ve written.',
+  Eventbrite: 'Upcoming salons: register, watch live on YouTube and get a reminder.',
+  Community: 'The Pen Parentis Discord, the Facebook group and accountability groups.',
+};
 
 export const CHAPTER_IDS = CHAPTERS.map((c) => c.id);
 

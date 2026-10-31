@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { PadValue, useNumberPad } from './NumberPad';
 import Sheet from './Sheet';
+import { tourEvent } from '../tourRun';
 import Rings, { RING_COLORS } from './Rings';
 import { colors, radius, space, themed } from '../theme';
 import { GOAL_LIMITS, lightTargets, normalizeGoals, stepGoal } from '../writingLogic';
@@ -53,6 +54,7 @@ export default function GoalsSheet({ visible, goals, firstTime, kind = 'usual', 
   }
 
   function save() {
+    tourEvent('goals-saved');
     // Anything still being typed counts, kept in range.
     const v = { words: clamp('words', g.words), minutes: clamp('minutes', g.minutes), sessions: clamp('sessions', g.sessions) };
     if (light) {
@@ -70,7 +72,7 @@ export default function GoalsSheet({ visible, goals, firstTime, kind = 'usual', 
     : firstTime ? 'One goal per ring, every day. On busy days pick a lighter day or rest.' : 'Your goal on a normal day.';
 
   return (
-    <Sheet visible={visible} onClose={firstTime ? () => {} : onClose} title={title} subtitle={subtitle} footer={pad.footer}>
+    <Sheet visible={visible} onClose={firstTime ? () => {} : onClose} title={title} subtitle={subtitle} footer={pad.footer} tourId="goals">
       {onBack ? (
         <Pressable onPress={onBack} hitSlop={8} style={s.back} accessibilityRole="button">
           <Text style={s.backText}>‹ Your goals</Text>

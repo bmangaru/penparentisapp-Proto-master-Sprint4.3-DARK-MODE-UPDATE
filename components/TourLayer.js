@@ -1,0 +1,401 @@
+// components/TourLayer.js — draws the running tour over the real app.
+//   • Spotlight: everything is dimmed except the step's target, which gets a
+//     gold outline. Only the outlined spot can be tapped (the dim takes the
+//     other taps). `free` steps (the writing page) don't dim or block anything.
+//   • The speech bubble: chapter, a few words, "Your turn: …" (green ✓ when
+//     done), Skip › or Got it ›, and ✕ to leave the tour. It sits below or
+//     above the spot, wherever there's room (above the keyboard if it's up).
+//   • Centred cards: the welcome (the logo, and the pen writing
+//     "parenting done, write.") and "Chapter done".
+// One layer sits over the app (App.js, host 'root') and one inside each
+// sheet (components/Sheet.js), because nothing can be drawn above a Modal.
+
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  View, Text, Pressable, StyleSheet, Image, Animated, Easing, Keyboard, Platform, useWindowDimensions,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { useFonts, Caveat_600SemiBold } from '@expo-google-fonts/caveat';
+import { BlackPen, PEN, TIP } from './IntroSplash';
+import { colors, isDark } from '../theme';
+import {
+  getTarget, getTourChapters, nextStep, startChapter, stepOf, stopTour, topHost, useRun,
+} from '../tourRun';
+import { openTour, useTour } from '../tour';
+
+const DIM = 'rgba(3,6,15,';
+const GOLD = '#F2C14E';
+const PAD = 6; // space between the spot and its outline
+
+export default function TourLayer({ host = 'root' }) {
+  const run = useRun();
+  const insets = useSafeAreaInsets();
+  const { width: W, height: H } = useWindowDimensions();
+  const [rect, setRect] = useState(null);
+  const [missing, setMissing] = useState(false);
+  const [kb, setKb] = useState(0);
+  const [bubbleH, setBubbleH] = useState(0);
+  const scrolledFor = useRef(null);
+
+  const step = stepOf(run);
+  const key = run ? `${run.ch}.${run.step}.${run.phase}` : 'off';
+
+  // The keyboard's height, so the bubble can sit above it.
+  useEffect(() => {
+    const show = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', (e) => setKb(e.endCoordinates?.height || 0));
+    const hide = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKb(0));
+    return () => { show.remove(); hide.remove(); };
+  }, []);
+
+  // Find the step's spot and keep measuring it (it can scroll, animate, or
+  // reappear after a redraw).
+  useEffect(() => {
+    setRect(null);
+    setMissing(false);
+    setBubbleH(0);
+    if (!step?.target) return undefined;
+    const since = Date.now();
+    const tick = () => {
+      const t = getTarget(step.target);
+      if (!t || t.host !== host) {
+        setRect(null);
+        // Not on screen for a while: the app layer offers to skip the step.
+        setMissing(host === 'root' && !t && !step.wait && Date.now() - since > 1800);
+        return;
+      }
+      setMissing(false);
+      const node = t.ref.current;
+      if (!node || !node.measureInWindow) return;
+      node.measureInWindow((x, y, w, h) => {
+        if (!w && !h) return;
+        setRect((r) => (r && r.x === x && r.y === y && r.w === w && r.h === h ? r : { x, y, w, h }));
+        // Below the fold (or under the header)? Scroll the page to it, once.
+        if (t.scroll && scrolledFor.current !== key) {
+          scrolledFor.current = key;
+          const top = insets.top + 8;
+          const bottom = H - 96;
+          if (y < top || y + h > bottom) {
+            const want = h > H * 0.45 ? insets.top + 24 : H * 0.28;
+            t.scroll.ref.current?.scrollTo({ y: Math.max(0, t.scroll.y.current + y - want), animated: true });
+          }
+        }
+      });
+    };
+    tick();
+    const id = setInterval(tick, 200);
+    return () => clearInterval(id);
+  }, [key, host]);
+
+  if (!run) return null;
+  const chapters = getTourChapters();
+  const chapter = chapters[run.ch];
+  if (!chapter) return null;
+
+  // Centred cards: drawn in the newest open sheet (or over the app).
+  const centred = run.phase === 'done' || (step && !step.target);
+  if (centred) {
+    if (topHost() !== host) return null;
+    return (
+      <View style={StyleSheet.absoluteFill}>
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: `${DIM}0.66)` }]} onStartShouldSetResponder={() => true} />
+        <View style={[c.centerWrap, { paddingTop: insets.top, paddingBottom: insets.bottom }]} pointerEvents="box-none">
+          {run.phase === 'done' ? <DoneCard ch={run.ch} /> : step.kind === 'welcome' ? <WelcomeCard /> : <Bubble run={run} step={step} />}
+        </View>
+      </View>
+    );
+  }
+
+  if (!step) return null;
+
+  // The spot isn't on screen: say so, and offer Skip.
+  if (!rect) {
+    if (!missing) return null;
+    return (
+      <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+        <View style={[c.centerWrap, { paddingTop: insets.top }]} pointerEvents="box-none">
+          <Bubble run={run} step={step} lost />
+        </View>
+      </View>
+    );
+  }
+
+  // The spotlight.
+  const hx = Math.max(0, rect.x - PAD);
+  const hy = Math.max(0, rect.y - PAD);
+  const hw = Math.min(W - hx, rect.w + PAD * 2);
+  const hh = rect.h + PAD * 2;
+  const dim = step.free ? null : `${DIM}${step.dim ?? 0.62})`;
+  const block = () => true;
+
+  // Where the bubble goes: below the spot, else above, else at the top.
+  const bh = bubbleH || 170;
+  const floor = H - (kb || insets.bottom) - 8;
+  const below = floor - (hy + hh);
+  const above = hy - insets.top - 6;
+  let top;
+  if (step.place === 'bottom') top = floor - bh;
+  else if (step.place === 'top') top = insets.top + 6;
+  else if (step.place !== 'above' && below >= bh + 14) top = hy + hh + 12;
+  else if (above >= bh + 14) top = hy - 12 - bh;
+  else if (below >= above) top = Math.max(insets.top + 6, floor - bh);
+  else top = insets.top + 6;
+  const ring = !step.free || step.ring;
+
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+      {dim ? (
+        <>
+          <View style={[c.abs, { left: 0, top: 0, width: W, height: hy, backgroundColor: dim }]} onStartShouldSetResponder={block} />
+          <View style={[c.abs, { left: 0, top: hy + hh, width: W, height: Math.max(0, H - hy - hh) + 60, backgroundColor: dim }]} onStartShouldSetResponder={block} />
+          <View style={[c.abs, { left: 0, top: hy, width: hx, height: hh, backgroundColor: dim }]} onStartShouldSetResponder={block} />
+          <View style={[c.abs, { left: hx + hw, top: hy, width: Math.max(0, W - hx - hw), height: hh, backgroundColor: dim }]} onStartShouldSetResponder={block} />
+        </>
+      ) : null}
+      {ring ? (
+        <View pointerEvents="none" style={[c.abs, c.ring, { left: hx, top: hy, width: hw, height: hh, borderRadius: step.round ?? 14 }]}>
+          <View style={[StyleSheet.absoluteFill, c.ringGlow, { borderRadius: (step.round ?? 14) + 4 }]} />
+        </View>
+      ) : null}
+      <View
+        key={key} // a fresh bubble per step, so it's always measured (and shown)
+        style={[c.abs, { left: 14, right: 14, top, opacity: bubbleH ? 1 : 0 }]}
+        onLayout={(e) => setBubbleH(Math.round(e.nativeEvent.layout.height))}
+      >
+        <Bubble run={run} step={step} />
+      </View>
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// The speech bubble.
+// ---------------------------------------------------------------------------
+function Bubble({ run, step, lost }) {
+  const chapters = getTourChapters();
+  const chapter = chapters[run.ch];
+  const steps = chapter.steps.filter((x) => x.kind !== 'welcome');
+  const at = steps.indexOf(step);
+  const text = typeof step.text === 'function' ? step.text(run.data || {}) : step.text;
+  const title = typeof step.title === 'function' ? step.title(run.data || {}) : step.title;
+  const done = run.taskDone;
+  return (
+    <View style={c.bubble} accessibilityLiveRegion="polite">
+      <View style={c.head}>
+        <Text style={c.kick} numberOfLines={1}>CHAPTER {run.ch + 1} · {chapter.title.toUpperCase()}</Text>
+        <View style={c.dots}>
+          {steps.map((_, i) => <View key={i} style={[c.dot, i < at && c.dotDone, i === at && c.dotOn]} />)}
+        </View>
+        <Pressable onPress={stopTour} hitSlop={10} style={c.x} accessibilityRole="button" accessibilityLabel="Leave the tour">
+          <Ionicons name="close" size={15} color="#5A6484" />
+        </Pressable>
+      </View>
+      {title ? <Text style={c.title}>{title}</Text> : null}
+      {lost
+        ? <Text style={c.text}>This part of the app isn't on screen right now, so this step can't be shown. You can skip it.</Text>
+        : text ? <Text style={c.text}>{text}</Text> : null}
+      {step.task && !lost ? (
+        <View style={[c.task, done && c.taskDone]}>
+          <View style={{ flex: 1 }}>
+            <Text style={c.taskText}>
+              {done ? <Text style={{ fontWeight: '800' }}>Nice! </Text> : <Text style={c.your}>Your turn: </Text>}
+              {done ? (step.doneText || 'On to the next bit…') : step.task}
+            </Text>
+            {!done && run.progress ? <Text style={c.prog}>{run.progress}</Text> : null}
+          </View>
+          <View style={[c.check, done && c.checkOn]}>{done ? <Ionicons name="checkmark" size={14} color="#1E7B3A" /> : null}</View>
+        </View>
+      ) : null}
+      <View style={c.foot}>
+        {step.info && !lost ? (
+          <Pressable onPress={nextStep} style={({ pressed }) => [c.got, pressed && { opacity: 0.85 }]} accessibilityRole="button">
+            <Text style={c.gotText}>Got it ›</Text>
+          </Pressable>
+        ) : !done ? (
+          <Pressable onPress={nextStep} hitSlop={10} accessibilityRole="button" accessibilityHint="Skips this step">
+            <Text style={c.skip}>{lost ? 'Skip this step ›' : 'Skip ›'}</Text>
+          </Pressable>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Welcome: the logo, and the pen writing the tagline (as in the opening).
+// ---------------------------------------------------------------------------
+const TAGLINE = 'parenting done, write';
+const OVERHANG = 16;
+const DOT_GAP = 8;
+
+function WrittenTagline({ play }) {
+  const [fontsLoaded, fontError] = useFonts({ Caveat_600SemiBold });
+  const fontReady = fontsLoaded || !!fontError;
+  const [textW, setTextW] = useState(0);
+  const write = useRef(new Animated.Value(0)).current;
+  const penOn = useRef(new Animated.Value(0)).current;
+  const wobble = useRef(new Animated.Value(0)).current;
+  const dot = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (!fontReady || !textW) return undefined;
+    write.setValue(0); dot.setValue(0); penOn.setValue(0);
+    const bob = Animated.loop(Animated.sequence([
+      Animated.timing(wobble, { toValue: 1, duration: 110, easing: Easing.inOut(Easing.quad), useNativeDriver: false }),
+      Animated.timing(wobble, { toValue: 0, duration: 110, easing: Easing.inOut(Easing.quad), useNativeDriver: false }),
+    ]));
+    bob.start();
+    const anim = Animated.sequence([
+      Animated.delay(250),
+      Animated.parallel([
+        Animated.timing(penOn, { toValue: 1, duration: 180, useNativeDriver: false }),
+        Animated.timing(write, { toValue: 1, duration: 1100, easing: Easing.linear, useNativeDriver: false }),
+      ]),
+      Animated.parallel([
+        Animated.spring(dot, { toValue: 1, friction: 4, tension: 160, useNativeDriver: false }),
+        Animated.timing(penOn, { toValue: 0, duration: 300, delay: 80, useNativeDriver: false }),
+      ]),
+    ]);
+    anim.start(() => { bob.stop(); wobble.setValue(0); });
+    return () => { anim.stop(); bob.stop(); };
+  }, [fontReady, textW, play]);
+
+  const ink = isDark() ? '#F4F6FB' : '#16171C';
+  const font = fontsLoaded ? { fontFamily: 'Caveat_600SemiBold' } : { fontStyle: 'italic', fontFamily: Platform.select({ ios: 'Georgia', default: 'serif' }) };
+  const revealW = write.interpolate({ inputRange: [0, 1], outputRange: [0, textW + OVERHANG] });
+  const penX = write.interpolate({ inputRange: [0, 1], outputRange: [-TIP.x, textW - TIP.x] });
+  const penY = wobble.interpolate({ inputRange: [0, 1], outputRange: [0, -3] });
+  const penTurn = wobble.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-4deg'] });
+  return (
+    <View style={{ alignItems: 'center', marginTop: 22 }}>
+      <Text style={[c.tag, font, { color: ink }, c.measure]} numberOfLines={1} onLayout={(e) => setTextW(Math.ceil(e.nativeEvent.layout.width))}>{TAGLINE}</Text>
+      <View style={{ width: textW + OVERHANG + DOT_GAP + 8, height: 46 }}>
+        <Animated.View style={{ width: revealW, height: 46, overflow: 'hidden' }}>
+          <Text style={[c.tag, font, { color: ink, paddingRight: OVERHANG }]} numberOfLines={1}>{TAGLINE}</Text>
+        </Animated.View>
+        <Animated.View style={[c.tagDot, { backgroundColor: ink, left: textW + DOT_GAP, transform: [{ scale: dot }] }]} />
+        <Animated.View pointerEvents="none" style={[c.pen, { opacity: penOn, transform: [{ translateX: penX }, { translateY: penY }, { rotate: penTurn }] }]}>
+          <BlackPen />
+        </Animated.View>
+      </View>
+    </View>
+  );
+}
+
+function WelcomeCard() {
+  const [play, setPlay] = useState(0);
+  return (
+    <View style={[c.card, { backgroundColor: colors.card, borderColor: colors.line }]}>
+      <Pressable onPress={() => setPlay((n) => n + 1)} accessibilityRole="button" accessibilityLabel="Pen Parentis logo. Tap to write the tagline again" style={{ alignSelf: 'center' }}>
+        <Image source={require('../assets/pen-parentis-logo.png')} style={c.logo} resizeMode="contain" accessibilityIgnoresInvertColors />
+      </Pressable>
+      <WrittenTagline play={play} />
+      <Text style={[c.cardTitle, { color: colors.ink }]}>Welcome to Pen Parentis</Text>
+      <Text style={[c.cardText, { color: colors.body }]}>
+        A hands-on tour of the real app. You'll tap the real buttons, and in chapter 4 you'll write your first entry.
+      </Text>
+      <View style={c.cardRow}>
+        <Pressable onPress={stopTour} style={[c.cardBtn, { borderColor: colors.royal, borderWidth: 1.5 }]} accessibilityRole="button">
+          <Text style={[c.cardBtnText, { color: colors.royal }]}>Not now</Text>
+        </Pressable>
+        <Pressable onPress={nextStep} style={[c.cardBtn, c.cardBtnFill]} accessibilityRole="button">
+          <Text style={[c.cardBtnText, { color: '#FFFFFF' }]}>Start the tour ›</Text>
+        </Pressable>
+      </View>
+      <Text style={[c.cardNote, { color: colors.muted }]}>Chapter 1 of {getTourChapters().length} · about a minute · ✕ leaves any time</Text>
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Chapter done.
+// ---------------------------------------------------------------------------
+const TIERS = [[3, 'Bronze'], [6, 'Silver'], [9, 'Gold'], [10, 'Diamond']];
+
+function DoneCard({ ch }) {
+  const tour = useTour();
+  const chapters = getTourChapters();
+  const ids = chapters.map((x) => x.id);
+  const done = { ...(tour?.done || {}), [chapters[ch].id]: true };
+  const n = ids.filter((id) => done[id]).length;
+  const nextTier = TIERS.find(([k]) => n < k);
+  const next = chapters[ch + 1];
+  function goNext() {
+    if (!next) { stopTour(); openTour('__list'); return; }
+    if (next.steps) startChapter(ch + 1);
+    else { stopTour(); openTour(next.id); }
+  }
+  return (
+    <View style={[c.card, { backgroundColor: colors.card, borderColor: colors.line }]}>
+      <View style={c.bigCheck}><Ionicons name="checkmark" size={32} color="#FFFFFF" /></View>
+      <Text style={[c.cardTitle, { color: colors.ink }]}>Chapter {ch + 1} done</Text>
+      <Text style={[c.cardText, { color: colors.body }]}>
+        {n} of {ids.length} chapters
+        {nextTier ? <Text> · {nextTier[0] - n} more for the <Text style={{ fontWeight: '800', color: '#C8912B' }}>{nextTier[1]} Tour Guide</Text> medal</Text> : null}
+      </Text>
+      <View style={[c.track, { backgroundColor: colors.line }]}><View style={[c.fill, { width: `${Math.max(4, (n / ids.length) * 100)}%`, backgroundColor: colors.royal }]} /></View>
+      <View style={c.cardRow}>
+        <Pressable onPress={stopTour} style={[c.cardBtn, { borderColor: colors.royal, borderWidth: 1.5 }]} accessibilityRole="button">
+          <Text style={[c.cardBtnText, { color: colors.royal }]}>Take a break</Text>
+        </Pressable>
+        <Pressable onPress={goNext} style={[c.cardBtn, c.cardBtnFill]} accessibilityRole="button">
+          <Text style={[c.cardBtnText, { color: '#FFFFFF' }]} numberOfLines={1}>{next ? `Next: ${next.short || next.title} ›` : 'All chapters ›'}</Text>
+        </Pressable>
+      </View>
+      <Pressable onPress={() => { stopTour(); openTour('__list'); }} hitSlop={8} style={{ alignSelf: 'center', marginTop: 12 }} accessibilityRole="button">
+        <Text style={[c.cardNote, { color: colors.royal, fontWeight: '800', marginTop: 0 }]}>See all chapters</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+// The bubble keeps the same light look in both schemes, so it stands out on
+// the dimmed app either way.
+const c = StyleSheet.create({
+  abs: { position: 'absolute' },
+  ring: { borderWidth: 2.5, borderColor: GOLD },
+  ringGlow: { margin: -6, borderWidth: 4, borderColor: 'rgba(242,193,78,0.28)' },
+  centerWrap: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', paddingHorizontal: 18 },
+  bubble: {
+    backgroundColor: '#FFFDF8', borderRadius: 18, paddingHorizontal: 14, paddingTop: 11, paddingBottom: 10,
+    shadowColor: '#000', shadowOpacity: 0.35, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 12,
+  },
+  head: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  kick: { flex: 1, fontSize: 10, fontWeight: '800', letterSpacing: 0.8, color: '#8A5E12' },
+  dots: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#C8CEDE' },
+  dotDone: { backgroundColor: '#1E7B3A' },
+  dotOn: { width: 14, backgroundColor: '#1B3FA0' },
+  x: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#EEF1F7' },
+  title: { fontSize: 16, fontWeight: '800', color: '#0A1633', marginTop: 5 },
+  text: { fontSize: 13.5, lineHeight: 19, color: '#2A3352', marginTop: 3 },
+  task: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#0A1633', borderRadius: 11, paddingVertical: 8, paddingHorizontal: 10, marginTop: 9 },
+  taskDone: { backgroundColor: '#1E7B3A' },
+  taskText: { fontSize: 13, lineHeight: 18, color: '#FFFFFF' },
+  your: { fontWeight: '800', color: GOLD },
+  prog: { fontSize: 11.5, fontWeight: '800', color: '#9BE3B0', marginTop: 1 },
+  check: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: 'rgba(255,255,255,0.4)', alignItems: 'center', justifyContent: 'center' },
+  checkOn: { backgroundColor: '#FFFFFF', borderColor: '#FFFFFF' },
+  foot: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginTop: 7, minHeight: 20 },
+  skip: { fontSize: 12.5, fontWeight: '700', color: '#5A6484' },
+  got: { backgroundColor: '#1B3FA0', borderRadius: 10, paddingVertical: 7, paddingHorizontal: 14 },
+  gotText: { color: '#FFFFFF', fontWeight: '800', fontSize: 13 },
+  card: {
+    borderRadius: 22, borderWidth: 1, paddingHorizontal: 18, paddingVertical: 20,
+    shadowColor: '#000', shadowOpacity: 0.4, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }, elevation: 14,
+  },
+  logo: { width: 132, height: 114, borderRadius: 12 },
+  tag: { fontSize: 32 },
+  measure: { position: 'absolute', opacity: 0, left: -9999 },
+  tagDot: { position: 'absolute', top: 29, width: 7, height: 7, borderRadius: 3.5 },
+  pen: { position: 'absolute', left: 0, top: 30 - TIP.y + 4, width: PEN, height: PEN },
+  cardTitle: { fontSize: 20, fontWeight: '800', textAlign: 'center', marginTop: 14 },
+  cardText: { fontSize: 14, lineHeight: 20, textAlign: 'center', marginTop: 6 },
+  cardRow: { flexDirection: 'row', gap: 10, marginTop: 18 },
+  cardBtn: { flex: 1, minHeight: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
+  cardBtnFill: { backgroundColor: '#3352C4' },
+  cardBtnText: { fontSize: 14.5, fontWeight: '800' },
+  cardNote: { fontSize: 12, textAlign: 'center', marginTop: 12 },
+  bigCheck: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#1E7B3A', alignSelf: 'center', alignItems: 'center', justifyContent: 'center' },
+  track: { height: 8, borderRadius: 4, marginTop: 14, overflow: 'hidden' },
+  fill: { height: '100%', borderRadius: 4 },
+});

@@ -9,6 +9,8 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import Sheet from './Sheet';
 import Rings from './Rings';
+import TourTarget from './TourTarget';
+import { tourEvent } from '../tourRun';
 import { colors, radius, space, themed } from '../theme';
 import { describeDailyGoal, planFor } from '../writingLogic';
 
@@ -42,6 +44,7 @@ export default function TodayPlanSheet({ visible, goals, current, onPick, onEdit
       onClose={onClose}
       title={edit ? 'Your goals' : 'What’s your goal today?'}
       subtitle={edit ? 'Today resets at midnight.' : subtitle}
+      tourId="plan"
     >
       {edit ? <Text style={s.section}>TODAY · {weekday.toUpperCase()}</Text> : null}
       <View style={{ gap: 10 }}>
@@ -71,6 +74,7 @@ export default function TodayPlanSheet({ visible, goals, current, onPick, onEdit
                 {o.note ? <Text style={s.note}>{o.note}</Text> : null}
               </View>
               {o.id === 'usual' ? (
+                <TourTarget id="plan.edit">
                 <Pressable
                   onPress={() => onEdit(o.id)}
                   hitSlop={6}
@@ -80,6 +84,7 @@ export default function TodayPlanSheet({ visible, goals, current, onPick, onEdit
                 >
                   <Text style={s.editText}>Edit</Text>
                 </Pressable>
+                </TourTarget>
               ) : null}
             </Pressable>
           );
@@ -88,7 +93,7 @@ export default function TodayPlanSheet({ visible, goals, current, onPick, onEdit
       <View style={s.tip}>
         <Text style={s.tipText}>✏️  To change your goals, tap <Text style={{ fontWeight: '700' }}>Edit</Text> on My usual. The others follow it.</Text>
       </View>
-      <Pressable style={s.cta} onPress={() => onPick(planFor(picked, goals))}>
+      <Pressable style={s.cta} onPress={() => { tourEvent('plan-saved', picked); onPick(planFor(picked, goals)); }}>
         <Text style={s.ctaText}>{cta}</Text>
       </Pressable>
     </Sheet>

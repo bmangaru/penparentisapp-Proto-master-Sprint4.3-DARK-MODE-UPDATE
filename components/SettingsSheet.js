@@ -10,6 +10,8 @@ import { colors, radius, themed } from '../theme';
 import { setAppearance, useAppearance } from '../appearance';
 import { openTour, restartTour } from '../tour';
 import { Ionicons } from '@expo/vector-icons';
+import TourTarget from './TourTarget';
+import { isTourTarget, tourEvent, useRun } from '../tourRun';
 
 const OPTIONS = [
   { id: 'system', label: 'System' },
@@ -18,22 +20,28 @@ const OPTIONS = [
 ];
 
 // The three picture tiles (also used in the app tour's first chapter).
+// During the app tour nothing is highlighted until you tap one (the one you're
+// on just gets a small "now" tag), so it's clear you're meant to pick.
 export function AppearancePicker({ onPick }) {
   const choice = useAppearance() || 'system';
+  const run = useRun();
+  const neutral = isTourTarget('settings.appearance', run) && !run.taskDone;
   return (
     <View style={s.row} accessibilityRole="radiogroup">
       {OPTIONS.map((o) => {
-        const on = o.id === choice;
+        const on = o.id === choice && !neutral;
+        const now = o.id === choice && neutral;
         return (
           <Pressable
             key={o.id}
-            onPress={() => { if (onPick) onPick(o.id); if (o.id !== choice) setAppearance(o.id); }}
+            onPress={() => { if (onPick) onPick(o.id); tourEvent('appearance', o.id); if (o.id !== choice) setAppearance(o.id); }}
             style={[s.opt, on && s.optOn]}
             accessibilityRole="radio"
             accessibilityState={{ checked: on }}
             accessibilityLabel={`${o.label} appearance`}
           >
             <Preview kind={o.id} />
+            {now ? <Text style={s.now}>now</Text> : null}
             <Text style={[s.optText, on && { color: colors.royal }]}>{o.label}</Text>
           </Pressable>
         );
@@ -49,11 +57,14 @@ export default function SettingsSheet({ visible, onClose }) {
     setTimeout(async () => { if (restart) await restartTour(); openTour(); }, 350);
   };
   return (
-    <Sheet visible={visible} onClose={onClose} title="Settings" subtitle="Make the app yours.">
-      <Text style={s.label}>APPEARANCE</Text>
-      <AppearancePicker />
-      <Text style={s.note}>System follows your phone's setting, so the app turns dark when your phone does.</Text>
+    <Sheet visible={visible} onClose={onClose} title="Settings" subtitle="Make the app yours." tourId="settings">
+      <TourTarget id="settings.appearance">
+        <Text style={s.label}>APPEARANCE</Text>
+        <AppearancePicker />
+        <Text style={s.note}>System follows your phone's setting, so the app turns dark when your phone does.</Text>
+      </TourTarget>
 
+      <TourTarget id="settings.tour">
       <Text style={[s.label, { marginTop: 18 }]}>THE APP TOUR</Text>
       <Text style={s.note}>A short, step-by-step guide to everything in the app. Review any chapter, or start over from the beginning.</Text>
       <View style={[s.row, { marginTop: 10 }]}>
@@ -66,6 +77,7 @@ export default function SettingsSheet({ visible, onClose }) {
           <Text style={s.tourText}>Start over</Text>
         </Pressable>
       </View>
+      </TourTarget>
     </Sheet>
   );
 }
@@ -105,5 +117,6 @@ const s = themed(() => ({
   tourBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, minHeight: 46, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.royal },
   tourBtnFill: { backgroundColor: colors.royal },
   tourText: { fontSize: 14, fontWeight: '700', color: colors.royal },
+  now: { position: 'absolute', top: -9, alignSelf: 'center', fontSize: 10, fontWeight: '800', color: '#8A5E12', backgroundColor: '#FFF4D6', borderWidth: 1, borderColor: '#F0D48A', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 1, overflow: 'hidden' },
   note: { fontSize: 12.5, lineHeight: 18, color: colors.muted, marginTop: 12, marginBottom: 6 },
 }));

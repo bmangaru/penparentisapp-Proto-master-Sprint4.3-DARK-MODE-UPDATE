@@ -41,6 +41,8 @@ import { MEDALS, TIER_LABEL, liveMedalStats, medalStats, nextMedals, reachNudge,
 import { LEVEL_LABEL, nextLevel, nextPrompt, promptForDay } from '../prompts';
 import usePromptLevel, { LEVEL_STYLE } from '../components/usePromptLevel';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import TourTarget from '../components/TourTarget';
+import { tourEvent } from '../tourRun';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function BrainstormWriterScreen({ navigation, route }) {
@@ -277,6 +279,10 @@ export default function BrainstormWriterScreen({ navigation, route }) {
     // Deleting text does NOT reduce the count — effort already spent stays counted.
   }
 
+  // The app tour follows along (your first entry is a real one).
+  useEffect(() => { tourEvent('writer-open'); }, []);
+  useEffect(() => { if (effortWords > 0) tourEvent('words', effortWords); }, [effortWords]);
+
   // The live count only moves when a word is finished (space or punctuation),
   // so it never blinks up or down while you type or delete letters.
   const liveWords = effortWords;
@@ -423,6 +429,7 @@ export default function BrainstormWriterScreen({ navigation, route }) {
     await draftSaving.current;
     await saveSession(rec);
     setSaveState('saved');
+    tourEvent('session-saved');
     const { newlyEarned, medals } = await syncMedals();
     setNewMedals(newlyEarned);
     setNextRows(nextMedals(medalBase.current?.stats, medals));
@@ -439,6 +446,7 @@ export default function BrainstormWriterScreen({ navigation, route }) {
   }
 
   function done() {
+    tourEvent('session-done');
     setSheet(null);
     navigation.goBack();
   }
@@ -551,6 +559,7 @@ export default function BrainstormWriterScreen({ navigation, route }) {
         </Pressable>
       ) : null}
 
+      <TourTarget id="writer.page" style={{ flex: 1 }}>
       {ready ? (
         <TextInput
           keyboardAppearance={isDark() ? 'dark' : 'light'}
@@ -569,6 +578,7 @@ export default function BrainstormWriterScreen({ navigation, route }) {
       ) : (
         <View style={s.editor} />
       )}
+      </TourTarget>
 
       {showNudge && !focus ? (
         <View style={s.nudge}>
@@ -593,9 +603,11 @@ export default function BrainstormWriterScreen({ navigation, route }) {
       ) : null}
 
       <View style={[s.bottomBar, { paddingBottom: insets.bottom + 14 }]}>
-        <Pressable style={s.finishBtn} onPress={finish}>
-          <Text style={s.finishText}>Finish &amp; check in</Text>
-        </Pressable>
+        <TourTarget id="writer.finish">
+          <Pressable style={s.finishBtn} onPress={finish}>
+            <Text style={s.finishText}>Finish &amp; check in</Text>
+          </Pressable>
+        </TourTarget>
       </View>
 
       {menuOpen ? (
