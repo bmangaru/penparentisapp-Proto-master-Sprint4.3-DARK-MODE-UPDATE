@@ -43,7 +43,7 @@ import usePromptLevel, { LEVEL_STYLE } from '../components/usePromptLevel';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TourTarget from '../components/TourTarget';
 import { TourInline } from '../components/TourLayer';
-import { isTourTarget, tourEvent, useRun } from '../tourRun';
+import { isTourTarget, tourEvent, tourRunning, useRun } from '../tourRun';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function BrainstormWriterScreen({ navigation, route }) {
@@ -147,6 +147,17 @@ export default function BrainstormWriterScreen({ navigation, route }) {
   }
   function toggleFocus(on) {
     tourEvent(on ? 'focus-on' : 'focus-off');
+    // In the app tour: start Focus mode on a fresh line at the end of what
+    // you've written, with the keyboard up, ready to type.
+    if (on && tourRunning()) {
+      const cur = textRef.current;
+      if (cur && !cur.endsWith('\n')) {
+        const next = `${cur}\n\n`;
+        textRef.current = next;
+        setText(next);
+      }
+      setTimeout(() => inputRef.current?.focus(), 350);
+    }
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setFocus(on);
     setMenuOpen(false);
@@ -168,6 +179,7 @@ export default function BrainstormWriterScreen({ navigation, route }) {
   const finishedRec = useRef(null);
 
   const textRef = useRef('');
+  const inputRef = useRef(null);
   const latest = useRef({});
   const saved = useRef(false);
   const noticeTimer = useRef(null);
@@ -596,6 +608,7 @@ export default function BrainstormWriterScreen({ navigation, route }) {
       <TourTarget id="writer.page" style={{ flex: 1 }}>
       {ready ? (
         <TextInput
+          ref={inputRef}
           keyboardAppearance={isDark() ? 'dark' : 'light'}
           value={text}
           onChangeText={onChangeText}

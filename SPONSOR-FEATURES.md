@@ -731,3 +731,13 @@ No new behaviour: this zip has every file the on-app tour touches (rounds 56–5
 - The "Almost there!" medal note stays hidden while the tour runs.
 - The spotlight on the raised pencil (Brainstorm) is taller, so the circle isn't cut off.
 - The welcome's pen now carries on past the full stop.
+
+## Round 63 — tour: try every appearance, redo a chapter, calmer writing chapter
+
+- **Appearance:** switching Light / Dark / System no longer drops the tour: Settings stays open through the redraw, and the step waits for **Next ›** so you can try all three.
+- **Every "Chapter done" card** has **↺ Redo chapter N** next to "See all chapters".
+- **Blog:** the posts don't move by themselves during the tour (the bubble says they normally do every 10 seconds); use the arrows or swipe.
+- **Goals:** the "Edit on My usual" step is titled "Change your goals here" (this is where you edit them, any time). On My usual, every row's − and + flash together, then every number ("Tap − or + to change any goal" / "Or tap any number to type it").
+- **Today's goal in the tour:** Rest is greyed out ("Not during the tour: today you're writing!").
+- **Focus mode in the tour** starts on a fresh line at the end of your writing with the keyboard up, ready to type.
+- **Pause** is now just a note (Got it ›) with Pause pulsing; you don't have to pause and restart.

@@ -187,8 +187,8 @@ export const CHAPTERS = [
       },
       {
         target: 'settings.appearance', wait: true,
-        text: 'Pick how the app looks. System follows your phone, so the app turns dark when your phone does.',
-        task: 'Tap Light, Dark or System.', doneText: 'The whole app changed.', hold: 1300,
+        text: 'Pick how the app looks. System follows your phone, so the app turns dark when your phone does. Try each one: the whole app changes as you tap.',
+        task: 'Tap Light, Dark or System.', doneText: 'Try the others too, then tap Next with the one you like.', manual: true,
         on: (ev) => ev === 'appearance',
       },
       {
@@ -219,7 +219,7 @@ export const CHAPTERS = [
       tapTab('Home', 'Back to Home', 'Every chapter starts from the tab bar, so you get to know where everything is.'),
       {
         target: 'home.blog', tab: 'Home',
-        title: 'From the blog', text: 'The newest posts from penparentis.org. Tap a post to read it right in the app.',
+        title: 'From the blog', text: 'The newest posts from penparentis.org. Tap a post to read it right in the app. (Normally the posts move on by themselves every 10 seconds; that’s paused for the tour.)',
         task: 'Swipe, or tap the arrows, to see 3 posts.', marks: ['blog.prev', 'blog.next'],
         on: (ev, v, d) => {
           if (ev !== 'blog-index') return null;
@@ -250,7 +250,7 @@ export const CHAPTERS = [
       },
       {
         target: 'plan.edit', wait: true, round: 999,
-        text: '“My usual” is your goal on a normal day. A lighter day is half of it, a stretch day 1.5×.',
+        title: 'Change your goals here', text: 'This is where you edit your goals, any time. “My usual” is your goal on a normal day; a lighter day is half of it, a stretch day 1.5×.',
         task: 'Tap Edit on My usual.', on: (ev, v) => ev === 'sheet-open' && v === 'goals',
       },
       {
@@ -265,7 +265,7 @@ export const CHAPTERS = [
       {
         target: 'plan.card', wait: true, lock: true, noRing: true, markRound: 16,
         marks: (d) => (d.picked ? ['plan.save'] : ['plan.light', 'plan.usual', 'plan.stretch']),
-        text: 'Each day, pick how big today is: a lighter day, your usual, or a stretch day (or rest). It resets at midnight.',
+        text: 'Each day, pick how big today is: a lighter day, your usual, or a stretch day. (Rest days are here too, but today you’re writing!) It resets at midnight.',
         task: 'Pick one, then tap Save today’s goal.',
         on: (ev) => {
           if (ev === 'plan-pick') return { data: { picked: true }, progress: 'Now tap Save today’s goal' };
@@ -354,15 +354,8 @@ export const CHAPTERS = [
         task: 'Tap ⤡ Exit focus.', on: (ev) => ev === 'focus-off',
       },
       {
-        target: 'writer.pause', inline: true, marks: ['writer.pause'], wait: true,
-        title: 'Pause any time', text: 'Kid needs you? Pause stops the clock. A quiet minute pauses it by itself too.',
-        task: 'Tap Pause.', on: (ev) => ev === 'pause',
-      },
-      {
-        target: 'writer.page', inline: true, wait: true,
-        text: 'Paused (see the note above). When you’re back, just type: the clock picks up again, no button needed.',
-        task: 'Type a word to start the clock again.', doneText: 'Back on the clock. Keep going, or tap Next.', manual: true,
-        on: (ev) => ev === 'resume',
+        target: 'writer.pause', inline: true, marks: ['writer.pause'], wait: true, info: true,
+        title: 'Pause any time', text: 'Kid needs you? Tap Pause to stop the clock. Typing starts it again, and after a quiet minute it pauses by itself.',
       },
     ],
   },

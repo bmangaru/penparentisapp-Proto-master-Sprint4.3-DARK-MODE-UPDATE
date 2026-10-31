@@ -10,7 +10,7 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 import Sheet from './Sheet';
 import Rings from './Rings';
 import TourTarget from './TourTarget';
-import { tourEvent } from '../tourRun';
+import { isTourTarget, tourEvent, useRun } from '../tourRun';
 import { colors, radius, space, themed } from '../theme';
 import { describeDailyGoal, planFor } from '../writingLogic';
 
@@ -33,6 +33,9 @@ export default function TodayPlanSheet({ visible, goals, current, onPick, onEdit
     setPicked(current?.plan || 'usual');
   }, [openKey]);
 
+  // In the app tour today is for writing: Rest is switched off.
+  const run = useRun();
+  const noRest = isTourTarget('plan.card', run);
   const weekday = new Date().toLocaleDateString(undefined, { weekday: 'long' });
   const subtitle = `Pick a goal for ${weekday}. Resets at midnight.`;
   const edit = mode === 'edit';
@@ -55,8 +58,9 @@ export default function TodayPlanSheet({ visible, goals, current, onPick, onEdit
           return (
             <TourTarget key={o.id} id={`plan.${o.id}`}>
             <Pressable
-              onPress={() => { setPicked(o.id); tourEvent('plan-pick', o.id); }}
-              style={[s.option, on && s.optionOn]}
+              onPress={() => { if (rest && noRest) return; setPicked(o.id); tourEvent('plan-pick', o.id); }}
+              disabled={rest && noRest}
+              style={[s.option, on && s.optionOn, rest && noRest && { opacity: 0.35 }]}
               accessibilityRole="button"
               accessibilityState={{ selected: on }}
             >
@@ -70,7 +74,7 @@ export default function TodayPlanSheet({ visible, goals, current, onPick, onEdit
                     <Text style={[s.level, { backgroundColor: LEVEL[o.level].bg, color: LEVEL[o.level].fg }]}>{o.level}</Text>
                   ) : null}
                 </View>
-                <Text style={s.sub}>{rest ? 'Counts as a day off. Your week stays on track.' : describeDailyGoal(plan)}</Text>
+                <Text style={s.sub}>{rest ? (noRest ? 'Not during the tour: today you’re writing!' : 'Counts as a day off. Your week stays on track.') : describeDailyGoal(plan)}</Text>
                 {o.note ? <Text style={s.note}>{o.note}</Text> : null}
               </View>
               {o.id === 'usual' ? (

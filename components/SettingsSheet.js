@@ -7,11 +7,11 @@ import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import Sheet from './Sheet';
 import { colors, radius, themed } from '../theme';
-import { setAppearance, useAppearance } from '../appearance';
+import { keepSettingsOpen, setAppearance, useAppearance } from '../appearance';
 import { openTour, restartTour } from '../tour';
 import { Ionicons } from '@expo/vector-icons';
 import TourTarget from './TourTarget';
-import { isTourTarget, tourEvent, useRun } from '../tourRun';
+import { isTourTarget, tourEvent, tourRunning, useRun } from '../tourRun';
 
 const OPTIONS = [
   { id: 'system', label: 'System' },
@@ -34,7 +34,13 @@ export function AppearancePicker({ onPick }) {
         return (
           <Pressable
             key={o.id}
-            onPress={() => { if (onPick) onPick(o.id); tourEvent('appearance', o.id); if (o.id !== choice) setAppearance(o.id); }}
+            onPress={() => {
+              if (onPick) onPick(o.id);
+              tourEvent('appearance', o.id);
+              // The app redraws in the new colours; during the tour, Settings
+              // stays open through it so you can try the others.
+              if (o.id !== choice) { if (tourRunning()) keepSettingsOpen(); setAppearance(o.id); }
+            }}
             style={[s.opt, on && s.optOn]}
             accessibilityRole="radio"
             accessibilityState={{ checked: on }}

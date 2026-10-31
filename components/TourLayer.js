@@ -546,9 +546,14 @@ function DoneCard({ ch, earned }) {
           <Text style={[c.cardBtnText, { color: '#FFFFFF' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{next ? `${next.short || next.title} ›` : 'All chapters ›'}</Text>
         </Pressable>
       </View>
-      <Pressable onPress={() => { stopTour(); openTour('__list'); }} hitSlop={8} style={{ alignSelf: 'center', marginTop: 12 }} accessibilityRole="button">
-        <Text style={[c.cardNote, { color: colors.royal, fontWeight: '800', marginTop: 0 }]}>See all chapters</Text>
-      </Pressable>
+      <View style={c.cardLinks}>
+        <Pressable onPress={() => startChapter(ch)} hitSlop={8} accessibilityRole="button" accessibilityLabel={`Redo chapter ${ch + 1}`}>
+          <Text style={[c.cardNote, { color: colors.royal, fontWeight: '800', marginTop: 0 }]}>↺ Redo chapter {ch + 1}</Text>
+        </Pressable>
+        <Pressable onPress={() => { stopTour(); openTour('__list'); }} hitSlop={8} accessibilityRole="button">
+          <Text style={[c.cardNote, { color: colors.royal, fontWeight: '800', marginTop: 0 }]}>See all chapters</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -610,6 +615,7 @@ const c = StyleSheet.create({
   cardNote: { fontSize: 12, textAlign: 'center', marginTop: 12 },
   wonKick: { fontSize: 11, fontWeight: '800', letterSpacing: 1.4, color: '#C8912B', textAlign: 'center' },
   nextKick: { fontSize: 9.5, fontWeight: '800', letterSpacing: 1, color: 'rgba(255,255,255,0.75)' },
+  cardLinks: { flexDirection: 'row', justifyContent: 'center', gap: 22, marginTop: 14 },
   bigCheck: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#1E7B3A', alignSelf: 'center', alignItems: 'center', justifyContent: 'center' },
   track: { height: 8, borderRadius: 4, marginTop: 14, overflow: 'hidden' },
   fill: { height: '100%', borderRadius: 4 },

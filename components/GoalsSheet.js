@@ -129,11 +129,11 @@ export default function GoalsSheet({ visible, goals, firstTime, kind = 'usual', 
               >
                 <Text style={s.stepText}>−</Text>
               </Pressable>
-              {ring(showHint && i === 0 && hint === 0)}
+              {ring(showHint && hint === 0)}
               </View>
               <View>
                 <PadValue pad={pad} k={r.k} value={g[r.k]} label={`${r.name} goal`} />
-                {ring(showHint && i === 0 && hint === 1)}
+                {ring(showHint && hint === 1)}
               </View>
               <View>
               <Pressable
@@ -145,7 +145,7 @@ export default function GoalsSheet({ visible, goals, firstTime, kind = 'usual', 
               >
                 <Text style={s.stepText}>+</Text>
               </Pressable>
-              {ring(showHint && i === 0 && hint === 0)}
+              {ring(showHint && hint === 0)}
               </View>
             </View>
           );
@@ -153,7 +153,7 @@ export default function GoalsSheet({ visible, goals, firstTime, kind = 'usual', 
       </View>
 
       {showHint ? (
-        <Text style={s.hintText}>{hint === 0 ? '👆  Tap − or + to change a goal' : '👆  Or tap the number to type it'}</Text>
+        <Text style={s.hintText}>{hint === 0 ? '👆  Tap − or + to change any goal' : '👆  Or tap any number to type it'}</Text>
       ) : null}
 
       {light ? (
