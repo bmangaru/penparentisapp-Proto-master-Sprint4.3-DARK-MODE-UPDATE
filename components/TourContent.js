@@ -159,7 +159,7 @@ function CommunityArt() {
 // Shared steps.
 // Each chapter starts at the tab bar, so you learn where everything is.
 const tapTab = (name, title, text, extra = {}) => ({
-  target: `tab.${name}`, dim: 0.5, round: 16, title, text,
+  target: `tab.${name}`, dim: 0.5, round: 16, title, text, growTop: name === 'Brainstorm' ? 16 : 0,
   task: name === 'Brainstorm' ? 'Tap the pencil (Brainstorm) in the tab bar.' : `Tap ${name} in the tab bar.`,
   on: (ev, v) => ev === 'tab' && v === name,
   ...extra,
@@ -208,7 +208,7 @@ export const CHAPTERS = [
           if (ev !== 'tab' || !TAB_INFO[v]) return null;
           const seen = { ...(d.seen || {}), [v]: true };
           const n = Object.keys(seen).length;
-          return { data: { seen, last: v }, progress: `${n} of 5 tabs seen`, done: n >= 5 };
+          return { data: { seen, last: v }, progress: `${n} of 5 tabs seen`, frac: n / 5, done: n >= 5 };
         },
       },
     ],
@@ -225,7 +225,7 @@ export const CHAPTERS = [
           if (ev !== 'blog-index') return null;
           const seen = { ...(d.seen || { 0: true }), [v]: true };
           const n = Object.keys(seen).length;
-          return { data: { seen }, progress: `${Math.min(n, 3)} of 3 posts`, done: n >= 3 };
+          return { data: { seen }, progress: `${Math.min(n, 3)} of 3 posts`, frac: n / 3, done: n >= 3 };
         },
       },
       {
@@ -284,10 +284,15 @@ export const CHAPTERS = [
         task: 'Tap the big blue button to start.', on: (ev) => ev === 'writer-open',
       },
       {
-        target: 'writer.page', free: true, place: 'top', wait: true,
-        title: 'Just write', text: 'Anything on your mind: a line, a memory, an idea. The clock runs while you type and the rings fill as you go.',
+        target: 'writer.page', inline: true, wait: true,
+        title: 'Just write', text: 'Anything on your mind: a line, a memory, an idea. Watch the rings above fill as you type.',
         task: 'Write at least 5 words.', doneText: 'Keep writing as long as you like. Tap the button when you’re done.', manual: true, nextLabel: 'I’m done writing ›',
-        on: (ev, v) => (ev === 'words' ? { progress: `${Math.min(v, 5)} of 5 words`, done: v >= 5 } : null),
+        on: (ev, v, d) => {
+          if (ev !== 'words') return null;
+          const base = d.base ?? v - 1; // words already written today, before this step
+          const n = v - base;
+          return { data: { base }, progress: `${Math.min(n, 5)} of 5 words`, frac: n / 5, done: n >= 5 };
+        },
       },
     ],
   },
@@ -296,12 +301,12 @@ export const CHAPTERS = [
     steps: [
       ...toWriter('Prompts and tools live on the writing page.'),
       {
-        target: 'writer.prompt', wait: true, round: 999, skipIf: () => !!getTarget('writer.promptCard'),
+        target: 'writer.prompt', inline: true, marks: ['writer.prompt'], wait: true, skipIf: () => !!getTarget('writer.promptCard'),
         title: 'Stuck? Try a prompt', text: 'Prompts are short questions to get you going. They never count as your words, and they’re saved with what you write.',
         task: 'Tap ✦ Prompt.', on: (ev) => ev === 'prompt-show',
       },
       {
-        target: 'writer.promptCard', wait: true, noRing: true, marks: ['writer.level'],
+        target: 'writer.promptCard', inline: true, wait: true, marks: ['writer.level'],
         title: 'How deep?', text: 'The button on the left is the prompt’s level. Each tap switches it: Simple, then Thoughtful, then Deep. Deeper prompts ask more of you.',
         task: 'Tap the level to try all three: Simple, Thoughtful and Deep.',
         doneText: 'You’ve tried all three. Pick the one you like, then go on.', manual: true, nextLabel: 'Ready to go on ›',
@@ -309,17 +314,17 @@ export const CHAPTERS = [
           if (ev !== 'prompt-level') return null;
           const seen = { ...(d.seen || {}), [v]: true };
           const n = Object.keys(seen).length;
-          return { data: { seen }, progress: `${n} of 3 levels`, done: n >= 3 };
+          return { data: { seen }, progress: `${n} of 3 levels`, frac: n / 3, done: n >= 3 };
         },
       },
       {
-        target: 'writer.promptCard', wait: true, noRing: true, marks: ['writer.refresh'],
+        target: 'writer.promptCard', inline: true, wait: true, marks: ['writer.refresh'],
         title: 'Not this one?', text: '↻ Refresh gives you another prompt at the same level. Whatever you write next is saved with the prompt on screen.',
         task: 'Tap ↻ Refresh.', doneText: 'Refresh as many times as you like, then go on.', manual: true, nextLabel: 'Ready to go on ›',
         on: (ev) => ev === 'prompt-refresh',
       },
       {
-        target: 'writer.aa', wait: true, round: 999,
+        target: 'writer.aa', inline: true, marks: ['writer.aa'], wait: true,
         title: 'Aa: text size and focus', text: 'Make the words bigger or smaller, and write without distractions.',
         task: 'Tap Aa.', on: (ev) => ev === 'menu-open',
       },
@@ -333,29 +338,29 @@ export const CHAPTERS = [
         },
       },
       {
-        target: 'writer.page', free: true, place: 'bottom', wait: true, skipIf: () => !getTarget('writer.exitFocus'),
+        target: 'writer.page', inline: true, wait: true, skipIf: () => !getTarget('writer.exitFocus'),
         title: 'Focus mode', text: 'Just you and your words. The clock still runs.',
         task: 'Write 5 words in Focus mode.', doneText: 'Nice and quiet. Keep going, or go on.', manual: true,
         on: (ev, v, d) => {
           if (ev !== 'words') return null;
           const base = d.base ?? v - 1; // words before this step
           const n = v - base;
-          return { data: { base }, progress: `${Math.min(n, 5)} of 5 words`, done: n >= 5 };
+          return { data: { base }, progress: `${Math.min(n, 5)} of 5 words`, frac: n / 5, done: n >= 5 };
         },
       },
       {
-        target: 'writer.exitFocus', wait: true, round: 999, skipIf: () => !getTarget('writer.exitFocus'),
+        target: 'writer.exitFocus', inline: true, marks: ['writer.exitFocus'], wait: true, skipIf: () => !getTarget('writer.exitFocus'),
         text: 'When you want the clock, prompts and tools back, leave Focus mode.',
         task: 'Tap ⤡ Exit focus.', on: (ev) => ev === 'focus-off',
       },
       {
-        target: 'writer.pause', wait: true, round: 999,
+        target: 'writer.pause', inline: true, marks: ['writer.pause'], wait: true,
         title: 'Pause any time', text: 'Kid needs you? Pause stops the clock. A quiet minute pauses it by itself too.',
         task: 'Tap Pause.', on: (ev) => ev === 'pause',
       },
       {
-        target: 'writer.page', free: true, place: 'top', wait: true,
-        text: 'Paused. When you’re back, just type: the clock picks up again, no button needed.',
+        target: 'writer.page', inline: true, wait: true,
+        text: 'Paused (see the note above). When you’re back, just type: the clock picks up again, no button needed.',
         task: 'Type a word to start the clock again.', doneText: 'Back on the clock. Keep going, or tap Next.', manual: true,
         on: (ev) => ev === 'resume',
       },
@@ -366,7 +371,7 @@ export const CHAPTERS = [
     steps: [
       ...toWriter('Finishing happens on the writing page.'),
       {
-        target: 'writer.finish', free: true, ring: true, wait: true,
+        target: 'writer.finish', inline: true, marks: ['writer.finish'], markRound: 14, wait: true,
         text: 'Write as much as you like. When you’re done, Finish & check in saves your entry.',
         task: 'Tap Finish & check in.', hold: 600, on: (ev) => ev === 'session-saved',
       },

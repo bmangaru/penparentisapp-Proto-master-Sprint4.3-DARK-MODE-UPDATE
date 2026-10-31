@@ -42,6 +42,7 @@ import { LEVEL_LABEL, nextLevel, nextPrompt, promptForDay } from '../prompts';
 import usePromptLevel, { LEVEL_STYLE } from '../components/usePromptLevel';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TourTarget from '../components/TourTarget';
+import { TourInline } from '../components/TourLayer';
 import { isTourTarget, tourEvent, useRun } from '../tourRun';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -523,7 +524,8 @@ export default function BrainstormWriterScreen({ navigation, route }) {
       {/* Today's rings, live: earlier writing today + this session. */}
       {!focus ? <LiveRings goal={dailyGoal} totals={todayTotals} clock={paused ? 'paused' : 'running'} /> : null}
 
-      {reach && liveStats ? <ReachNote reach={reach} stats={liveStats} onClose={hideReach} /> : null}
+      {/* (Not during the app tour, so it can't crowd the tour's tip.) */}
+      {reach && liveStats && !tourRun ? <ReachNote reach={reach} stats={liveStats} onClose={hideReach} /> : null}
 
       {/* Paused (by you or after a quiet minute): typing picks it back up.
           Shown even in Focus mode, since the clock matters there too. */}
@@ -586,6 +588,10 @@ export default function BrainstormWriterScreen({ navigation, route }) {
           <Text style={s.chipText}>✦ Stuck? Try a prompt</Text>
         </Pressable>
       ) : null}
+
+      {/* The app tour's tip, in the page under the rings and prompt (so it
+          never covers your words, the rings or "Paused"). */}
+      <TourInline />
 
       <TourTarget id="writer.page" style={{ flex: 1 }}>
       {ready ? (

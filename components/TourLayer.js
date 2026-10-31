@@ -17,6 +17,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFonts, Caveat_600SemiBold } from '@expo-google-fonts/caveat';
+import Svg, { Circle } from 'react-native-svg';
 import { BlackPen, PEN, TIP } from './IntroSplash';
 import { colors, isDark } from '../theme';
 import Medal from './Medal';
@@ -220,6 +221,19 @@ export default function TourLayer({ host = 'root' }) {
     );
   }
 
+  // Tips shown inside the page (the writing page: TourInline): no dimming
+  // and no floating bubble, just the pulsing "tap here" marks.
+  if (step.inline) {
+    if (!markRects || !markRects.length) return null;
+    return (
+      <View style={StyleSheet.absoluteFill} pointerEvents="none">
+        {markRects.map((r, i) => (
+          <Animated.View key={`m${i}`} style={[c.abs, c.mark, { left: r.x - 5, top: r.y - 5, width: r.w + 10, height: r.h + 10, borderRadius: step.markRound ?? 999, opacity: pulse }]} />
+        ))}
+      </View>
+    );
+  }
+
   // The spotlight (around every ring spot, when there are several).
   let box = rect;
   if (ringRects && ringRects.length) {
@@ -229,10 +243,11 @@ export default function TourLayer({ host = 'root' }) {
     const y2 = Math.max(...ringRects.map((r) => r.y + r.h));
     box = { x: x1, y: y1, w: x2 - x1, h: y2 - y1 };
   }
+  const growTop = step.growTop || 0;
   const hx = Math.max(0, box.x - PAD);
-  const hy = Math.max(0, box.y - PAD);
+  const hy = Math.max(0, box.y - PAD - growTop);
   const hw = Math.min(W - hx, box.w + PAD * 2);
-  const hh = box.h + PAD * 2;
+  const hh = box.h + PAD * 2 + growTop;
   const dim = step.free ? null : `${DIM}${step.dim ?? 0.62})`;
   const block = () => true;
 
@@ -289,7 +304,7 @@ export default function TourLayer({ host = 'root' }) {
 // ---------------------------------------------------------------------------
 // The speech bubble.
 // ---------------------------------------------------------------------------
-function Bubble({ run, step, lost }) {
+export function Bubble({ run, step, lost, inline }) {
   const chapters = getTourChapters();
   const chapter = chapters[run.ch];
   const steps = chapter.steps.filter((x) => x.kind !== 'welcome');
@@ -307,7 +322,7 @@ function Bubble({ run, step, lost }) {
     return () => clearTimeout(id);
   }, [done]);
   return (
-    <View style={c.bubble} accessibilityLiveRegion="polite">
+    <View style={[c.bubble, inline && c.bubbleInline]} accessibilityLiveRegion="polite">
       <View style={c.head}>
         <Text style={c.kick} numberOfLines={1}>CHAPTER {run.ch + 1} · {chapter.title.toUpperCase()}</Text>
         <View style={c.dots}>
@@ -317,7 +332,7 @@ function Bubble({ run, step, lost }) {
           <Ionicons name="close" size={15} color="#5A6484" />
         </Pressable>
       </View>
-      {title ? <Text style={c.title}>{title}</Text> : null}
+      {title ? <Text style={[c.title, inline && { fontSize: 14.5, marginTop: 3 }]}>{title}</Text> : null}
       {lost
         ? <Text style={c.text}>This part of the app isn't on screen right now, so this step can't be shown. You can skip it.</Text>
         : text ? <Text style={c.text}>{text}</Text> : null}
@@ -330,7 +345,9 @@ function Bubble({ run, step, lost }) {
             </Text>
             {!done && run.progress ? <Text style={c.prog}>{run.progress}</Text> : null}
           </View>
-          <View style={[c.check, done && c.checkOn]}>{done ? <Ionicons name="checkmark" size={14} color="#1E7B3A" /> : null}</View>
+          {!done && run.frac != null ? <ProgressRing frac={run.frac} /> : (
+            <View style={[c.check, done && c.checkOn]}>{done ? <Ionicons name="checkmark" size={14} color="#1E7B3A" /> : null}</View>
+          )}
         </View>
       ) : null}
       <View style={c.foot}>
@@ -353,6 +370,32 @@ function Bubble({ run, step, lost }) {
           </Pressable>
         ) : null}
       </View>
+    </View>
+  );
+}
+
+// How far along the task is (5 words, 3 levels…), as a small filling ring.
+function ProgressRing({ frac }) {
+  const r = 10;
+  const len = 2 * Math.PI * r;
+  const f = Math.max(0, Math.min(1, frac));
+  return (
+    <Svg width={26} height={26} viewBox="0 0 26 26">
+      <Circle cx={13} cy={13} r={r} stroke="rgba(255,255,255,0.25)" strokeWidth={3.5} fill="none" />
+      <Circle cx={13} cy={13} r={r} stroke="#6FD49A" strokeWidth={3.5} fill="none" strokeLinecap="round" strokeDasharray={`${len * f} ${len}`} rotation={-90} origin="13, 13" />
+    </Svg>
+  );
+}
+
+// The tip inside the writing page (under the rings and the prompt), for
+// steps marked inline, so it never covers your words, rings or "Paused".
+export function TourInline() {
+  const run = useRun();
+  const step = stepOf(run);
+  if (!run || run.min || !step || !step.inline) return null;
+  return (
+    <View style={{ marginHorizontal: 14, marginBottom: 8 }}>
+      <Bubble run={run} step={step} inline />
     </View>
   );
 }
@@ -398,7 +441,8 @@ function WrittenTagline({ play }) {
   const ink = isDark() ? '#F4F6FB' : '#16171C';
   const font = fontsLoaded ? { fontFamily: 'Caveat_600SemiBold' } : { fontStyle: 'italic', fontFamily: Platform.select({ ios: 'Georgia', default: 'serif' }) };
   const revealW = write.interpolate({ inputRange: [0, 1], outputRange: [0, textW + OVERHANG] });
-  const penX = write.interpolate({ inputRange: [0, 1], outputRange: [-TIP.x, textW - TIP.x] });
+  // The pen writes the words, then carries on past the full stop.
+  const penX = write.interpolate({ inputRange: [0, 1], outputRange: [-TIP.x, textW + DOT_GAP + 14 - TIP.x] });
   const penY = wobble.interpolate({ inputRange: [0, 1], outputRange: [0, -3] });
   const penTurn = wobble.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-4deg'] });
   return (
@@ -523,6 +567,7 @@ const c = StyleSheet.create({
   mark: { borderWidth: 3, borderColor: GOLD, backgroundColor: 'rgba(242,193,78,0.10)' },
   ringGlow: { margin: -6, borderWidth: 4, borderColor: 'rgba(242,193,78,0.28)' },
   centerWrap: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', paddingHorizontal: 18 },
+  bubbleInline: { paddingTop: 9, paddingBottom: 6, shadowOpacity: 0.18, shadowRadius: 8, elevation: 3, borderWidth: 1.5, borderColor: GOLD },
   bubble: {
     backgroundColor: '#FFFDF8', borderRadius: 18, paddingHorizontal: 14, paddingTop: 11, paddingBottom: 10,
     shadowColor: '#000', shadowOpacity: 0.35, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 12,

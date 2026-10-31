@@ -64,7 +64,7 @@ let advanceTimer = null;
 export function startChapter(idx) {
   clearTimeout(advanceTimer);
   if (!CHAPTERS[idx]?.steps) return;
-  set({ ch: idx, step: 0, phase: 'step', data: {}, progress: '', taskDone: false, min: false });
+  set({ ch: idx, step: 0, phase: 'step', data: {}, progress: '', frac: null, taskDone: false, min: false });
   enter();
 }
 
@@ -75,7 +75,7 @@ function enter() {
   while (st && st.skipIf && safe(st.skipIf)) {
     const steps = CHAPTERS[run.ch].steps;
     if (run.step + 1 >= steps.length) { finishChapter(); return; }
-    set({ ...run, step: run.step + 1, data: {}, progress: '', taskDone: false, min: false });
+    set({ ...run, step: run.step + 1, data: {}, progress: '', frac: null, taskDone: false, min: false });
     st = stepOf();
   }
   if (st?.go && goTo) goTo(st.go);
@@ -93,7 +93,7 @@ export function nextStep() {
   if (!run) return;
   const steps = CHAPTERS[run.ch].steps;
   if (run.step + 1 < steps.length) {
-    set({ ...run, step: run.step + 1, phase: 'step', data: {}, progress: '', taskDone: false, min: false });
+    set({ ...run, step: run.step + 1, phase: 'step', data: {}, progress: '', frac: null, taskDone: false, min: false });
     enter();
   } else finishChapter();
 }
@@ -124,7 +124,7 @@ export function prevStep() {
   const i = backIndex();
   if (i < 0) return;
   clearTimeout(advanceTimer);
-  set({ ...run, step: i, phase: 'step', data: {}, progress: '', taskDone: false, min: false });
+  set({ ...run, step: i, phase: 'step', data: {}, progress: '', frac: null, taskDone: false, min: false });
   const st = stepOf();
   if (st?.tab && goTo) goTo({ tab: st.tab });
 }
@@ -149,7 +149,8 @@ export function stopTour() {
 // The real app reports what happened: tourEvent('sheet-open', 'settings'),
 // tourEvent('tab', 'Calendar'), tourEvent('words', 7)…
 // A step's on(name, value, data) answers true / false, or
-// { done, progress, data } to show progress ("3 of 5 tabs seen").
+// { done, progress, data, frac } to show progress ("3 of 5 tabs seen";
+// frac 0–1 fills the little ring in the bubble).
 export function tourEvent(name, value) {
   if (!run || run.phase !== 'step' || run.taskDone) return;
   const st = stepOf();
@@ -162,6 +163,7 @@ export function tourEvent(name, value) {
     ...run,
     data: res.data !== undefined ? res.data : run.data,
     progress: res.progress !== undefined ? res.progress : run.progress,
+    frac: res.frac !== undefined ? res.frac : run.frac,
     taskDone: !!res.done,
   });
   // manual steps wait for "Next ›" (time to read, or to keep writing).

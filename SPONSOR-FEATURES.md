@@ -723,3 +723,11 @@ No new behaviour: this zip has every file the on-app tour touches (rounds 56–5
 - **↻ Refresh:** as many times as you like, then **Ready to go on ›**.
 - **Focus mode:** write 5 words in Focus mode first, then Exit focus.
 - **✕ on the bubble now tucks the tour away** instead of ending it: a small gold "Tour" pill stays at the top (tap it to bring the bubble back, or End). The tour keeps listening, so e.g. tapping Finish & check in moves it on and the next step appears by itself.
+
+## Round 62 — tour tips inside the writing page
+
+- **On the writing page the tips are part of the page**, sitting under the rings and the prompt, instead of floating over it. They no longer hide your words, the rings, Focus mode or the "Paused" note. Buttons to tap (✦ Prompt, level, Refresh, Aa, Exit focus, Pause, Finish) get a pulsing gold ring. This also fixes the tip not showing the first time the page opens.
+- **A little ring fills as you go** in the "Your turn" bar (5 words, 3 levels, 5 tabs, 3 posts). The rings at the top of the writing page stay visible and update live too.
+- The "Almost there!" medal note stays hidden while the tour runs.
+- The spotlight on the raised pencil (Brainstorm) is taller, so the circle isn't cut off.
+- The welcome's pen now carries on past the full stop.
