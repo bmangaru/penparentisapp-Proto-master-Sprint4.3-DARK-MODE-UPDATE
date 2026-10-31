@@ -22,7 +22,7 @@ import { colors, isDark } from '../theme';
 import Medal from './Medal';
 import { MEDALS } from '../medals';
 import {
-  backIndex, getTarget, getTourChapters, nextStep, prevStep, startChapter, stepOf, stopTour, topHost, useRun,
+  backIndex, getTarget, tourEvent, getTourChapters, nextStep, prevStep, startChapter, stepOf, stopTour, topHost, useRun,
 } from '../tourRun';
 import { openTour, useTour } from '../tour';
 
@@ -38,6 +38,7 @@ export default function TourLayer({ host = 'root' }) {
   const [missing, setMissing] = useState(false);
   const [kb, setKb] = useState(0);
   const [bubbleH, setBubbleH] = useState(0);
+  const [ringRects, setRingRects] = useState(null); // step.rings: outline these spots one by one
   const scrolledFor = useRef(null);
 
   const step = stepOf(run);
@@ -56,6 +57,7 @@ export default function TourLayer({ host = 'root' }) {
     setRect(null);
     setMissing(false);
     setBubbleH(0);
+    setRingRects(null);
     if (!step?.target) return undefined;
     const since = Date.now();
     const tick = () => {
@@ -78,6 +80,30 @@ export default function TourLayer({ host = 'root' }) {
           return;
         }
         setRect((r) => (r && r.x === x && r.y === y && r.w === w && r.h === h ? r : { x, y, w, h }));
+        // "Scroll down to …" steps: done once the spot's top part is on screen
+        // (you scroll yourself; the tour doesn't).
+        if (step.reveal) {
+          if (y >= insets.top && y + Math.min(h, 140) <= H - 96) tourEvent('revealed', step.target);
+          return;
+        }
+        // Several small spots outlined one by one (e.g. the prompt's level and
+        // ↻ Refresh); the bright area is the box around all of them.
+        if (step.rings) {
+          const out = [];
+          let left = step.rings.length;
+          step.rings.forEach((id, i) => {
+            const n = getTarget(id)?.ref.current;
+            if (!n?.measureInWindow) { left -= 1; return; }
+            n.measureInWindow((rx, ry, rw, rh) => {
+              out[i] = { x: rx, y: ry, w: rw, h: rh };
+              left -= 1;
+              if (left === 0) {
+                const list = out.filter(Boolean);
+                setRingRects((prev) => (prev && JSON.stringify(prev) === JSON.stringify(list) ? prev : list));
+              }
+            });
+          });
+        }
         // Below the fold (or under the header)? Scroll the page to it, once.
         if (t.scroll && scrolledFor.current !== key) {
           scrolledFor.current = key;
@@ -118,6 +144,17 @@ export default function TourLayer({ host = 'root' }) {
 
   if (!step) return null;
 
+  // "Scroll down to …": no dimming, so you can scroll; the bubble waits at the top.
+  if (step.reveal) {
+    return (
+      <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+        <View key={key} style={[c.abs, { left: 14, right: 14, top: insets.top + 6 }]}>
+          <Bubble run={run} step={step} />
+        </View>
+      </View>
+    );
+  }
+
   // The spot isn't on screen: say so, and offer Skip.
   if (!rect) {
     if (!missing) return null;
@@ -130,11 +167,19 @@ export default function TourLayer({ host = 'root' }) {
     );
   }
 
-  // The spotlight.
-  const hx = Math.max(0, rect.x - PAD);
-  const hy = Math.max(0, rect.y - PAD);
-  const hw = Math.min(W - hx, rect.w + PAD * 2);
-  const hh = rect.h + PAD * 2;
+  // The spotlight (around every ring spot, when there are several).
+  let box = rect;
+  if (ringRects && ringRects.length) {
+    const x1 = Math.min(...ringRects.map((r) => r.x));
+    const y1 = Math.min(...ringRects.map((r) => r.y));
+    const x2 = Math.max(...ringRects.map((r) => r.x + r.w));
+    const y2 = Math.max(...ringRects.map((r) => r.y + r.h));
+    box = { x: x1, y: y1, w: x2 - x1, h: y2 - y1 };
+  }
+  const hx = Math.max(0, box.x - PAD);
+  const hy = Math.max(0, box.y - PAD);
+  const hw = Math.min(W - hx, box.w + PAD * 2);
+  const hh = box.h + PAD * 2;
   const dim = step.free ? null : `${DIM}${step.dim ?? 0.62})`;
   const block = () => true;
 
@@ -165,7 +210,11 @@ export default function TourLayer({ host = 'root' }) {
       {step.look ? (
         <View style={[c.abs, { left: hx, top: hy, width: hw, height: hh }]} onStartShouldSetResponder={block} />
       ) : null}
-      {ring ? (
+      {ring && ringRects && ringRects.length ? ringRects.map((r, i) => (
+        <View key={i} pointerEvents="none" style={[c.abs, c.ring, { left: r.x - 4, top: r.y - 4, width: r.w + 8, height: r.h + 8, borderRadius: 999 }]}>
+          <View style={[StyleSheet.absoluteFill, c.ringGlow, { borderRadius: 999 }]} />
+        </View>
+      )) : ring ? (
         <View pointerEvents="none" style={[c.abs, c.ring, { left: hx, top: hy, width: hw, height: hh, borderRadius: step.round ?? 14 }]}>
           <View style={[StyleSheet.absoluteFill, c.ringGlow, { borderRadius: (step.round ?? 14) + 4 }]} />
         </View>
@@ -212,7 +261,7 @@ function Bubble({ run, step, lost }) {
           <View style={{ flex: 1 }}>
             <Text style={c.taskText}>
               {done ? <Text style={{ fontWeight: '800' }}>Nice! </Text> : <Text style={c.your}>Your turn: </Text>}
-              {done ? (step.doneText || 'On to the next bit…') : step.task}
+              {done ? (step.doneText || (step.manual ? 'Tap Next when you’re ready.' : 'On to the next bit…')) : step.task}
             </Text>
             {!done && run.progress ? <Text style={c.prog}>{run.progress}</Text> : null}
           </View>
@@ -225,7 +274,11 @@ function Bubble({ run, step, lost }) {
             <Text style={c.skip}>‹ Back</Text>
           </Pressable>
         ) : null}
-        {step.info && !lost ? (
+        {done && step.manual && !lost ? (
+          <Pressable onPress={nextStep} style={({ pressed }) => [c.got, pressed && { opacity: 0.85 }]} accessibilityRole="button">
+            <Text style={c.gotText}>{step.nextLabel || 'Next ›'}</Text>
+          </Pressable>
+        ) : step.info && !lost ? (
           <Pressable onPress={nextStep} style={({ pressed }) => [c.got, pressed && { opacity: 0.85 }]} accessibilityRole="button">
             <Text style={c.gotText}>Got it ›</Text>
           </Pressable>

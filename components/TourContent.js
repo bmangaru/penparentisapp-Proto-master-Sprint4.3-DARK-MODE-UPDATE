@@ -8,7 +8,9 @@
 //   appears later, e.g. in a sheet), hold (ms before moving on), doneText.
 //   tab (the step's spot is on that tab: ‹ Back goes there), look (the spot
 //   can't be tapped, just looked at), lock (the sheet can't be closed),
-//   skipIf() (skip the step when it doesn't apply).
+//   skipIf() (skip the step when it doesn't apply), manual (wait for Next ›
+//   once done, label nextLabel), rings ([ids] outlined one by one),
+//   reveal (you scroll down to the spot yourself; done when it's on screen).
 // The last three chapters are still cards in a full-screen page
 // (TourModal.js), until they're moved onto the app too: a picture (art)
 // drawn with the app's own pieces, a title, a few plain sentences, and
@@ -201,7 +203,7 @@ export const CHAPTERS = [
         target: 'tabbar', dim: 0.3, round: 0,
         title: (d) => (d.last ? d.last : 'Five tabs'),
         text: (d) => (d.last ? TAB_INFO[d.last] : 'The tab bar is always at the bottom of the app. The round pencil in the middle is where you write.'),
-        task: 'Tap each tab at the bottom to open it.', doneText: 'You’ve seen all five tabs.', hold: 2200,
+        task: 'Tap each tab at the bottom to open it.', doneText: 'You’ve seen all five tabs.', manual: true,
         on: (ev, v, d) => {
           if (ev !== 'tab' || !TAB_INFO[v]) return null;
           const seen = { ...(d.seen || {}), [v]: true };
@@ -279,7 +281,7 @@ export const CHAPTERS = [
       {
         target: 'writer.page', free: true, place: 'bottom', wait: true,
         title: 'Just write', text: 'Anything on your mind: a line, a memory, an idea. The clock runs while you type and the rings fill as you go.',
-        task: 'Write at least 5 words.', doneText: 'That’s your first entry started.',
+        task: 'Write at least 5 words.', doneText: 'Keep writing as long as you like.', manual: true, nextLabel: 'I’m ready to go on ›',
         on: (ev, v) => (ev === 'words' ? { progress: `${Math.min(v, 5)} of 5 words`, done: v >= 5 } : null),
       },
     ],
@@ -294,7 +296,7 @@ export const CHAPTERS = [
         task: 'Tap ✦ Prompt.', on: (ev) => ev === 'prompt-show',
       },
       {
-        target: 'writer.promptCard', wait: true,
+        target: 'writer.level', rings: ['writer.level', 'writer.refresh'], wait: true,
         text: 'Tap the level to switch between Simple, Thoughtful and Deep, or ↻ Refresh for a new one.',
         task: 'Change the level, then tap ↻ Refresh.',
         on: (ev, v, d) => {
@@ -331,7 +333,7 @@ export const CHAPTERS = [
       {
         target: 'writer.page', free: true, place: 'bottom', wait: true,
         text: 'Paused. When you’re back, just type: the clock picks up again, no button needed.',
-        task: 'Type a word to start the clock again.', doneText: 'Back on the clock.',
+        task: 'Type a word to start the clock again.', doneText: 'Back on the clock. Keep going, or tap Next.', manual: true,
         on: (ev) => ev === 'resume',
       },
     ],
@@ -358,9 +360,32 @@ export const CHAPTERS = [
     ],
   },
   {
-    id: 'medals', title: 'Medals', short: 'Medals', sub: 'Bronze, Silver, Gold, Diamond',
+    id: 'medals', title: 'Your week, writing & medals', short: 'Week & medals', sub: 'This week, everything you wrote, medals',
     steps: [
-      tapTab('Brainstorm', 'Brainstorm', 'Your medals are on Brainstorm too.'),
+      tapTab('Brainstorm', 'Brainstorm', 'There’s more on Brainstorm below the button: your week, everything you’ve written, and your medals.'),
+      {
+        target: 'bs.week', reveal: true, hold: 500,
+        text: 'Brainstorm keeps going below Start writing.', task: 'Swipe up to scroll down to This week.',
+        on: (ev, v) => ev === 'revealed' && v === 'bs.week',
+      },
+      {
+        target: 'bs.week', tab: 'Brainstorm', info: true, look: true,
+        title: 'Your week at a glance', text: 'Seven sets of rings, Sunday to Saturday, with the week’s totals underneath. Tip: a day with all three rings closed is a day you met your goal. Tap any day to read it.',
+      },
+      {
+        target: 'bs.history', reveal: true, hold: 500,
+        text: 'Keep going.', task: 'Scroll down to Your writing.',
+        on: (ev, v) => ev === 'revealed' && v === 'bs.history',
+      },
+      {
+        target: 'bs.history', tab: 'Brainstorm', info: true, look: true,
+        title: 'Everything you’ve written', text: 'It’s all saved on your phone. Each day you wrote this week has a card with how you felt; tap one to read it. “See all my writing” has every day, by week.',
+      },
+      {
+        target: 'bs.medals', reveal: true, hold: 500,
+        text: 'Last one, at the very bottom.', task: 'Scroll down to Medals.',
+        on: (ev, v) => ev === 'revealed' && v === 'bs.medals',
+      },
       {
         target: 'bs.medals', tab: 'Brainstorm', info: true, look: true,
         title: 'Your medals', text: 'Medals live here, at the bottom of Brainstorm. You earn them for words, time, sessions, streaks and goals met, plus a few for your words themselves.',
