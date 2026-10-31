@@ -714,3 +714,12 @@ How it's built: `tourRun.js` (the run), `components/TourTarget.js` (marks a spot
 ## Round 60 — one full set of the tour files
 
 No new behaviour: this zip has every file the on-app tour touches (rounds 56–59), so no file is left at an older version. In particular `tourRun.js` is the file that makes "tap all 5 tabs" and "write 5 words" wait for **Next ›** / **I'm done writing ›** instead of moving on by themselves.
+
+## Round 61 — tour: smoother flow, try every prompt level, ✕ tucks the tour away
+
+- **Socials:** look only ("Got it ›"); no need to leave the app.
+- **Edit goals** pulses gold on the Today card; on **My usual** only the **Save** button gets the gold ring (not the whole sheet).
+- **Prompt levels:** try all three (Simple, Thoughtful, Deep, "2 of 3 levels"), then **Ready to go on ›**.
+- **↻ Refresh:** as many times as you like, then **Ready to go on ›**.
+- **Focus mode:** write 5 words in Focus mode first, then Exit focus.
+- **✕ on the bubble now tucks the tour away** instead of ending it: a small gold "Tour" pill stays at the top (tap it to bring the bubble back, or End). The tour keeps listening, so e.g. tapping Finish & check in moves it on and the next step appears by itself.

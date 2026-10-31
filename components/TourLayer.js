@@ -22,7 +22,7 @@ import { colors, isDark } from '../theme';
 import Medal from './Medal';
 import { MEDALS } from '../medals';
 import {
-  backIndex, getRun, getTarget, tourEvent, getTourChapters, nextStep, prevStep, startChapter, stepOf, stopTour, topHost, useRun,
+  backIndex, getRun, getTarget, tourEvent, getTourChapters, minimizeTour, nextStep, prevStep, startChapter, stepOf, stopTour, topHost, useRun,
 } from '../tourRun';
 import { openTour, useTour } from '../tour';
 
@@ -163,6 +163,24 @@ export default function TourLayer({ host = 'root' }) {
   const chapter = chapters[run.ch];
   if (!chapter) return null;
 
+  // Tucked away (✕): just a small pill to bring it back, or end the tour.
+  if (run.min && run.phase === 'step') {
+    if (topHost() !== host) return null;
+    return (
+      <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+        <View style={[c.pill, { top: insets.top + 2 }]}>
+          <Pressable onPress={() => minimizeTour(false)} hitSlop={8} style={c.pillMain} accessibilityRole="button" accessibilityLabel="Show the tour again">
+            <Ionicons name="compass-outline" size={15} color="#0A1633" />
+            <Text style={c.pillText}>Tour</Text>
+          </Pressable>
+          <Pressable onPress={stopTour} hitSlop={8} style={c.pillEnd} accessibilityRole="button" accessibilityLabel="End the tour">
+            <Text style={c.pillEndText}>End</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
+
   // Centred cards: drawn in the newest open sheet (or over the app).
   const centred = run.phase === 'done' || (step && !step.target);
   if (centred) {
@@ -295,7 +313,7 @@ function Bubble({ run, step, lost }) {
         <View style={c.dots}>
           {steps.map((_, i) => <View key={i} style={[c.dot, i < at && c.dotDone, i === at && c.dotOn]} />)}
         </View>
-        <Pressable onPress={stopTour} hitSlop={10} style={c.x} accessibilityRole="button" accessibilityLabel="Leave the tour">
+        <Pressable onPress={() => minimizeTour(true)} hitSlop={10} style={c.x} accessibilityRole="button" accessibilityLabel="Hide the tour for now">
           <Ionicons name="close" size={15} color="#5A6484" />
         </Pressable>
       </View>
@@ -496,6 +514,12 @@ function DoneCard({ ch, earned }) {
 const c = StyleSheet.create({
   abs: { position: 'absolute' },
   ring: { borderWidth: 2.5, borderColor: GOLD },
+  // The tucked-away tour: a small gold pill, top centre.
+  pill: { position: 'absolute', alignSelf: 'center', flexDirection: 'row', alignItems: 'center', backgroundColor: GOLD, borderRadius: 999, paddingLeft: 12, paddingRight: 4, paddingVertical: 4, gap: 8, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 6, shadowOffset: { width: 0, height: 3 }, elevation: 8 },
+  pillMain: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  pillText: { fontSize: 13, fontWeight: '800', color: '#0A1633' },
+  pillEnd: { backgroundColor: 'rgba(10,22,51,0.15)', borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 },
+  pillEndText: { fontSize: 11.5, fontWeight: '800', color: '#0A1633' },
   mark: { borderWidth: 3, borderColor: GOLD, backgroundColor: 'rgba(242,193,78,0.10)' },
   ringGlow: { margin: -6, borderWidth: 4, borderColor: 'rgba(242,193,78,0.28)' },
   centerWrap: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', paddingHorizontal: 18 },

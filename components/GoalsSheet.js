@@ -6,6 +6,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
 import { PadValue, useNumberPad } from './NumberPad';
 import Sheet from './Sheet';
+import TourTarget from './TourTarget';
 import { isTourTarget, tourEvent, useRun } from '../tourRun';
 import Rings, { RING_COLORS } from './Rings';
 import { colors, radius, space, themed } from '../theme';
@@ -172,9 +173,11 @@ export default function GoalsSheet({ visible, goals, firstTime, kind = 'usual', 
 
       {/* Hidden while the number pad is open; Done brings it back. */}
       {!pad.active ? (
-        <Pressable style={s.save} onPress={save}>
-          <Text style={s.saveText}>{firstTime ? 'Save goals' : 'Save'}</Text>
-        </Pressable>
+        <TourTarget id="goals.save" style={{ marginTop: space.md }}>
+          <Pressable style={s.save} onPress={save}>
+            <Text style={s.saveText}>{firstTime ? 'Save goals' : 'Save'}</Text>
+          </Pressable>
+        </TourTarget>
       ) : null}
     </Sheet>
   );
@@ -199,6 +202,6 @@ const s = themed(() => ({
   stepOff: { opacity: 0.3 },
   stepText: { fontSize: 20, color: colors.ink, lineHeight: 22 },
   value: { minWidth: 58, textAlign: 'center', fontSize: 16, fontWeight: '800', color: colors.ink, paddingVertical: 4 },
-  save: { backgroundColor: colors.royal, borderRadius: radius.md, minHeight: 50, alignItems: 'center', justifyContent: 'center', marginTop: space.md },
+  save: { backgroundColor: colors.royal, borderRadius: radius.md, minHeight: 50, alignItems: 'center', justifyContent: 'center' },
   saveText: { color: '#FFFFFF', fontWeight: '700', fontSize: 14.5 },
 }));

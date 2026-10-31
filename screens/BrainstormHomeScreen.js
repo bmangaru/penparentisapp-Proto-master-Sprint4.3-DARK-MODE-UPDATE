@@ -176,9 +176,11 @@ export default function BrainstormHomeScreen({ navigation, route }) {
           <View style={s.todayHead}>
             <Text style={s.todayLabel}>Today · {todayLabel}{rest ? ' · rest day' : ''}</Text>
             {/* One link: today's goal and your usual goals, in one sheet. */}
-            <Pressable onPress={() => openPlan('edit')} hitSlop={8} accessibilityRole="button">
-              <Text style={s.todayLink}>Edit goals</Text>
-            </Pressable>
+            <TourTarget id="bs.editGoals">
+              <Pressable onPress={() => openPlan('edit')} hitSlop={8} accessibilityRole="button">
+                <Text style={s.todayLink}>Edit goals</Text>
+              </Pressable>
+            </TourTarget>
           </View>
           <RingStats summary={todaySum} rings={rings} off={rest} playKey={playKey} />
         </LinearGradient>

@@ -64,7 +64,7 @@ let advanceTimer = null;
 export function startChapter(idx) {
   clearTimeout(advanceTimer);
   if (!CHAPTERS[idx]?.steps) return;
-  set({ ch: idx, step: 0, phase: 'step', data: {}, progress: '', taskDone: false });
+  set({ ch: idx, step: 0, phase: 'step', data: {}, progress: '', taskDone: false, min: false });
   enter();
 }
 
@@ -75,7 +75,7 @@ function enter() {
   while (st && st.skipIf && safe(st.skipIf)) {
     const steps = CHAPTERS[run.ch].steps;
     if (run.step + 1 >= steps.length) { finishChapter(); return; }
-    set({ ...run, step: run.step + 1, data: {}, progress: '', taskDone: false });
+    set({ ...run, step: run.step + 1, data: {}, progress: '', taskDone: false, min: false });
     st = stepOf();
   }
   if (st?.go && goTo) goTo(st.go);
@@ -84,7 +84,7 @@ const safe = (fn) => { try { return !!fn(); } catch { return false; } };
 
 function finishChapter() {
   const ch = run.ch;
-  set({ ...run, phase: 'done', earned: null });
+  set({ ...run, phase: 'done', earned: null, min: false });
   if (chapterDone) chapterDone(ch);
 }
 
@@ -93,7 +93,7 @@ export function nextStep() {
   if (!run) return;
   const steps = CHAPTERS[run.ch].steps;
   if (run.step + 1 < steps.length) {
-    set({ ...run, step: run.step + 1, phase: 'step', data: {}, progress: '', taskDone: false });
+    set({ ...run, step: run.step + 1, phase: 'step', data: {}, progress: '', taskDone: false, min: false });
     enter();
   } else finishChapter();
 }
@@ -124,7 +124,7 @@ export function prevStep() {
   const i = backIndex();
   if (i < 0) return;
   clearTimeout(advanceTimer);
-  set({ ...run, step: i, phase: 'step', data: {}, progress: '', taskDone: false });
+  set({ ...run, step: i, phase: 'step', data: {}, progress: '', taskDone: false, min: false });
   const st = stepOf();
   if (st?.tab && goTo) goTo({ tab: st.tab });
 }
@@ -132,6 +132,13 @@ export function prevStep() {
 // A Tour Guide tier earned by the chapter just finished (shown on its card).
 export function setTourEarned(tiers) {
   if (run && run.phase === 'done') set({ ...run, earned: tiers });
+}
+
+// ✕ on the bubble tucks the tour away (a small "Tour" pill stays) so you
+// can carry on using the app; it keeps listening, so doing the task (e.g.
+// tapping Finish & check in) still moves it on, and the next step shows again.
+export function minimizeTour(on = true) {
+  if (run) set({ ...run, min: on });
 }
 
 export function stopTour() {

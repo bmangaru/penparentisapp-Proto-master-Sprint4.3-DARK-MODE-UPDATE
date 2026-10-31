@@ -230,8 +230,8 @@ export const CHAPTERS = [
       },
       {
         target: 'home.socials', tab: 'Home',
-        title: 'The website and socials', text: 'Visit penparentis.org, or follow Pen Parentis. Each button shows the account it opens.',
-        task: 'Tap one to see where it goes, then come back.', on: (ev) => ev === 'link-open',
+        info: true, look: true,
+        title: 'The website and socials', text: 'Visit penparentis.org, or follow Pen Parentis on Facebook, Instagram, LinkedIn, X and Bluesky. Each button shows the account it opens.',
       },
       {
         target: 'home.supporters', tab: 'Home', info: true, look: true,
@@ -244,7 +244,7 @@ export const CHAPTERS = [
     steps: [
       tapTab('Brainstorm', 'Brainstorm', 'The pencil is Brainstorm: your goals, your rings and all your writing.'),
       {
-        target: 'bs.today', tab: 'Brainstorm',
+        target: 'bs.today', tab: 'Brainstorm', marks: ['bs.editGoals'], markRound: 8,
         title: 'Your three rings', text: 'Minutes writing, words written and sessions (times you sat down). They fill as you write and close when you meet the day’s goal.',
         task: 'Tap Edit goals.', on: (ev, v) => ev === 'sheet-open' && v === 'plan',
       },
@@ -254,7 +254,7 @@ export const CHAPTERS = [
         task: 'Tap Edit on My usual.', on: (ev, v) => ev === 'sheet-open' && v === 'goals',
       },
       {
-        target: 'goals.card', wait: true, lock: true, round: 20,
+        target: 'goals.card', wait: true, lock: true, noRing: true, marks: ['goals.save'], markRound: 16,
         text: 'Change each ring’s goal with − and +, or tap a number and type it.',
         task: 'Set your goals, then tap Save.', doneText: 'Saved. Those are your goals.',
         on: (ev) => {
@@ -303,13 +303,19 @@ export const CHAPTERS = [
       {
         target: 'writer.promptCard', wait: true, noRing: true, marks: ['writer.level'],
         title: 'How deep?', text: 'The button on the left is the prompt’s level. Each tap switches it: Simple, then Thoughtful, then Deep. Deeper prompts ask more of you.',
-        task: 'Tap the level to switch it.', hold: 1200, doneText: 'New level, new prompt.',
-        on: (ev) => ev === 'prompt-level',
+        task: 'Tap the level to try all three: Simple, Thoughtful and Deep.',
+        doneText: 'You’ve tried all three. Pick the one you like, then go on.', manual: true, nextLabel: 'Ready to go on ›',
+        on: (ev, v, d) => {
+          if (ev !== 'prompt-level') return null;
+          const seen = { ...(d.seen || {}), [v]: true };
+          const n = Object.keys(seen).length;
+          return { data: { seen }, progress: `${n} of 3 levels`, done: n >= 3 };
+        },
       },
       {
         target: 'writer.promptCard', wait: true, noRing: true, marks: ['writer.refresh'],
         title: 'Not this one?', text: '↻ Refresh gives you another prompt at the same level. Whatever you write next is saved with the prompt on screen.',
-        task: 'Tap ↻ Refresh.', hold: 1200, doneText: 'A fresh prompt.',
+        task: 'Tap ↻ Refresh.', doneText: 'Refresh as many times as you like, then go on.', manual: true, nextLabel: 'Ready to go on ›',
         on: (ev) => ev === 'prompt-refresh',
       },
       {
@@ -327,8 +333,19 @@ export const CHAPTERS = [
         },
       },
       {
-        target: 'writer.exitFocus', wait: true, round: 999,
-        text: 'That’s Focus mode: just you and your words. The clock still runs.',
+        target: 'writer.page', free: true, place: 'bottom', wait: true, skipIf: () => !getTarget('writer.exitFocus'),
+        title: 'Focus mode', text: 'Just you and your words. The clock still runs.',
+        task: 'Write 5 words in Focus mode.', doneText: 'Nice and quiet. Keep going, or go on.', manual: true,
+        on: (ev, v, d) => {
+          if (ev !== 'words') return null;
+          const base = d.base ?? v - 1; // words before this step
+          const n = v - base;
+          return { data: { base }, progress: `${Math.min(n, 5)} of 5 words`, done: n >= 5 };
+        },
+      },
+      {
+        target: 'writer.exitFocus', wait: true, round: 999, skipIf: () => !getTarget('writer.exitFocus'),
+        text: 'When you want the clock, prompts and tools back, leave Focus mode.',
         task: 'Tap ⤡ Exit focus.', on: (ev) => ev === 'focus-off',
       },
       {
