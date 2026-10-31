@@ -42,12 +42,14 @@ export default function ShareCalendarSheet({ visible, onClose, sessions = [], da
   // Picture width: the sheet's width less its padding.
   const imgW = Math.min(width, 520) - 44;
   const inner = imgW - 32;
-  // This month and 3 months use the small month size (3 to a row; one month
-  // sits on its own, centred). 6 months uses bigger months, 2 to a row.
+  // This month: one month across the full width, with the small rings of the
+  // 3-month view spread out (so it stays short). 3 months: 3 to a row.
+  // 6 months: bigger months, 2 to a row.
   const perRow = range === '6months' ? 2 : 3;
   const gap = 10;
-  const monthW = (inner - gap * (perRow - 1)) / perRow;
-  const ring = Math.floor(monthW / 7) - 2;
+  const smallW = (inner - gap * (perRow - 1)) / perRow;
+  const monthW = range === 'month' ? inner : smallW;
+  const ring = Math.floor(smallW / 7) - 2;
 
   async function share() {
     if (busy) return;
@@ -95,11 +97,11 @@ export default function ShareCalendarSheet({ visible, onClose, sessions = [], da
             </View>
           ) : <View style={{ height: 10 }} />}
 
-          <View style={[s.months, { gap }, range === 'month' && { justifyContent: 'center' }]}>
+          <View style={[s.months, { gap }]}>
             {months.map((m) => (
               <View key={`${m.year}-${m.month}`} style={{ width: monthW }}>
-                <Text style={[s.mon, perRow === 3 && { fontSize: 9 }]}>
-                  {new Date(m.year, m.month, 1).toLocaleDateString('en-US', { month: perRow === 3 ? 'short' : 'long' }).toUpperCase()}
+                <Text style={[s.mon, perRow === 3 && range !== 'month' && { fontSize: 9 }]}>
+                  {new Date(m.year, m.month, 1).toLocaleDateString('en-US', { month: perRow === 3 && range !== 'month' ? 'short' : 'long' }).toUpperCase()}
                 </Text>
                 {monthGrid(m.year, m.month).map((row, r) => (
                   <View key={r} style={s.week}>
