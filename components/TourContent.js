@@ -10,7 +10,11 @@
 //   can't be tapped, just looked at), lock (the sheet can't be closed),
 //   skipIf() (skip the step when it doesn't apply), manual (wait for Next ›
 //   once done, label nextLabel), rings ([ids] outlined one by one),
-//   reveal (you scroll down to the spot yourself; done when it's on screen).
+//   reveal (you scroll down to the spot yourself; done when it's on screen),
+//   section ('Title': a new numbered section starts here), jump: false (a
+//   section that can't be started on its own, e.g. inside a sheet: the
+//   chapter list starts it from the section before), freshLine (writing
+//   steps: start on a new line with the keyboard up).
 // The last three chapters are still cards in a full-screen page
 // (TourModal.js), until they're moved onto the app too: a picture (art)
 // drawn with the app's own pieces, a title, a few plain sentences, and
@@ -172,8 +176,8 @@ export const CHAPTERS = [
     steps: [
       { kind: 'welcome', go: { tab: 'Home' }, section: 'Welcome' },
       {
-        target: 'home.settings', tab: 'Home', round: 20, section: 'Light or dark',
-        title: 'Light or dark first?', text: 'Settings lives here on Home. It’s where you choose how the app looks.',
+        target: 'home.settings', tab: 'Home', round: 20, section: 'Settings',
+        text: 'Settings lives here on Home: how the app looks, and this tour.',
         task: 'Tap ⚙ Settings.', on: (ev, v) => ev === 'sheet-open' && v === 'settings',
       },
       {
@@ -210,7 +214,7 @@ export const CHAPTERS = [
       tapTab('Home', 'Back to Home', 'Every chapter starts from the tab bar, so you get to know where everything is.', { section: 'From the blog' }),
       {
         target: 'home.blog', tab: 'Home',
-        title: 'From the blog', text: 'The newest posts from penparentis.org. Tap a post to read it right in the app. (Normally the posts move on by themselves every 10 seconds; that’s paused for the tour.)',
+        text: 'The newest posts from penparentis.org. Tap a post to read it right in the app. (Normally the posts move on by themselves every 10 seconds; that’s paused for the tour.)',
         task: 'Swipe, or tap the arrows, to see 3 posts.', marks: ['blog.prev', 'blog.next'],
         on: (ev, v, d) => {
           if (ev !== 'blog-index') return null;
@@ -223,11 +227,11 @@ export const CHAPTERS = [
       {
         target: 'home.socials', tab: 'Home', section: 'Website & socials',
         info: true, look: true,
-        title: 'The website and socials', text: 'Visit penparentis.org, or follow Pen Parentis on Facebook, Instagram, LinkedIn, X and Bluesky. Each button shows the account it opens.',
+        text: 'Visit penparentis.org, or follow Pen Parentis on Facebook, Instagram, LinkedIn, X and Bluesky. Each button shows the account it opens.',
       },
       {
         target: 'home.supporters', tab: 'Home', info: true, look: true, section: 'Our supporters',
-        title: 'Our supporters', text: 'Get Karma keeps the salons free. The names scrolling here are the organizations and people who keep Pen Parentis going. Thank you!',
+        text: 'Get Karma keeps the salons free. The names scrolling here are the organizations and people who keep Pen Parentis going. Thank you!',
       },
     ],
   },
@@ -237,7 +241,7 @@ export const CHAPTERS = [
       tapTab('Brainstorm', 'Brainstorm', 'The pencil is Brainstorm: your goals, your rings and all your writing.', { section: 'Your three rings' }),
       {
         target: 'bs.today', tab: 'Brainstorm', info: true, look: true,
-        title: 'Your three rings', text: 'Minutes writing, words written and sessions (times you sat down). They fill as you write and close when you meet the day’s goal.',
+        text: 'Minutes writing, words written and sessions (times you sat down). They fill as you write and close when you meet the day’s goal.',
       },
       {
         target: 'bs.today', tab: 'Brainstorm', marks: ['bs.editGoals'], markRound: 8, section: 'Change your goals',
@@ -280,7 +284,7 @@ export const CHAPTERS = [
         task: 'Tap the big blue button to start.', on: (ev) => ev === 'writer-open',
       },
       {
-        target: 'writer.page', inline: true, wait: true, section: 'Your first words',
+        target: 'writer.page', inline: true, wait: true, section: 'Your first words', freshLine: true,
         title: 'Just write', text: 'Anything on your mind: a line, a memory, an idea. Watch the rings above fill as you type.',
         task: 'Write at least 5 words.', doneText: 'Keep writing as long as you like. Tap the button when you’re done.', manual: true, nextLabel: 'I’m done writing ›',
         on: (ev, v, d) => {
@@ -320,38 +324,10 @@ export const CHAPTERS = [
         on: (ev) => ev === 'prompt-refresh',
       },
       {
-        target: 'writer.aa', inline: true, section: 'Text size & Focus mode', marks: ['writer.aa'], wait: true,
-        title: 'Aa: text size and focus', text: 'Make the words bigger or smaller, and write without distractions.',
-        task: 'Tap Aa.', on: (ev) => ev === 'menu-open',
-      },
-      {
-        target: 'writer.menu', wait: true,
-        text: 'A− and A+ change the text size (it’s remembered). Focus mode hides everything but your words.',
-        task: 'Change the size, then turn on Focus mode.',
-        on: (ev) => {
-          if (ev === 'size') return { progress: 'Now turn on Focus mode' };
-          return ev === 'focus-on';
-        },
-      },
-      {
-        target: 'writer.page', inline: true, wait: true, skipIf: () => !getTarget('writer.exitFocus'),
-        title: 'Focus mode', text: 'Just you and your words. The clock still runs.',
-        task: 'Write 5 words in Focus mode.', doneText: 'Nice and quiet. Keep going, or go on.', manual: true,
-        on: (ev, v, d) => {
-          if (ev !== 'words') return null;
-          const base = d.base ?? v - 1; // words before this step
-          const n = v - base;
-          return { data: { base }, progress: `${Math.min(n, 5)} of 5 words`, frac: n / 5, done: n >= 5 };
-        },
-      },
-      {
-        target: 'writer.exitFocus', inline: true, marks: ['writer.exitFocus'], wait: true, skipIf: () => !getTarget('writer.exitFocus'),
-        text: 'When you want the clock, prompts and tools back, leave Focus mode.',
-        task: 'Tap ⤡ Exit focus.', on: (ev) => ev === 'focus-off',
-      },
-      {
-        target: 'writer.pause', inline: true, section: 'Pause', marks: ['writer.pause'], wait: true, info: true,
-        title: 'Pause any time', text: 'Kid needs you? Tap Pause to stop the clock. Typing starts it again, and after a quiet minute it pauses by itself.',
+        target: 'writer.page', inline: true, wait: true, info: true, section: 'More writing tools',
+        marks: ['writer.aa', 'writer.pause'],
+        title: 'Aa and Pause',
+        text: 'Aa makes the words bigger or smaller, and turns on Focus mode: just you and your words. Pause stops the clock when life calls; typing starts it again, and a quiet minute pauses it by itself. Try them whenever you like.',
       },
     ],
   },
@@ -360,13 +336,23 @@ export const CHAPTERS = [
     steps: [
       ...toWriter('Finishing happens on the writing page.'),
       {
-        target: 'writer.finish', inline: true, marks: ['writer.finish'], markRound: 14, wait: true,
+        target: 'writer.finish', inline: true, section: 'Finish', marks: ['writer.finish'], markRound: 14, wait: true,
         text: 'Write as much as you like. When you’re done, Finish & check in saves your entry.',
         task: 'Tap Finish & check in.', hold: 600, on: (ev) => ev === 'session-saved',
       },
       {
-        target: 'done.feel', wait: true, lock: true, round: 16,
-        title: 'Saved! How do you feel?', text: 'Pick a face for how writing felt. It’s optional, and it shows on that day so you can look back.',
+        target: 'done.summary', wait: true, lock: true, info: true, look: true, round: 16, section: 'Your summary', jump: false,
+        title: 'Your end-of-writing summary', text: 'Every time you finish, you see what you wrote and how today’s rings are doing.',
+      },
+      {
+        target: 'done.medals', wait: true, lock: true, round: 16,
+        title: 'Medals you moved', text: 'Writing moves your medals along. These are the ones this session moved (green is what you just added).',
+        task: 'Tap a medal to see what it counts.', doneText: 'Tap others too, then go on.', manual: true,
+        on: (ev) => ev === 'medal-note',
+      },
+      {
+        target: 'done.feel', wait: true, lock: true, round: 16, section: 'How you feel', jump: false,
+        title: 'How do you feel?', text: 'Pick a face for how writing felt. It’s optional, and it shows on that day so you can look back.',
         task: 'Pick a face.', on: (ev) => ev === 'feeling',
       },
       {
@@ -386,8 +372,8 @@ export const CHAPTERS = [
         task: 'Tap Log offline writing.', on: (ev, v) => ev === 'sheet-open' && v === 'offline',
       },
       {
-        target: 'offline.card', wait: true, info: true, look: true, round: 20, place: 'top',
-        text: 'Pick the day, then add the minutes, words and sessions you wrote. It counts toward your rings and most medals.',
+        target: 'offline.card', wait: true, info: true, lock: true, noRing: true, place: 'top',
+        text: 'Pick the day, then add the minutes, words and sessions you wrote. It counts toward your rings and most medals. Try the numbers: nothing is added until you tap Add.',
       },
       {
         target: 'offline.close', wait: true, round: 18,
@@ -410,7 +396,8 @@ export const CHAPTERS = [
       },
       {
         target: 'bs.history', tab: 'Brainstorm', info: true, look: true,
-        title: 'Everything you’ve written', text: 'It’s all saved on your phone. Each day you wrote this week has a card with how you felt; tap one to read it. “See all my writing” has every day, by week.',
+        noRing: true, markRound: 16, marks: ['bs.day0', 'bs.day1', 'bs.day2', 'bs.day3', 'bs.day4', 'bs.day5', 'bs.day6', 'bs.seeAll'],
+        text: 'It’s all saved on your phone. Each day you wrote this week has a card with how you felt; tap one to read it. “See all my writing” has every day, by week.',
       },
     ],
   },

@@ -225,17 +225,20 @@ export default function BrainstormHomeScreen({ navigation, route }) {
         {weekDays.length === 0 && (
           <Text style={s.empty}>Your first day of writing this week will show up here.</Text>
         )}
-        {weekDays.map((d) => (
-          <DayBubble
-            key={d.key}
-            day={d}
-            isToday={d.key === today}
-            onPress={() => navigation.navigate('BrainstormDay', { day: d.key })}
-          />
+        {weekDays.map((d, i) => (
+          <TourTarget key={d.key} id={`bs.day${i}`}>
+            <DayBubble
+              day={d}
+              isToday={d.key === today}
+              onPress={() => navigation.navigate('BrainstormDay', { day: d.key })}
+            />
+          </TourTarget>
         ))}
+        <TourTarget id="bs.seeAll">
         <Pressable onPress={() => navigation.navigate('MyWriting')} style={s.allLink}>
           <Text style={s.link}>See all my writing  ›</Text>
         </Pressable>
+        </TourTarget>
         </TourTarget>
 
         <TourTarget id="bs.medals">

@@ -54,11 +54,12 @@ export function addedText(m, n) {
 
 // rows: summaryRow()s. open / onToggle: optional, to share one open note with
 // other badges on the page (the offline log's text medals).
-export function MedalSummary({ rows, pending = false, open: openProp, onToggle, resetKey }) {
+export function MedalSummary({ rows, pending = false, open: openProp, onToggle, onOpen, resetKey }) {
   const [own, setOwn] = useState(null);
   useEffect(() => setOwn(null), [resetKey]);
   const open = openProp !== undefined ? openProp : own;
-  const toggle = onToggle || ((id) => setOwn((o) => (o === id ? null : id)));
+  // onOpen: told which medal's note was opened (the app tour listens).
+  const toggle = onToggle || ((id) => { setOwn((o) => (o === id ? null : id)); if (onOpen) onOpen(id); });
   return (
     <View>
       {rows.map((row, i) => (

@@ -14,6 +14,8 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { PadValue, useNumberPad } from './NumberPad';
 import { Ionicons } from '@expo/vector-icons';
 import Sheet from './Sheet';
+import { TIP_TEXT, useTapHint } from './TapHint';
+import { isTourTarget, useRun } from '../tourRun';
 import Rings, { RING_LABEL } from './Rings';
 import Medal from './Medal';
 import { MedalBar, MedalSummary, TRACKS } from './MedalProgress';
@@ -48,6 +50,12 @@ export default function OfflineLogSheet({ visible, onClose, onSave, sessions = [
     () => (stats ? offlinePreview(sessions, dailyGoals, goals, stats, day, vals) : null),
     [stats, sessions, dailyGoals, goals, day, vals],
   );
+
+  // The app tour: − / + and the numbers pulse in turn, until you try one.
+  const run = useRun();
+  const [touched, setTouched] = useState(false);
+  useEffect(() => { if (visible) setTouched(false); }, [visible]);
+  const tip = useTapHint(isTourTarget('offline.card', run) && !touched);
 
   // The app's number pad: tap a number to type it; Next › goes to the next one.
   const pad = useNumberPad({
@@ -111,17 +119,23 @@ export default function OfflineLogSheet({ visible, onClose, onSave, sessions = [
           <View key={f.id} style={s.field}>
             <Text style={s.fieldLabel}>{f.label}</Text>
             <View style={s.stepper}>
-              <Pressable onPress={() => set(f.id, stepOffline(f.id, vals[f.id], -1))} style={s.round} hitSlop={6} accessibilityRole="button" accessibilityLabel={`Less ${f.label.toLowerCase()}`}>
+              <Pressable onPress={() => { setTouched(true); set(f.id, stepOffline(f.id, vals[f.id], -1)); }} style={s.round} hitSlop={6} accessibilityRole="button" accessibilityLabel={`Less ${f.label.toLowerCase()}`}>
                 <Text style={s.roundText}>−</Text>
+                {tip.ring(tip.on && tip.hint === 0)}
               </Pressable>
-              <PadValue pad={pad} k={f.id} value={vals[f.id]} label={f.label} />
-              <Pressable onPress={() => set(f.id, stepOffline(f.id, vals[f.id], 1))} style={s.round} hitSlop={6} accessibilityRole="button" accessibilityLabel={`More ${f.label.toLowerCase()}`}>
+              <View onTouchStart={() => setTouched(true)}>
+                <PadValue pad={pad} k={f.id} value={vals[f.id]} label={f.label} />
+                {tip.ring(tip.on && tip.hint === 1)}
+              </View>
+              <Pressable onPress={() => { setTouched(true); set(f.id, stepOffline(f.id, vals[f.id], 1)); }} style={s.round} hitSlop={6} accessibilityRole="button" accessibilityLabel={`More ${f.label.toLowerCase()}`}>
                 <Text style={s.roundText}>+</Text>
+                {tip.ring(tip.on && tip.hint === 0)}
               </Pressable>
             </View>
           </View>
         ))}
       </View>
+      {tip.on ? <Text style={TIP_TEXT}>{tip.line}</Text> : null}
 
       <MedalPreview preview={preview} day={day} isToday={isToday} />
 

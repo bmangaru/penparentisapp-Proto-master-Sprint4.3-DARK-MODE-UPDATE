@@ -313,6 +313,11 @@ export function Bubble({ run, step, lost, inline }) {
   const title = typeof step.title === 'function' ? step.title(run.data || {}) : step.title;
   const done = run.taskDone;
   const sec = sectionOf(run); // "7.2 · THIS WEEK"
+  // In dark mode the bubble is dark too.
+  const d = isDark();
+  // No bold title when it just repeats the section's name.
+  const plain = (x) => String(x || '').toLowerCase().replace(/^the /, '').replace(/[^a-z]/g, '');
+  const showTitle = title && !(sec && plain(title) === plain(sec.title));
   // A manual "Next ›" only works a moment after it appears, so a tap meant for
   // the keyboard or the page can't end the step by accident.
   const [armed, setArmed] = useState(false);
@@ -323,22 +328,22 @@ export function Bubble({ run, step, lost, inline }) {
     return () => clearTimeout(id);
   }, [done]);
   return (
-    <View style={[c.bubble, inline && c.bubbleInline]} accessibilityLiveRegion="polite">
+    <View style={[c.bubble, d && c.bubbleDark, inline && c.bubbleInline]} accessibilityLiveRegion="polite">
       <View style={c.head}>
-        <Text style={c.kick} numberOfLines={1}>{sec ? `${sec.num} · ${sec.title.toUpperCase()}` : `CHAPTER ${run.ch + 1} · ${chapter.title.toUpperCase()}`}</Text>
+        <Text style={[c.kick, d && { color: '#E7B85A' }]} numberOfLines={1}>{sec ? `${sec.num} · ${sec.title.toUpperCase()}` : `CHAPTER ${run.ch + 1} · ${chapter.title.toUpperCase()}`}</Text>
         <View style={c.dots}>
-          {steps.map((_, i) => <View key={i} style={[c.dot, i < at && c.dotDone, i === at && c.dotOn]} />)}
+          {steps.map((_, i) => <View key={i} style={[c.dot, d && { backgroundColor: 'rgba(255,255,255,0.22)' }, i < at && c.dotDone, i === at && c.dotOn, i === at && d && { backgroundColor: '#9DB4FF' }]} />)}
         </View>
-        <Pressable onPress={() => minimizeTour(true)} hitSlop={10} style={c.x} accessibilityRole="button" accessibilityLabel="Hide the tour for now">
-          <Ionicons name="close" size={15} color="#5A6484" />
+        <Pressable onPress={() => minimizeTour(true)} hitSlop={10} style={[c.x, d && { backgroundColor: 'rgba(255,255,255,0.1)' }]} accessibilityRole="button" accessibilityLabel="Hide the tour for now">
+          <Ionicons name="close" size={15} color={d ? '#C9D1E6' : '#5A6484'} />
         </Pressable>
       </View>
-      {title ? <Text style={[c.title, inline && { fontSize: 14.5, marginTop: 3 }]}>{title}</Text> : null}
+      {showTitle ? <Text style={[c.title, d && { color: '#EEF1F8' }, inline && { fontSize: 14.5, marginTop: 3 }]}>{title}</Text> : null}
       {lost
-        ? <Text style={c.text}>This part of the app isn't on screen right now, so this step can't be shown. You can skip it.</Text>
-        : text ? <Text style={c.text}>{text}</Text> : null}
+        ? <Text style={[c.text, d && { color: '#C9D1E6' }]}>This part of the app isn't on screen right now, so this step can't be shown. You can skip it.</Text>
+        : text ? <Text style={[c.text, d && { color: '#C9D1E6' }]}>{text}</Text> : null}
       {step.task && !lost ? (
-        <View style={[c.task, done && c.taskDone]}>
+        <View style={[c.task, d && c.taskDark, done && c.taskDone]}>
           <View style={{ flex: 1 }}>
             <Text style={c.taskText}>
               {done ? <Text style={{ fontWeight: '800' }}>Nice! </Text> : <Text style={c.your}>Your turn: </Text>}
@@ -354,7 +359,7 @@ export function Bubble({ run, step, lost, inline }) {
       <View style={c.foot}>
         {backIndex(run) >= 0 ? (
           <Pressable onPress={prevStep} hitSlop={10} accessibilityRole="button" accessibilityHint="Goes back a step to try it again" style={{ marginRight: 'auto' }}>
-            <Text style={c.skip}>‹ Back</Text>
+            <Text style={[c.skip, d && { color: '#A7B2CF' }]}>‹ Back</Text>
           </Pressable>
         ) : null}
         {done && step.manual && !lost ? (
@@ -367,7 +372,7 @@ export function Bubble({ run, step, lost, inline }) {
           </Pressable>
         ) : !done ? (
           <Pressable onPress={nextStep} hitSlop={10} accessibilityRole="button" accessibilityHint="Skips this step">
-            <Text style={c.skip}>{lost ? 'Skip this step ›' : 'Skip ›'}</Text>
+            <Text style={[c.skip, d && { color: '#A7B2CF' }]}>{lost ? 'Skip this step ›' : 'Skip ›'}</Text>
           </Pressable>
         ) : null}
       </View>
@@ -482,7 +487,7 @@ function WelcomeCard() {
           <Text style={[c.cardBtnText, { color: '#FFFFFF' }]}>Start the tour ›</Text>
         </Pressable>
       </View>
-      <Text style={[c.cardNote, { color: colors.muted }]}>Chapter 1 of {getTourChapters().length} · about a minute · ✕ leaves any time</Text>
+      <Text style={[c.cardNote, { color: colors.muted }]}>{getTourChapters().length} short chapters · ✕ tucks the tour away any time</Text>
     </View>
   );
 }
@@ -573,6 +578,8 @@ const c = StyleSheet.create({
   mark: { borderWidth: 3, borderColor: GOLD, backgroundColor: 'rgba(242,193,78,0.10)' },
   ringGlow: { margin: -6, borderWidth: 4, borderColor: 'rgba(242,193,78,0.28)' },
   centerWrap: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', paddingHorizontal: 18 },
+  bubbleDark: { backgroundColor: '#1C2541', borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)' },
+  taskDark: { backgroundColor: '#0D1324', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
   bubbleInline: { paddingTop: 9, paddingBottom: 6, shadowOpacity: 0.18, shadowRadius: 8, elevation: 3, borderWidth: 1.5, borderColor: GOLD },
   bubble: {
     backgroundColor: '#FFFDF8', borderRadius: 18, paddingHorizontal: 14, paddingTop: 11, paddingBottom: 10,

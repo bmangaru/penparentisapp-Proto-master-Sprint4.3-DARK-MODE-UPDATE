@@ -127,7 +127,12 @@ export function sectionOf(r = run) {
 export function sectionsOf(idx) {
   const steps = CHAPTERS[idx]?.steps || [];
   const out = [];
-  steps.forEach((st, i) => { if (st.section) out.push({ num: `${idx + 1}.${out.length + 1}`, title: st.section, at: i }); });
+  let lastJump = 0;
+  steps.forEach((st, i) => {
+    if (!st.section) return;
+    if (st.jump !== false) lastJump = i;
+    out.push({ num: `${idx + 1}.${out.length + 1}`, title: st.section, at: st.jump === false ? lastJump : i });
+  });
   return out;
 }
 

@@ -43,7 +43,7 @@ import usePromptLevel, { LEVEL_STYLE } from '../components/usePromptLevel';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TourTarget from '../components/TourTarget';
 import { TourInline } from '../components/TourLayer';
-import { isTourTarget, stepOf, tourEvent, tourRunning, useRun } from '../tourRun';
+import { isTourTarget, stepOf, tourEvent, useRun } from '../tourRun';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function BrainstormWriterScreen({ navigation, route }) {
@@ -147,17 +147,6 @@ export default function BrainstormWriterScreen({ navigation, route }) {
   }
   function toggleFocus(on) {
     tourEvent(on ? 'focus-on' : 'focus-off');
-    // In the app tour: start Focus mode on a fresh line at the end of what
-    // you've written, with the keyboard up, ready to type.
-    if (on && tourRunning()) {
-      const cur = textRef.current;
-      if (cur && !cur.endsWith('\n')) {
-        const next = `${cur}\n\n`;
-        textRef.current = next;
-        setText(next);
-      }
-      setTimeout(() => inputRef.current?.focus(), 350);
-    }
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setFocus(on);
     setMenuOpen(false);
@@ -305,6 +294,20 @@ export default function BrainstormWriterScreen({ navigation, route }) {
   // and × are hidden so a stray tap can't leave the page mid-lesson.
   const tourStep = tourRun && !tourRun.min ? stepOf(tourRun) : null;
   const tourHolds = !!tourStep && String(tourStep.target || '').startsWith('writer.') && tourStep.target !== 'writer.finish';
+  // Tour steps that ask you to write (freshLine) start on a fresh line at the
+  // end of what you've written, with the keyboard up, ready to type.
+  const freshKey = tourStep?.freshLine ? `${tourRun.ch}.${tourRun.step}` : null;
+  useEffect(() => {
+    if (!freshKey || !ready) return undefined;
+    const cur = textRef.current;
+    if (cur && !cur.endsWith('\n')) {
+      const next = `${cur}\n\n`;
+      textRef.current = next;
+      setText(next);
+    }
+    const id = setTimeout(() => inputRef.current?.focus(), 350);
+    return () => clearTimeout(id);
+  }, [freshKey, ready]);
   useEffect(() => { tourEvent('writer-open'); }, []);
   useEffect(() => { if (effortWords > 0) tourEvent('words', effortWords); }, [effortWords]);
 

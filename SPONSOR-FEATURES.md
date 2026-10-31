@@ -749,3 +749,15 @@ No new behaviour: this zip has every file the on-app tour touches (rounds 56–5
 - **Blog:** see at least 3 posts, then keep going as long as you like and tap **Ready to go on ›**.
 - **Writing lessons:** Finish & check in and the × are hidden while the tour is teaching the writing page (they come back for chapter 6, Finish, and whenever the tour is tucked away), so a stray tap can't leave the page.
 - **Chapter 3** now starts with the rings (Got it), then "Edit goals" as its own step.
+
+## Round 65 — tour polish: dark bubbles, simpler sections, a proper summary
+
+- **Dark mode:** the tour's bubbles are dark too when the app is.
+- **Welcome:** "about a minute" is gone ("10 short chapters").
+- **1.2 Settings** covers how the app looks and where the tour lives; 1.3 is the five tabs.
+- **No repeated titles:** a bubble no longer repeats the section's name in bold (e.g. 2.2 Website & socials).
+- **4.2 Your first words** starts on a fresh line at the end of your writing with the keyboard up.
+- **Chapter 5:** 5.1 Prompts, then **5.2 More writing tools**: one note on Aa (text size, Focus mode) and Pause (with auto-pause), with both buttons pulsing. No more forced size / focus / pause drills.
+- **Chapter 6:** 6.1 Finish → **6.2 Your summary** (your end-of-writing summary and rings; then the medals this session moved: tap one to see what it counts, tap others, then go on) → **6.3 How you feel** → Send to myself / Done. Sections inside the summary start from 6.1 in the chapter list.
+- **7.1 Log offline writing:** you can try the numbers (− / + and the numbers pulse in turn, as on My usual); nothing is added until you tap Add.
+- **7.3 Everything you've written:** each day's card and "See all my writing" get their own pulsing gold outline, instead of one box round the whole area.

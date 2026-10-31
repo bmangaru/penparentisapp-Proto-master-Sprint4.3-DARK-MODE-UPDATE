@@ -7,6 +7,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import Sheet from './Sheet';
 import TourTarget from './TourTarget';
+import { tourEvent } from '../tourRun';
 import Face from './Face';
 import { MedalSummary } from './MedalProgress';
 import { colors, radius, space, themed } from '../theme';
@@ -64,7 +65,7 @@ export default function SessionDoneSheet({
       title="Session saved"
       subtitle={`${words.toLocaleString()} word${words === 1 ? '' : 's'} · ${timeText(seconds)} · in My Writing`}
     >
-      <View style={s.goal}>
+      <TourTarget id="done.summary" style={s.goal}>
         <View style={s.goalHead}>
           <Text style={s.goalTitle}>{g.title}</Text>
           {g.right && !g.rings ? <Text style={[s.goalRight, met && s.goalMet]}>{g.right}</Text> : null}
@@ -79,7 +80,7 @@ export default function SessionDoneSheet({
             <View style={[s.fill, { width: `${Math.min(100, Math.max(2, g.pct))}%` }, met && { backgroundColor: colors.karma }]} />
           </View>
         )}
-      </View>
+      </TourTarget>
 
       {/* Up to 3 medals this session moved, closest first (any just earned lead), or all 9.
           Bars are in your medal's colour; green is what this session added. */}
@@ -93,9 +94,9 @@ export default function SessionDoneSheet({
               </Pressable>
             ) : null}
           </View>
-          <View style={s.medPanel}>
-            <MedalSummary rows={rows} resetKey={all} />
-          </View>
+          <TourTarget id="done.medals" style={s.medPanel}>
+            <MedalSummary rows={rows} resetKey={all} onOpen={(id) => tourEvent('medal-note', id)} />
+          </TourTarget>
         </View>
       ) : null}
 
