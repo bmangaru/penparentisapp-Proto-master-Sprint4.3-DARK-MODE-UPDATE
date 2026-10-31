@@ -23,7 +23,7 @@ import { colors, isDark } from '../theme';
 import Medal from './Medal';
 import { MEDALS } from '../medals';
 import {
-  backIndex, getRun, getTarget, tourEvent, getTourChapters, minimizeTour, nextStep, sectionOf, prevStep, startChapter, stepOf, stopTour, topHost, useRun,
+  getRun, getTarget, tourEvent, getTourChapters, minimizeTour, nextStep, sectionOf, startChapter, stepOf, stopTour, topHost, useRun,
 } from '../tourRun';
 import { openTour, useTour } from '../tour';
 
@@ -358,11 +358,9 @@ export function Bubble({ run, step, lost, inline }) {
         </View>
       ) : null}
       <View style={c.foot}>
-        {backIndex(run) >= 0 ? (
-          <Pressable onPress={prevStep} hitSlop={10} accessibilityRole="button" accessibilityHint="Goes back a step to try it again" style={{ marginRight: 'auto' }}>
-            <Text style={[c.skip, d && { color: '#A7B2CF' }]}>‹ Back</Text>
-          </Pressable>
-        ) : null}
+        {/* No ‹ Back or Skip ›: every chapter is done start to finish (Redo is
+            on the chapter's last card). Only a step whose spot can't be
+            found offers a way past it, so the tour can never get stuck. */}
         {done && step.manual && !lost ? (
           <Pressable onPress={() => armed && nextStep()} style={({ pressed }) => [c.got, !armed && { opacity: 0.45 }, pressed && { opacity: 0.85 }]} accessibilityRole="button" accessibilityState={{ disabled: !armed }}>
             <Text style={c.gotText}>{step.nextLabel || 'Next ›'}</Text>
@@ -371,7 +369,7 @@ export function Bubble({ run, step, lost, inline }) {
           <Pressable onPress={nextStep} style={({ pressed }) => [c.got, pressed && { opacity: 0.85 }]} accessibilityRole="button">
             <Text style={c.gotText}>Got it ›</Text>
           </Pressable>
-        ) : !done ? (
+        ) : !done && lost ? (
           <Pressable onPress={nextStep} hitSlop={10} accessibilityRole="button" accessibilityHint="Skips this step">
             <Text style={[c.skip, d && { color: '#A7B2CF' }]}>{lost ? 'Skip this step ›' : 'Skip ›'}</Text>
           </Pressable>
@@ -478,15 +476,15 @@ function WelcomeCard() {
       <WrittenTagline play={play} />
       <Text style={[c.cardTitle, { color: colors.ink }]}>Welcome to Pen Parentis</Text>
       <Text style={[c.cardText, { color: colors.body }]}>
-        Thank you for downloading our app! This is an interactive tour: you tap the real buttons as you go.
+        Thank you for downloading our app! This is an interactive tutorial: you tap the real buttons as you go. Upon completion, you’ll have earned the following medals:
       </Text>
       <View style={[c.medalList, { borderColor: colors.line }]}>
-        <Text style={[c.medalHead, { color: colors.muted }]}>EARN THE TOUR GUIDE MEDAL</Text>
+        <Text style={[c.medalHead, { color: colors.muted }]}>THE TOUR GUIDE MEDAL</Text>
         {[
           ['bronze', 'Bronze', 'when you set today’s goal'],
           ['silver', 'Silver', 'when you save your first entry'],
           ['gold', 'Gold', 'when you’ve explored the Calendar'],
-          ['diamond', 'Diamond', 'when you finish the tour'],
+          ['diamond', 'Diamond', 'upon completion of this tour'],
         ].map(([tier, name, when]) => (
           <View key={tier} style={c.medalRow}>
             <Medal medal={TOUR_MEDAL} tier={tier} size={26} />
@@ -565,8 +563,8 @@ function DoneCard({ ch, earned }) {
       </Text>
       <View style={[c.track, { backgroundColor: colors.line }]}><View style={[c.fill, { width: `${Math.max(4, (n / ids.length) * 100)}%`, backgroundColor: colors.royal }]} /></View>
       <View style={c.cardRow}>
-        <Pressable onPress={stopTour} style={[c.cardBtn, { borderColor: colors.royal, borderWidth: 1.5 }]} accessibilityRole="button">
-          <Text style={[c.cardBtnText, { color: colors.royal }]}>Take a break</Text>
+        <Pressable onPress={() => startChapter(ch)} style={[c.cardBtn, { borderColor: colors.royal, borderWidth: 1.5 }]} accessibilityRole="button" accessibilityLabel={`Redo chapter ${ch + 1}`}>
+          <Text style={[c.cardBtnText, { color: colors.royal }]}>↺ Redo chapter</Text>
         </Pressable>
         <Pressable onPress={goNext} style={[c.cardBtn, c.cardBtnFill]} accessibilityRole="button">
           {next ? <Text style={c.nextKick}>NEXT</Text> : null}
@@ -574,8 +572,8 @@ function DoneCard({ ch, earned }) {
         </Pressable>
       </View>
       <View style={c.cardLinks}>
-        <Pressable onPress={() => startChapter(ch)} hitSlop={8} accessibilityRole="button" accessibilityLabel={`Redo chapter ${ch + 1}`}>
-          <Text style={[c.cardNote, { color: colors.royal, fontWeight: '800', marginTop: 0 }]}>↺ Redo chapter {ch + 1}</Text>
+        <Pressable onPress={stopTour} hitSlop={8} accessibilityRole="button">
+          <Text style={[c.cardNote, { color: colors.royal, fontWeight: '800', marginTop: 0 }]}>Take a break</Text>
         </Pressable>
         <Pressable onPress={() => { stopTour(); openTour('__list'); }} hitSlop={8} accessibilityRole="button">
           <Text style={[c.cardNote, { color: colors.royal, fontWeight: '800', marginTop: 0 }]}>See all chapters</Text>

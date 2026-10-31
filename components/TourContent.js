@@ -231,12 +231,6 @@ export const CHAPTERS = [
         on: (ev) => ev === 'medal-note',
       },
       {
-        target: 'done.medals', wait: true, lock: true, noRing: true, marks: ['done.seeAll'], markRound: 10,
-        title: 'Every medal', text: 'These were just the ones this session moved. “See all” shows every medal and how close you are to each.',
-        task: 'Tap See all.', doneText: 'Have a look through them, then go on.', manual: true,
-        on: (ev) => ev === 'medals-all',
-      },
-      {
         target: 'done.feel', wait: true, lock: true, round: 16, section: 'How you feel', jump: false,
         title: 'How do you feel?', text: 'Pick a face for how writing felt. It’s optional, and it shows on that day so you can look back.',
         task: 'Pick a face.', on: (ev) => ev === 'feeling',
