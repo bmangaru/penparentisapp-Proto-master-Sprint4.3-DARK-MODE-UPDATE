@@ -61,11 +61,30 @@ export function setTourChapterDone(fn) { chapterDone = fn; }
 
 let advanceTimer = null;
 
-export function startChapter(idx) {
+// Start a chapter, or one of its sections (at = the section's first step).
+// A section that needs you somewhere first (e.g. on the writing page) runs
+// the chapter's `prelude` steps before it (they skip themselves if you're
+// already there).
+export function startChapter(idx, at = 0) {
   clearTimeout(advanceTimer);
-  if (!CHAPTERS[idx]?.steps) return;
-  set({ ch: idx, step: 0, phase: 'step', data: {}, progress: '', frac: null, taskDone: false, min: false });
+  const chapter = CHAPTERS[idx];
+  if (!chapter?.steps) return;
+  const all = chapter.steps.map((_, i) => i);
+  const order = at > 0 ? [...(chapter.prelude || []).filter((i) => i < at), ...all.slice(at)] : all;
+  set({ ch: idx, order, pos: 0, step: order[0], phase: 'step', data: {}, progress: '', frac: null, taskDone: false, min: false });
   enter();
+  const st = stepOf();
+  if (at > 0 && st?.tab && goTo) goTo({ tab: st.tab });
+}
+
+const fresh = { phase: 'step', data: {}, progress: '', frac: null, taskDone: false, min: false };
+// Move to the next step in this run's order; false when there's none left.
+function advance() {
+  const order = run.order || CHAPTERS[run.ch].steps.map((_, i) => i);
+  const pos = (run.pos ?? order.indexOf(run.step)) + 1;
+  if (pos >= order.length) return false;
+  set({ ...run, ...fresh, order, pos, step: order[pos] });
+  return true;
 }
 
 // Steps with skipIf() that's true right now are passed over (e.g. "open the
@@ -73,9 +92,7 @@ export function startChapter(idx) {
 function enter() {
   let st = stepOf();
   while (st && st.skipIf && safe(st.skipIf)) {
-    const steps = CHAPTERS[run.ch].steps;
-    if (run.step + 1 >= steps.length) { finishChapter(); return; }
-    set({ ...run, step: run.step + 1, data: {}, progress: '', frac: null, taskDone: false, min: false });
+    if (!advance()) { finishChapter(); return; }
     st = stepOf();
   }
   if (st?.go && goTo) goTo(st.go);
@@ -91,11 +108,27 @@ function finishChapter() {
 export function nextStep() {
   clearTimeout(advanceTimer);
   if (!run) return;
-  const steps = CHAPTERS[run.ch].steps;
-  if (run.step + 1 < steps.length) {
-    set({ ...run, step: run.step + 1, phase: 'step', data: {}, progress: '', frac: null, taskDone: false, min: false });
-    enter();
-  } else finishChapter();
+  if (advance()) enter();
+  else finishChapter();
+}
+
+// Which section the current step is in: { num: '7.2', title } (or null).
+export function sectionOf(r = run) {
+  if (!r) return null;
+  const steps = CHAPTERS[r.ch]?.steps || [];
+  let n = 0;
+  let found = null;
+  steps.forEach((st, i) => {
+    if (st.section) { n += 1; if (i <= r.step) found = { num: `${r.ch + 1}.${n}`, title: st.section }; }
+  });
+  return found;
+}
+// A chapter's sections, for the table of contents: [{ num, title, at }].
+export function sectionsOf(idx) {
+  const steps = CHAPTERS[idx]?.steps || [];
+  const out = [];
+  steps.forEach((st, i) => { if (st.section) out.push({ num: `${idx + 1}.${out.length + 1}`, title: st.section, at: i }); });
+  return out;
 }
 
 // ‹ Back: the nearest earlier step you can do again from where you are now.
@@ -124,7 +157,8 @@ export function prevStep() {
   const i = backIndex();
   if (i < 0) return;
   clearTimeout(advanceTimer);
-  set({ ...run, step: i, phase: 'step', data: {}, progress: '', frac: null, taskDone: false, min: false });
+  const order = CHAPTERS[run.ch].steps.map((_, k) => k);
+  set({ ...run, ...fresh, order, pos: i, step: i });
   const st = stepOf();
   if (st?.tab && goTo) goTo({ tab: st.tab });
 }

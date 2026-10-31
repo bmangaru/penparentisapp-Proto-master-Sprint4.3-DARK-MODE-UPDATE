@@ -30,7 +30,7 @@ import { colors, gradients, lift, radius, space, themed } from '../theme';
 import { LINKS } from '../links';
 import { MEDALS } from '../medals';
 import { markChapter, setTourOpener, useTour } from '../tour';
-import { startChapter, stopTour } from '../tourRun';
+import { sectionsOf, startChapter, stopTour } from '../tourRun';
 import { syncMedals } from '../writingStore';
 import { promptForDay } from '../prompts';
 import { dayKey } from '../writingLogic';
@@ -55,10 +55,10 @@ export default function TourModal({ navRef }) {
   // unfinished chapter (or the list once they're all done).
   // Chapters that run on the real app (components/TourLayer.js) start there;
   // this page closes first.
-  function begin(idx) {
+  function begin(idx, at = 0) {
     if (CHAPTERS[idx]?.steps) {
       setOpen(false);
-      setTimeout(() => startChapter(idx), open ? 400 : 0);
+      setTimeout(() => startChapter(idx, at), open ? 400 : 0);
       return;
     }
     stopTour();
@@ -143,7 +143,8 @@ export default function TourModal({ navRef }) {
           {CHAPTERS.map((c, i) => {
             const isDone = !!done[c.id];
             return (
-              <Pressable key={c.id} onPress={() => begin(i)} style={({ pressed }) => [s.ch, pressed && { opacity: 0.8 }]} accessibilityRole="button" accessibilityLabel={`${c.title}${isDone ? ', done' : ''}`}>
+              <View key={c.id}>
+              <Pressable onPress={() => begin(i)} style={({ pressed }) => [s.ch, pressed && { opacity: 0.8 }]} accessibilityRole="button" accessibilityLabel={`${c.title}${isDone ? ', done' : ''}`}>
                 <View style={[s.num, isDone ? s.numDone : s.numTodo]}>
                   {isDone ? <Ionicons name="checkmark" size={17} color="#FFFFFF" /> : <Text style={s.numText}>{i + 1}</Text>}
                 </View>
@@ -153,6 +154,19 @@ export default function TourModal({ navRef }) {
                 </View>
                 <Text style={s.chGo}>{isDone ? 'Redo' : 'Start ›'}</Text>
               </Pressable>
+              {/* Its sections (7.1, 7.2…): start from any one. */}
+              {sectionsOf(i).length > 1 ? (
+                <View style={s.secs}>
+                  {sectionsOf(i).map((x) => (
+                    <Pressable key={x.num} onPress={() => begin(i, x.at)} style={({ pressed }) => [s.sec, pressed && { opacity: 0.7 }]} accessibilityRole="button" accessibilityLabel={`${x.num} ${x.title}`}>
+                      <Text style={s.secNum}>{x.num}</Text>
+                      <Text style={s.secTitle} numberOfLines={1}>{x.title}</Text>
+                      <Text style={s.secGo}>›</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              ) : null}
+              </View>
             );
           })}
           {doneCount === CHAPTERS.length ? (
@@ -303,6 +317,11 @@ const s = themed(() => ({
   chTitle: { fontSize: 14.5, fontWeight: '700', color: colors.ink },
   chSub: { fontSize: 12, color: colors.muted, marginTop: 1 },
   chGo: { fontSize: 12.5, fontWeight: '800', color: colors.royal },
+  secs: { marginTop: -4, marginBottom: 8, marginLeft: 42, gap: 2 },
+  sec: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 7, paddingHorizontal: 10, borderRadius: 10, backgroundColor: '#F5F7FD' },
+  secNum: { fontSize: 12, fontWeight: '800', color: colors.royal, width: 30 },
+  secTitle: { flex: 1, fontSize: 13, color: colors.body },
+  secGo: { fontSize: 15, fontWeight: '800', color: colors.royal },
   endLink: { alignItems: 'center', marginTop: 8, padding: 10 },
   endLinkText: { fontSize: 14, fontWeight: '800', color: colors.royal },
   steps: { flexDirection: 'row', justifyContent: 'center', gap: 6, paddingBottom: 6 },

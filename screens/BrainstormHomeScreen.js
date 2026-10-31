@@ -197,6 +197,7 @@ export default function BrainstormHomeScreen({ navigation, route }) {
         </TourTarget>
 
         {/* Writing done outside the app, on the honor system */}
+        <TourTarget id="bs.offline" style={{ marginTop: -4 }}>
         <Pressable onPress={() => setOfflineOpen(true)} style={({ pressed }) => [s.offline, pressed && { opacity: 0.85 }]} accessibilityRole="button" accessibilityLabel="Log offline writing">
           <View style={s.offlineIcon}><Ionicons name="download-outline" size={20} color={colors.royal} /></View>
           <View style={{ flex: 1 }}>
@@ -205,6 +206,7 @@ export default function BrainstormHomeScreen({ navigation, route }) {
           </View>
           <Ionicons name="chevron-forward" size={18} color={colors.royal} />
         </Pressable>
+        </TourTarget>
 
         {/* This week: seven ring sets */}
         <TourTarget id="bs.week">
@@ -277,7 +279,7 @@ export default function BrainstormHomeScreen({ navigation, route }) {
 
 const s = themed(() => ({
   pad: { padding: space.lg, gap: space.md },
-  offline: { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1.5, borderColor: '#B9C6E8', backgroundColor: '#F5F7FD', borderRadius: radius.md, paddingVertical: 11, paddingHorizontal: 12, marginTop: -4 },
+  offline: { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1.5, borderColor: '#B9C6E8', backgroundColor: '#F5F7FD', borderRadius: radius.md, paddingVertical: 11, paddingHorizontal: 12 },
   offlineIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: '#E3E9F8', alignItems: 'center', justifyContent: 'center' },
   offlineTitle: { fontSize: 14, fontWeight: '700', color: colors.royalDeep },
   offlineSub: { fontSize: 12, color: colors.muted, marginTop: 1 },

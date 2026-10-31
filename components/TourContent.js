@@ -108,15 +108,6 @@ function ShareArt() {
   );
 }
 
-function OfflineArt() {
-  return (
-    <Frame style={{ gap: 8 }}>
-      <View style={s.offline}><View style={s.offIcon}><Ionicons name="download-outline" size={18} color={colors.royal} /></View><View style={{ flex: 1 }}><Text style={s.optTitle}>Log offline writing</Text><Text style={s.small}>Wrote in Word, a notebook or elsewhere?</Text></View></View>
-      <View style={s.fieldRow}><Text style={s.optTitle}>Minutes</Text><Text style={s.round}>−</Text><Text style={s.val}>30</Text><Text style={s.round}>+</Text></View>
-      <View style={s.fieldRow}><Text style={s.optTitle}>Words</Text><Text style={s.round}>−</Text><Text style={s.val}>500</Text><Text style={s.round}>+</Text></View>
-    </Frame>
-  );
-}
 
 function EventArt() {
   return (
@@ -179,9 +170,9 @@ export const CHAPTERS = [
   {
     id: 'welcome', title: 'Welcome & settings', short: 'Settings', sub: 'Light or dark, and finding your way',
     steps: [
-      { kind: 'welcome', go: { tab: 'Home' } },
+      { kind: 'welcome', go: { tab: 'Home' }, section: 'Welcome' },
       {
-        target: 'home.settings', tab: 'Home', round: 20,
+        target: 'home.settings', tab: 'Home', round: 20, section: 'Light or dark',
         title: 'Light or dark first?', text: 'Settings lives here on Home. It’s where you choose how the app looks.',
         task: 'Tap ⚙ Settings.', on: (ev, v) => ev === 'sheet-open' && v === 'settings',
       },
@@ -200,7 +191,7 @@ export const CHAPTERS = [
         text: 'That’s Settings.', task: 'Close it with ×.', on: (ev, v) => ev === 'sheet-close' && v === 'settings',
       },
       {
-        target: 'tabbar', dim: 0.3, round: 0,
+        target: 'tabbar', dim: 0.3, round: 0, section: 'The five tabs',
         title: (d) => (d.last ? d.last : 'Five tabs'),
         text: (d) => (d.last ? TAB_INFO[d.last] : 'The tab bar is always at the bottom of the app. The round pencil in the middle is where you write.'),
         task: 'Tap each tab at the bottom to open it.', doneText: 'You’ve seen all five tabs.', manual: true,
@@ -214,9 +205,9 @@ export const CHAPTERS = [
     ],
   },
   {
-    id: 'home', title: 'Home', short: 'Home', sub: 'The blog, the website and socials',
+    id: 'home', title: 'Home', short: 'Home', sub: 'The blog, the website and socials', prelude: [0],
     steps: [
-      tapTab('Home', 'Back to Home', 'Every chapter starts from the tab bar, so you get to know where everything is.'),
+      tapTab('Home', 'Back to Home', 'Every chapter starts from the tab bar, so you get to know where everything is.', { section: 'From the blog' }),
       {
         target: 'home.blog', tab: 'Home',
         title: 'From the blog', text: 'The newest posts from penparentis.org. Tap a post to read it right in the app. (Normally the posts move on by themselves every 10 seconds; that’s paused for the tour.)',
@@ -227,25 +218,30 @@ export const CHAPTERS = [
           const n = Object.keys(seen).length;
           return { data: { seen }, progress: `${Math.min(n, 3)} of 3 posts`, frac: n / 3, done: n >= 3 };
         },
+        doneText: 'Keep looking as long as you like, then go on.', manual: true, nextLabel: 'Ready to go on ›',
       },
       {
-        target: 'home.socials', tab: 'Home',
+        target: 'home.socials', tab: 'Home', section: 'Website & socials',
         info: true, look: true,
         title: 'The website and socials', text: 'Visit penparentis.org, or follow Pen Parentis on Facebook, Instagram, LinkedIn, X and Bluesky. Each button shows the account it opens.',
       },
       {
-        target: 'home.supporters', tab: 'Home', info: true, look: true,
+        target: 'home.supporters', tab: 'Home', info: true, look: true, section: 'Our supporters',
         title: 'Our supporters', text: 'Get Karma keeps the salons free. The names scrolling here are the organizations and people who keep Pen Parentis going. Thank you!',
       },
     ],
   },
   {
-    id: 'goals', title: 'Your goals & rings', short: 'Goals', sub: 'Minutes, words and sessions',
+    id: 'goals', title: 'Your goals & rings', short: 'Goals', sub: 'Minutes, words and sessions', prelude: [0],
     steps: [
-      tapTab('Brainstorm', 'Brainstorm', 'The pencil is Brainstorm: your goals, your rings and all your writing.'),
+      tapTab('Brainstorm', 'Brainstorm', 'The pencil is Brainstorm: your goals, your rings and all your writing.', { section: 'Your three rings' }),
       {
-        target: 'bs.today', tab: 'Brainstorm', marks: ['bs.editGoals'], markRound: 8,
+        target: 'bs.today', tab: 'Brainstorm', info: true, look: true,
         title: 'Your three rings', text: 'Minutes writing, words written and sessions (times you sat down). They fill as you write and close when you meet the day’s goal.',
+      },
+      {
+        target: 'bs.today', tab: 'Brainstorm', marks: ['bs.editGoals'], markRound: 8, section: 'Change your goals',
+        title: 'Edit goals', text: 'Your goals for every day, and today’s, are one tap away.',
         task: 'Tap Edit goals.', on: (ev, v) => ev === 'sheet-open' && v === 'plan',
       },
       {
@@ -275,16 +271,16 @@ export const CHAPTERS = [
     ],
   },
   {
-    id: 'write', title: 'Start writing', short: 'Start writing', sub: 'Your first entry, for real',
+    id: 'write', title: 'Start writing', short: 'Start writing', sub: 'Your first entry, for real', prelude: [0, 1],
     steps: [
-      tapTab('Brainstorm', 'Where you write', 'The pencil takes you to Brainstorm, where all your writing lives.', { skipIf: onWriter }),
+      tapTab('Brainstorm', 'Where you write', 'The pencil takes you to Brainstorm, where all your writing lives.', { skipIf: onWriter, section: 'Open the writing page' }),
       {
         target: 'bs.start', tab: 'Brainstorm', skipIf: onWriter,
         title: 'Your first entry', text: 'This is the real thing: what you write is saved on your phone and counts toward your rings and medals.',
         task: 'Tap the big blue button to start.', on: (ev) => ev === 'writer-open',
       },
       {
-        target: 'writer.page', inline: true, wait: true,
+        target: 'writer.page', inline: true, wait: true, section: 'Your first words',
         title: 'Just write', text: 'Anything on your mind: a line, a memory, an idea. Watch the rings above fill as you type.',
         task: 'Write at least 5 words.', doneText: 'Keep writing as long as you like. Tap the button when you’re done.', manual: true, nextLabel: 'I’m done writing ›',
         on: (ev, v, d) => {
@@ -297,11 +293,11 @@ export const CHAPTERS = [
     ],
   },
   {
-    id: 'tools', title: 'Prompts & tools', short: 'Prompts & tools', sub: 'Prompts, text size, focus, pause',
+    id: 'tools', title: 'Prompts & tools', short: 'Prompts & tools', sub: 'Prompts, text size, focus, pause', prelude: [0, 1],
     steps: [
       ...toWriter('Prompts and tools live on the writing page.'),
       {
-        target: 'writer.prompt', inline: true, marks: ['writer.prompt'], wait: true, skipIf: () => !!getTarget('writer.promptCard'),
+        target: 'writer.prompt', inline: true, section: 'Prompts', marks: ['writer.prompt'], wait: true, skipIf: () => !!getTarget('writer.promptCard'),
         title: 'Stuck? Try a prompt', text: 'Prompts are short questions to get you going. They never count as your words, and they’re saved with what you write.',
         task: 'Tap ✦ Prompt.', on: (ev) => ev === 'prompt-show',
       },
@@ -324,7 +320,7 @@ export const CHAPTERS = [
         on: (ev) => ev === 'prompt-refresh',
       },
       {
-        target: 'writer.aa', inline: true, marks: ['writer.aa'], wait: true,
+        target: 'writer.aa', inline: true, section: 'Text size & Focus mode', marks: ['writer.aa'], wait: true,
         title: 'Aa: text size and focus', text: 'Make the words bigger or smaller, and write without distractions.',
         task: 'Tap Aa.', on: (ev) => ev === 'menu-open',
       },
@@ -354,13 +350,13 @@ export const CHAPTERS = [
         task: 'Tap ⤡ Exit focus.', on: (ev) => ev === 'focus-off',
       },
       {
-        target: 'writer.pause', inline: true, marks: ['writer.pause'], wait: true, info: true,
+        target: 'writer.pause', inline: true, section: 'Pause', marks: ['writer.pause'], wait: true, info: true,
         title: 'Pause any time', text: 'Kid needs you? Tap Pause to stop the clock. Typing starts it again, and after a quiet minute it pauses by itself.',
       },
     ],
   },
   {
-    id: 'finish', title: 'Finish & check in', short: 'Finish', sub: 'Save it, and how you feel',
+    id: 'finish', title: 'Finish & check in', short: 'Finish', sub: 'Save it, and how you feel', prelude: [0, 1],
     steps: [
       ...toWriter('Finishing happens on the writing page.'),
       {
@@ -381,12 +377,26 @@ export const CHAPTERS = [
     ],
   },
   {
-    id: 'medals', title: 'Your week, writing & medals', short: 'Week & medals', sub: 'This week, everything you wrote, medals',
+    id: 'week', title: 'Your week', short: 'Your week', sub: 'Offline writing, this week, everything you wrote', prelude: [0],
     steps: [
-      tapTab('Brainstorm', 'Brainstorm', 'There’s more on Brainstorm below the button: your week, everything you’ve written, and your medals.'),
+      tapTab('Brainstorm', 'Brainstorm', 'There’s more on Brainstorm: writing you did elsewhere, your week, and everything you’ve written.'),
       {
-        target: 'bs.week', reveal: true, hold: 500,
-        text: 'Brainstorm keeps going below Start writing.', task: 'Swipe up to scroll down to This week.',
+        target: 'bs.offline', tab: 'Brainstorm', round: 16, section: 'Log offline writing',
+        title: 'Wrote somewhere else?', text: 'Wrote in Word, a notebook or another app? You can add it here, on the honor system.',
+        task: 'Tap Log offline writing.', on: (ev, v) => ev === 'sheet-open' && v === 'offline',
+      },
+      {
+        target: 'offline.card', wait: true, info: true, look: true, round: 20, place: 'top',
+        text: 'Pick the day, then add the minutes, words and sessions you wrote. It counts toward your rings and most medals.',
+      },
+      {
+        target: 'offline.close', wait: true, round: 18,
+        text: 'Nothing is added unless you tap Save, so you can look around safely.', task: 'Close it with ×.',
+        on: (ev, v) => ev === 'sheet-close' && v === 'offline',
+      },
+      {
+        target: 'bs.week', reveal: true, hold: 500, section: 'This week',
+        text: 'Brainstorm keeps going below.', task: 'Swipe up to scroll down to This week.',
         on: (ev, v) => ev === 'revealed' && v === 'bs.week',
       },
       {
@@ -394,7 +404,7 @@ export const CHAPTERS = [
         title: 'Your week at a glance', text: 'Seven sets of rings, Sunday to Saturday, with the week’s totals underneath. Tip: a day with all three rings closed is a day you met your goal. Tap any day to read it.',
       },
       {
-        target: 'bs.history', reveal: true, hold: 500,
+        target: 'bs.history', reveal: true, hold: 500, section: 'Everything you’ve written',
         text: 'Keep going.', task: 'Scroll down to Your writing.',
         on: (ev, v) => ev === 'revealed' && v === 'bs.history',
       },
@@ -402,9 +412,15 @@ export const CHAPTERS = [
         target: 'bs.history', tab: 'Brainstorm', info: true, look: true,
         title: 'Everything you’ve written', text: 'It’s all saved on your phone. Each day you wrote this week has a card with how you felt; tap one to read it. “See all my writing” has every day, by week.',
       },
+    ],
+  },
+  {
+    id: 'medals', title: 'Medals', short: 'Medals', sub: 'Bronze, Silver, Gold, Diamond', prelude: [0],
+    steps: [
+      tapTab('Brainstorm', 'Brainstorm', 'Your medals are at the very bottom of Brainstorm.'),
       {
-        target: 'bs.medals', reveal: true, hold: 500,
-        text: 'Last one, at the very bottom.', task: 'Scroll down to Medals.',
+        target: 'bs.medals', reveal: true, hold: 500, section: 'Where medals live',
+        text: 'All the way down.', task: 'Scroll down to Medals.',
         on: (ev, v) => ev === 'revealed' && v === 'bs.medals',
       },
       {
@@ -412,7 +428,7 @@ export const CHAPTERS = [
         title: 'Your medals', text: 'Medals live here, at the bottom of Brainstorm. You earn them for words, time, sessions, streaks and goals met, plus a few for your words themselves.',
       },
       {
-        target: 'bs.medals', tab: 'Brainstorm', info: true, look: true,
+        target: 'bs.medals', tab: 'Brainstorm', info: true, look: true, section: 'Four tiers',
         title: 'Bronze, Silver, Gold, Diamond', text: 'Every medal has four tiers. Its bar is the colour of the medal you have and shows how close the next one is. Tap this card any time to see them all.',
       },
     ],
@@ -423,12 +439,6 @@ export const CHAPTERS = [
       { art: <CalendarArt />, title: 'Where all your rings live', body: 'The Calendar shows every day as its rings. Tap a past day to read what you wrote that day.' },
       { art: <CountdownArt />, title: 'Salons on your calendar', body: 'A ★ marks salon days. The card at the top takes turns between today’s rings and a countdown to the next event.' },
       { art: <ShareArt />, title: 'Show it off', body: 'Ever want to flex on your friends or family? Tap ⇪ Share to make a picture of your calendar decked out with rings. Only rings and totals, never your writing.', try: { label: 'Share your rings', go: 'share' } },
-    ],
-  },
-  {
-    id: 'offline', title: 'Writing elsewhere', sub: 'Log offline writing',
-    cards: [
-      { art: <OfflineArt />, title: 'Wrote in Word or a notebook?', body: 'On Brainstorm, "Log offline writing" lets you add minutes, words and sessions for any day, on the honor system. It counts toward your rings and most medals.', try: { label: 'Log offline writing', go: 'offline' } },
     ],
   },
   {

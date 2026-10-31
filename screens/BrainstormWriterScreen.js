@@ -43,7 +43,7 @@ import usePromptLevel, { LEVEL_STYLE } from '../components/usePromptLevel';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TourTarget from '../components/TourTarget';
 import { TourInline } from '../components/TourLayer';
-import { isTourTarget, tourEvent, tourRunning, useRun } from '../tourRun';
+import { isTourTarget, stepOf, tourEvent, tourRunning, useRun } from '../tourRun';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function BrainstormWriterScreen({ navigation, route }) {
@@ -301,6 +301,10 @@ export default function BrainstormWriterScreen({ navigation, route }) {
   // showing the prompt's level and Refresh, the prompt's ✕ is hidden.
   const tourRun = useRun();
   const tourOnPrompt = isTourTarget('writer.promptCard', tourRun);
+  // While the tour teaches the writing page (but not Finish itself), Finish
+  // and × are hidden so a stray tap can't leave the page mid-lesson.
+  const tourStep = tourRun && !tourRun.min ? stepOf(tourRun) : null;
+  const tourHolds = !!tourStep && String(tourStep.target || '').startsWith('writer.') && tourStep.target !== 'writer.finish';
   useEffect(() => { tourEvent('writer-open'); }, []);
   useEffect(() => { if (effortWords > 0) tourEvent('words', effortWords); }, [effortWords]);
 
@@ -482,7 +486,7 @@ export default function BrainstormWriterScreen({ navigation, route }) {
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.paper }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={[s.topBar, { paddingTop: insets.top + 10 }]}>
         <View style={s.barLeft}>
-          {!focus ? (
+          {!focus && !tourHolds ? (
             <Pressable onPress={() => navigation.goBack()} hitSlop={10} accessibilityRole="button" accessibilityLabel="Close">
               <Text style={s.close}>×</Text>
             </Pressable>
@@ -649,13 +653,13 @@ export default function BrainstormWriterScreen({ navigation, route }) {
         </View>
       ) : null}
 
-      <View style={[s.bottomBar, { paddingBottom: insets.bottom + 14 }]}>
+      {tourHolds ? null : <View style={[s.bottomBar, { paddingBottom: insets.bottom + 14 }]}>
         <TourTarget id="writer.finish">
           <Pressable style={s.finishBtn} onPress={finish}>
             <Text style={s.finishText}>Finish &amp; check in</Text>
           </Pressable>
         </TourTarget>
-      </View>
+      </View>}
 
       {menuOpen ? (
         <>

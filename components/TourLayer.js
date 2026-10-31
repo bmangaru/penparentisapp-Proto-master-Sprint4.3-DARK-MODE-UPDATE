@@ -23,7 +23,7 @@ import { colors, isDark } from '../theme';
 import Medal from './Medal';
 import { MEDALS } from '../medals';
 import {
-  backIndex, getRun, getTarget, tourEvent, getTourChapters, minimizeTour, nextStep, prevStep, startChapter, stepOf, stopTour, topHost, useRun,
+  backIndex, getRun, getTarget, tourEvent, getTourChapters, minimizeTour, nextStep, sectionOf, prevStep, startChapter, stepOf, stopTour, topHost, useRun,
 } from '../tourRun';
 import { openTour, useTour } from '../tour';
 
@@ -312,6 +312,7 @@ export function Bubble({ run, step, lost, inline }) {
   const text = typeof step.text === 'function' ? step.text(run.data || {}) : step.text;
   const title = typeof step.title === 'function' ? step.title(run.data || {}) : step.title;
   const done = run.taskDone;
+  const sec = sectionOf(run); // "7.2 · THIS WEEK"
   // A manual "Next ›" only works a moment after it appears, so a tap meant for
   // the keyboard or the page can't end the step by accident.
   const [armed, setArmed] = useState(false);
@@ -324,7 +325,7 @@ export function Bubble({ run, step, lost, inline }) {
   return (
     <View style={[c.bubble, inline && c.bubbleInline]} accessibilityLiveRegion="polite">
       <View style={c.head}>
-        <Text style={c.kick} numberOfLines={1}>CHAPTER {run.ch + 1} · {chapter.title.toUpperCase()}</Text>
+        <Text style={c.kick} numberOfLines={1}>{sec ? `${sec.num} · ${sec.title.toUpperCase()}` : `CHAPTER ${run.ch + 1} · ${chapter.title.toUpperCase()}`}</Text>
         <View style={c.dots}>
           {steps.map((_, i) => <View key={i} style={[c.dot, i < at && c.dotDone, i === at && c.dotOn]} />)}
         </View>

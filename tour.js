@@ -10,6 +10,10 @@ import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const TOUR_KEY = 'pp.tour.v1';
+// The chapters, in order (components/TourContent.js uses the same ids).
+// Only these count toward the Tour Guide medal, so a chapter that was
+// renamed or removed in an update doesn't count twice.
+export const TOUR_CHAPTER_IDS = ['welcome', 'home', 'goals', 'write', 'tools', 'finish', 'week', 'medals', 'calendar', 'community'];
 const EMPTY = { done: {}, ever: {}, hidden: false, finished: false };
 
 let state = null;

@@ -741,3 +741,11 @@ No new behaviour: this zip has every file the on-app tour touches (rounds 56–5
 - **Today's goal in the tour:** Rest is greyed out ("Not during the tour: today you're writing!").
 - **Focus mode in the tour** starts on a fresh line at the end of your writing with the keyboard up, ready to type.
 - **Pause** is now just a note (Got it ›) with Pause pulsing; you don't have to pause and restart.
+
+## Round 64 — tour sections (7.1, 7.2…), new chapter 7, safer writing lessons
+
+- **Sections:** every on-app chapter is split into numbered sections (1.1 Welcome, 1.2 Light or dark, 1.3 The five tabs, 2.1 From the blog…). The bubble shows the section ("7.2 · THIS WEEK"), and the chapter list shows each chapter's sections under it, so you can jump straight to the part you want. Starting a section takes you there first (e.g. tap the pencil, open the writing page) if needed.
+- **Chapters now:** 1 Welcome & settings · 2 Home · 3 Your goals & rings · 4 Start writing · 5 Prompts & tools · 6 Finish & check in · **7 Your week** (7.1 Log offline writing — open it, look, close it; 7.2 This week; 7.3 Everything you've written) · **8 Medals** · 9 Calendar · 10 Salons & community. ("Writing elsewhere" is now 7.1.) Still 10 chapters, so the Tour Guide tiers are the same.
+- **Blog:** see at least 3 posts, then keep going as long as you like and tap **Ready to go on ›**.
+- **Writing lessons:** Finish & check in and the × are hidden while the tour is teaching the writing page (they come back for chapter 6, Finish, and whenever the tour is tucked away), so a stray tap can't leave the page.
+- **Chapter 3** now starts with the rings (Got it), then "Edit goals" as its own step.

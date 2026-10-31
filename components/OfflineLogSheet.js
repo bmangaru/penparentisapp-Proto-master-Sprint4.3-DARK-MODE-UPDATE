@@ -78,7 +78,7 @@ export default function OfflineLogSheet({ visible, onClose, onSave, sessions = [
   }
 
   return (
-    <Sheet visible={visible} onClose={onClose} title="Log offline writing" subtitle="On the honor system: no need to paste your text." footer={pad.footer} scrollRef={scrollRef}>
+    <Sheet visible={visible} onClose={onClose} title="Log offline writing" subtitle="On the honor system: no need to paste your text." footer={pad.footer} scrollRef={scrollRef} tourId="offline">
       <Text style={s.k}>WHEN</Text>
       <View style={s.chips}>
         <Pressable onPress={() => { setDay(today); setCalOpen(false); }} style={[s.chip, isToday && !calOpen && s.chipOn]} accessibilityRole="button" accessibilityState={{ selected: isToday && !calOpen }}>
