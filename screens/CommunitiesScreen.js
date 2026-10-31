@@ -48,6 +48,7 @@ export default function CommunitiesScreen() {
         </TourTarget>
 
         <TourTarget id="com.groups" style={{ gap: space.sm }}>
+        <TourTarget id="com.groupsInfo">
         <View style={s.secRow}>
           <Text style={s.sec}>Accountability groups</Text>
           <Pressable onPress={() => openLink(LINKS.cycleOfSupport)} hitSlop={8} accessibilityRole="link" accessibilityLabel="Open the accountability groups in Airtable">
@@ -60,6 +61,7 @@ export default function CommunitiesScreen() {
           when you're free, with a 12-week minimum participation. Times are listed in each group's own
           time zone, so do your own time-zone math.
         </Text>
+        </TourTarget>
         <AirtableView />
         </TourTarget>
 

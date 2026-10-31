@@ -315,11 +315,11 @@ export const CHAPTERS = [
       },
       {
         target: 'cal.grid', tab: 'Calendar', info: true, look: true, section: 'Your writing calendar',
-        text: 'Every day as its rings, this week first; scroll up for earlier weeks. A gold ★ marks a salon day. Tap a past day to read what you wrote that day.',
+        text: 'Each day’s progress is shown as its own set of rings. The current week is at the top of the calendar; scroll up for earlier weeks. A gold ★ marks a salon day. Tap a past day to read what you wrote that day.',
       },
       {
         target: 'cal.share', tab: 'Calendar', round: 999, section: 'Share your rings',
-        text: 'Show off your streak: turn your calendar, filled with your rings, into a picture to send to friends or family.',
+        text: 'Show off all the days you showed up to write! Share your calendar with friends or family.',
         task: 'Tap Share.', on: (ev, v) => ev === 'sheet-open' && v === 'share',
       },
       {
@@ -362,8 +362,8 @@ export const CHAPTERS = [
         text: 'The Pen Parentis Discord runs around the clock (there’s almost always someone up), and the Facebook group is there too. Both are free.',
       },
       {
-        target: 'com.groups', tab: 'Community', info: true, look: true, place: 'top', section: 'Accountability groups',
-        text: 'Small groups of writer-parents who meet to set goals and keep each other writing. They’re for sustaining members at the All-Access level.',
+        target: 'com.groupsInfo', tab: 'Community', info: true, look: true, section: 'Accountability groups',
+        text: 'Small groups of writer-parents who meet to set goals and keep each other writing. Pick a group by when you’re free; the list is just below. They’re for sustaining members at the All-Access level.',
       },
     ],
   },

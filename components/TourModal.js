@@ -70,7 +70,8 @@ export default function TourModal({ navRef }) {
   // '__end' open the chapter list and the thank-you.
   useEffect(() => {
     setTourOpener((id) => {
-      if (id === '__list' || id === '__end') { stopTour(); setView(id === '__end' ? 'end' : 'list'); setOpen(true); return; }
+      if (id === '__list') { setView('list'); setOpen(true); return; }
+      if (id === '__end') { stopTour(); setView('end'); setOpen(true); return; }
       const done = tour?.done || {};
       const idx = id ? CHAPTER_IDS.indexOf(id) : CHAPTER_IDS.findIndex((c) => !done[c]);
       if (idx >= 0) begin(idx);
@@ -139,23 +140,26 @@ export default function TourModal({ navRef }) {
       <>
         {header(null, `The tour · ${doneCount} of ${CHAPTERS.length}`, close)}
         <ScrollView ref={scroll} contentContainerStyle={[s.pad, { paddingBottom: insets.bottom + 30 }]}>
-          <Text style={s.lead}>Short chapters, about 5 minutes in all. Do them in order or jump to any one; tap a finished chapter to go over it again.</Text>
+          <Text style={s.lead}>Chapters open in order. Go over any chapter you've finished, or jump to one of its sections; the next one is ready when you are.</Text>
           {CHAPTERS.map((c, i) => {
             const isDone = !!done[c.id];
+            // Open: finished chapters, and the next one to do. Later ones are locked.
+            const nextIdx = CHAPTER_IDS.findIndex((id) => !done[id]);
+            const locked = !isDone && i !== nextIdx;
             return (
               <View key={c.id}>
-              <Pressable onPress={() => begin(i)} style={({ pressed }) => [s.ch, pressed && { opacity: 0.8 }]} accessibilityRole="button" accessibilityLabel={`${c.title}${isDone ? ', done' : ''}`}>
+              <Pressable onPress={() => { if (!locked) begin(i); }} disabled={locked} style={({ pressed }) => [s.ch, locked && { opacity: 0.45 }, pressed && { opacity: 0.8 }]} accessibilityRole="button" accessibilityState={{ disabled: locked }} accessibilityLabel={`${c.title}${isDone ? ', done' : locked ? ', locked' : ''}`}>
                 <View style={[s.num, isDone ? s.numDone : s.numTodo]}>
-                  {isDone ? <Ionicons name="checkmark" size={17} color="#FFFFFF" /> : <Text style={s.numText}>{i + 1}</Text>}
+                  {isDone ? <Ionicons name="checkmark" size={17} color="#FFFFFF" /> : locked ? <Ionicons name="lock-closed" size={14} color={colors.muted} /> : <Text style={s.numText}>{i + 1}</Text>}
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={s.chTitle}>{c.title}</Text>
                   <Text style={s.chSub}>{c.sub}</Text>
                 </View>
-                <Text style={s.chGo}>{isDone ? 'Redo' : 'Start ›'}</Text>
+                <Text style={[s.chGo, locked && { color: colors.muted }]}>{isDone ? 'Redo' : locked ? 'Locked' : 'Start ›'}</Text>
               </Pressable>
-              {/* Its sections (7.1, 7.2…): start from any one. */}
-              {sectionsOf(i).length > 1 ? (
+              {/* Its sections (7.1, 7.2…), once the chapter is finished. */}
+              {isDone && sectionsOf(i).length > 1 ? (
                 <View style={s.secs}>
                   {sectionsOf(i).map((x) => (
                     <Pressable key={x.num} onPress={() => begin(i, x.at)} style={({ pressed }) => [s.sec, pressed && { opacity: 0.7 }]} accessibilityRole="button" accessibilityLabel={`${x.num} ${x.title}`}>
@@ -260,7 +264,7 @@ export default function TourModal({ navRef }) {
             <Medal medal={TOUR_MEDAL} tier="diamond" size={76} />
             <View style={{ flex: 1 }}>
               <Text style={s.kick}>💎 DIAMOND TOUR GUIDE</Text>
-              <Text style={s.small}>Every chapter done. You've seen everything Pen Parentis can do. Welcome in!</Text>
+              <Text style={s.small}>Every chapter done. You've seen everything the Pen Parentis app can do. Welcome in!</Text>
             </View>
           </View>
 

@@ -578,7 +578,7 @@ function DoneCard({ ch, earned }) {
         <Pressable onPress={stopTour} hitSlop={8} accessibilityRole="button">
           <Text style={[c.cardNote, { color: colors.royal, fontWeight: '800', marginTop: 0 }]}>Take a break</Text>
         </Pressable>
-        <Pressable onPress={() => { stopTour(); openTour('__list'); }} hitSlop={8} accessibilityRole="button">
+        <Pressable onPress={() => openTour('__list')} hitSlop={8} accessibilityRole="button">
           <Text style={[c.cardNote, { color: colors.royal, fontWeight: '800', marginTop: 0 }]}>See all chapters</Text>
         </Pressable>
       </View>

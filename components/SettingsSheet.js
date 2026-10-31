@@ -63,7 +63,7 @@ export default function SettingsSheet({ visible, onClose }) {
   const go = (restart) => {
     if (touring) return;
     onClose();
-    setTimeout(async () => { if (restart) await restartTour(); openTour(); }, 350);
+    setTimeout(async () => { if (restart) { await restartTour(); openTour(); } else openTour('__list'); }, 350);
   };
   return (
     <Sheet visible={visible} onClose={onClose} title="Settings" subtitle="Make the app yours." tourId="settings">
@@ -75,11 +75,11 @@ export default function SettingsSheet({ visible, onClose }) {
 
       <TourTarget id="settings.tour">
       <Text style={[s.label, { marginTop: 18 }]}>THE APP TOUR</Text>
-      <Text style={s.note}>A short, step-by-step guide to everything in the app. Review any chapter, or start over from the beginning.</Text>
+      <Text style={s.note}>A hands-on guide to everything in the app. Go over any chapter or section you've done, or start over from the beginning.</Text>
       <View style={[s.row, { marginTop: 10 }]}>
         <Pressable onPress={() => go(false)} disabled={touring} style={[s.tourBtn, s.tourBtnFill, touring && { opacity: 0.4 }]} accessibilityRole="button" accessibilityState={{ disabled: touring }}>
           <Ionicons name="compass-outline" size={17} color="#FFFFFF" />
-          <Text style={[s.tourText, { color: '#FFFFFF' }]}>Open the tour</Text>
+          <Text style={[s.tourText, { color: '#FFFFFF' }]}>Chapters</Text>
         </Pressable>
         <Pressable onPress={() => go(true)} disabled={touring} style={[s.tourBtn, touring && { opacity: 0.4 }]} accessibilityRole="button" accessibilityState={{ disabled: touring }}>
           <Ionicons name="refresh" size={16} color={colors.royal} />
