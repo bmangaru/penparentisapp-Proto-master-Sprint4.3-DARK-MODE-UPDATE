@@ -761,3 +761,12 @@ No new behaviour: this zip has every file the on-app tour touches (rounds 56–5
 - **Chapter 6:** 6.1 Finish → **6.2 Your summary** (your end-of-writing summary and rings; then the medals this session moved: tap one to see what it counts, tap others, then go on) → **6.3 How you feel** → Send to myself / Done. Sections inside the summary start from 6.1 in the chapter list.
 - **7.1 Log offline writing:** you can try the numbers (− / + and the numbers pulse in turn, as on My usual); nothing is added until you tap Add.
 - **7.3 Everything you've written:** each day's card and "See all my writing" get their own pulsing gold outline, instead of one box round the whole area.
+
+## Round 66 — the whole tour runs on the app (chapters 9 and 10)
+
+- **Chapter 9, Calendar:** 9.1 Today & the next salon (tap the arrows to see the countdown; the card holds still during the tour) · 9.2 Your writing calendar (rings for every day, ★ salon days) · 9.3 Share your rings (tap Share, try this month / 3 / 6 months, close it) · 9.4 Previous salons (scroll down: YouTube, Spotify, the new-episode switch).
+- **Chapter 10, Salons & community:** 10.1 Monthly salons (tap Eventbrite; the next salon's Register / YouTube / Add to calendar / Share, and the "goes live" reminder switch) · 10.2 Community (tap Community; the Discord and the Facebook group) · 10.3 Accountability groups. Finishing the last chapter for the first time leads to the thank-you, Get Karma and the credits.
+- **5.2a Focus mode:** if you turn on Focus mode during 5.2, a short 5.2a explains it (typing is off for that moment), then Exit focus pulses. Tap Got it without Focus and it's skipped.
+- **2.1** now says "The newest blog posts… Tap a blog post to read it right in the app."
+- **7.2** no longer says "Tap any day to read it".
+- Everything is hands-on now, so the old picture cards are gone from the tour.

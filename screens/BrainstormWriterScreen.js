@@ -24,7 +24,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
-  View, Text, TextInput, StyleSheet, Pressable, KeyboardAvoidingView, Platform, AppState, Animated, LayoutAnimation, Switch,
+  View, Text, TextInput, StyleSheet, Pressable, Keyboard, KeyboardAvoidingView, Platform, AppState, Animated, LayoutAnimation, Switch,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SessionDoneSheet from '../components/SessionDoneSheet';
@@ -296,6 +296,8 @@ export default function BrainstormWriterScreen({ navigation, route }) {
   const tourHolds = !!tourStep && String(tourStep.target || '').startsWith('writer.') && tourStep.target !== 'writer.finish';
   // Tour steps that ask you to write (freshLine) start on a fresh line at the
   // end of what you've written, with the keyboard up, ready to type.
+  // Steps that only explain (noTyping): the keyboard goes away meanwhile.
+  useEffect(() => { if (tourStep?.noTyping) Keyboard.dismiss(); }, [tourStep?.noTyping]);
   const freshKey = tourStep?.freshLine ? `${tourRun.ch}.${tourRun.step}` : null;
   useEffect(() => {
     if (!freshKey || !ready) return undefined;
@@ -616,6 +618,7 @@ export default function BrainstormWriterScreen({ navigation, route }) {
       {ready ? (
         <TextInput
           ref={inputRef}
+          editable={!tourStep?.noTyping}
           keyboardAppearance={isDark() ? 'dark' : 'light'}
           value={text}
           onChangeText={onChangeText}

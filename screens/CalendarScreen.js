@@ -23,6 +23,8 @@ import Rings, { RING_COLORS } from '../components/Rings';
 import RingStats from '../components/RingStats';
 import { LinearGradient } from 'expo-linear-gradient';
 import Cycler from '../components/Cycler';
+import TourTarget from '../components/TourTarget';
+import { tourEvent, useRun } from '../tourRun';
 import ShareCalendarSheet from '../components/ShareCalendarSheet';
 import EventCountdown, { nextUpcoming } from '../components/EventCountdown';
 import { colors, gradients, lift, radius, space, themed } from '../theme';
@@ -38,6 +40,8 @@ const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']; // Sunday first, like a re
 const STAR = '#E0AE45';
 
 export default function CalendarScreen({ navigation, route }) {
+  // The app tour: the top card holds still while it's running.
+  const tourRun = useRun();
   const today = useToday();
   const [data, setData] = useState({ goals: DEFAULT_GOALS, dailyGoals: {}, sessions: [] });
   const [events, setEvents] = useState([]); // the gold ★ on event days, and the countdown card
@@ -157,7 +161,8 @@ export default function CalendarScreen({ navigation, route }) {
         {/* ---------- Top card: the selected day ↔ the next event's countdown ----------
             Switches every 6 s while today is selected; tapping another day
             shows that day and holds still. */}
-        <Cycler paused={selected !== today} resetKey={selected} arrows>
+        <TourTarget id="cal.top">
+        <Cycler paused={selected !== today || !!tourRun} resetKey={selected} arrows tourId="cal" onIndex={(k) => tourEvent('cal-index', k)}>
         <LinearGradient colors={gradients.header} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={s.dayCard}>
           <View style={s.dayHead}>
             <Text style={s.dayTitle} numberOfLines={1}>
@@ -190,15 +195,18 @@ export default function CalendarScreen({ navigation, route }) {
         </LinearGradient>
         {nextUpcoming(events) ? <EventCountdown events={events} onDetails={(e) => showEvent(e.id)} style={{ flex: 1 }} /> : null}
         </Cycler>
+        </TourTarget>
 
         {/* ---------- Rolling calendar ---------- */}
-        <View style={[s.card, lift, { paddingHorizontal: 10 }]}>
+        <TourTarget id="cal.grid" style={[s.card, lift, { paddingHorizontal: 10 }]}>
           <View style={s.titleRow}>
             <Text style={s.h}>Your writing calendar</Text>
-            <Pressable onPress={() => setShareOpen(true)} style={s.shareBtn} hitSlop={6} accessibilityRole="button" accessibilityLabel="Share your rings">
-              <Ionicons name="share-outline" size={14} color="#FFFFFF" />
-              <Text style={s.shareText}>Share</Text>
-            </Pressable>
+            <TourTarget id="cal.share">
+              <Pressable onPress={() => setShareOpen(true)} style={s.shareBtn} hitSlop={6} accessibilityRole="button" accessibilityLabel="Share your rings">
+                <Ionicons name="share-outline" size={14} color="#FFFFFF" />
+                <Text style={s.shareText}>Share</Text>
+              </Pressable>
+            </TourTarget>
           </View>
           <View style={s.legend}>
             <Legend color={RING_COLORS.light.minutes} label="Minutes" />
@@ -251,10 +259,10 @@ export default function CalendarScreen({ navigation, route }) {
           )}
           </View>
           <Text style={s.hint}>Tap a past day to read what you wrote.</Text>
-        </View>
+        </TourTarget>
 
         {/* ---------- Previous salons ---------- */}
-        <View style={{ gap: 8 }}>
+        <TourTarget id="cal.past" style={{ gap: 8 }}>
           <Text style={[s.h, { marginTop: 4 }]}>Previous salons</Text>
           <Text style={s.body}>
             Missed one, or want to hear it again? Recordings of past salons are on YouTube,
@@ -279,7 +287,7 @@ export default function CalendarScreen({ navigation, route }) {
             onChange={toggleEpisodes}
           />
           {notifyNote === 'denied' && <DeniedNote />}
-        </View>
+        </TourTarget>
       </View>
 
       <ShareCalendarSheet visible={shareOpen} onClose={() => setShareOpen(false)} sessions={data.sessions} dailyGoals={data.dailyGoals} goals={data.goals} />

@@ -119,7 +119,10 @@ export function sectionOf(r = run) {
   let n = 0;
   let found = null;
   steps.forEach((st, i) => {
-    if (st.section) { n += 1; if (i <= r.step) found = { num: `${r.ch + 1}.${n}`, title: st.section }; }
+    if (i > r.step) return;
+    if (st.section) { n += 1; found = { num: `${r.ch + 1}.${n}`, title: st.section }; }
+    // An extra part of a section, shown as e.g. 5.2a.
+    if (st.subsection && i === r.step) found = { num: `${r.ch + 1}.${n}a`, title: st.subsection };
   });
   return found;
 }

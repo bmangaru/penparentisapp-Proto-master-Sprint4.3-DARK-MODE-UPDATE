@@ -64,7 +64,7 @@ export default function ShareCalendarSheet({ visible, onClose, sessions = [], da
   }
 
   return (
-    <Sheet visible={visible} onClose={onClose} title="Share your rings" subtitle="Show off your streak. Your writing is never included.">
+    <Sheet visible={visible} onClose={onClose} tourId="share" title="Share your rings" subtitle="Show off your streak. Your writing is never included.">
       <View style={s.chips}>
         {RANGES.map((r) => {
           const on = r.id === range;

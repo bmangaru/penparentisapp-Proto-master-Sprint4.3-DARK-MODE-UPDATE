@@ -22,6 +22,7 @@ import { eventWhen, loadEvents, upcoming, youtubeFor } from '../eventsService';
 import { addEventToCalendar, openPhoneSettings, shareEvent } from '../eventActions';
 import { LEAD_MINUTES, setNotify, syncNotifications, useNotifySettings } from '../notify';
 import { BrandButton, DeniedNote, ToggleCard, YT_RED } from '../components/LinkButtons';
+import TourTarget from '../components/TourTarget';
 
 const STAR = '#E0AE45';
 
@@ -166,8 +167,8 @@ export default function EventbriteScreen({ route }) {
           )}
 
           {coming.map((e, i) => (
+            <TourTarget key={e.id} id={i === 0 ? 'ev.next' : null}>
             <EventCard
-              key={e.id}
               event={e}
               now={now}
               open={e.id === activeId}
@@ -178,6 +179,7 @@ export default function EventbriteScreen({ route }) {
               note={calNote?.id === e.id ? calNote : null}
               onNoteDone={clearNote}
             />
+            </TourTarget>
           ))}
 
           {!loadingEvents && (
@@ -196,7 +198,7 @@ export default function EventbriteScreen({ route }) {
         </Pressable>
 
         {/* ---------- Notifications ---------- */}
-        <View style={{ gap: 8, marginTop: 6 }}>
+        <TourTarget id="ev.remind" style={{ gap: 8, marginTop: 6 }}>
           <ToggleCard
             title="Tell me when a salon goes live"
             sub={`One notification, ${LEAD_MINUTES === 30 ? 'half an hour' : `${LEAD_MINUTES} minutes`} before. Nothing else.`}
@@ -204,7 +206,7 @@ export default function EventbriteScreen({ route }) {
             onChange={(v) => toggleNotify('live', v)}
           />
           {notifyNote === 'denied' && <DeniedNote />}
-        </View>
+        </TourTarget>
       </View>
     </Screen>
   );
