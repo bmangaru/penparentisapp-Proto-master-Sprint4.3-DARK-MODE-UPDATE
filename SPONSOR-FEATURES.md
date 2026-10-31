@@ -596,3 +596,26 @@ Also: writing you're picking up from earlier today never counts twice. If you ta
 - **Blog pictures:** if a post has no featured image in the site's list, the app looks for the picture the site shares on social media, then the first picture in the post itself (including lazy-loaded ones). The Pen Parentis logo is only the last resort. Tested in `test28`.
 - **Home order:** From the blog → Visit penparentis.org → Follow Pen Parentis → Get Karma → thank-you scroll, so the two website things sit together.
 - **Social colours:** each button has its own tint: Facebook blue, Instagram pink, LinkedIn teal, X grey, Bluesky sky blue (with matching dark-mode versions).
+
+## Round 50 — full-width blog cards, arrows, 10-second switching
+
+- **From the blog:** each post is now a full-width card (same width as the buttons below): a bigger picture, the date, the title, up to four lines of the post and "Read post ›". The cards take turns every **10 seconds**; swipe, tap a dot, or tap the round **‹ ›** arrows either side of the dots (they wrap around). Touching it holds it still for a while.
+- **Calendar top card** (today's rings ↔ next event countdown) now switches every **10 seconds** too.
+- Both use `components/Cycler.js` (new `arrows` option; default timing now 10 s).
+- **Calendar top card** now has the same round ‹ › arrows either side of its dots.
+
+## Round 51 — 10 blog posts, wrap-around swiping
+
+- **From the blog** now shows the **10** newest posts (`COUNT` in `blogService.js`).
+- **Goes round and round** (`components/Cycler.js`): swiping on from the last card slides straight to the first (newest) post, and swiping back from the first shows the last. The ‹ › arrows and the 10-second switching wrap the same way. (A copy of the first and last card sits at each end; once the slide finishes it jumps to the real card, which you can't see.) Same on the Calendar's top card.
+- The ‹ › arrows sit a little in from the left and right edges (44 px), with the dots in the middle.
+
+## Round 52 — Share your rings (sponsor request)
+
+- **Calendar → ⇪ Share** (in the "Your writing calendar" title row) opens **Share your rings** (`components/ShareCalendarSheet.js`):
+  - **This month · 3 months · This year** (January to now; a year shows 3 months a row).
+  - A live preview of the picture: the app's blue with "PEN PARENTIS · MY WRITING", the dates ("Aug – Oct 2026"), each month as a little calendar of your rings (future days faded), and the Pen Parentis logo with "parenting done, write.". It's always blue, in light or dark mode.
+  - **Show totals** switch: days with every ring closed, words, and best streak in that range.
+  - **Share image…** turns the preview into a picture and opens the phone's share sheet (Messages, Instagram, Save Image…). Only rings and totals, never any writing.
+- **Logic** (`writingLogic.js`): `shareMonths`, `shareTitle`, `shareStats`. Tested in `test29`.
+- **Needs** two add-ons that work in Expo Go: `npx expo install react-native-view-shot expo-sharing`.

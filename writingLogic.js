@@ -1079,3 +1079,56 @@ export function upgradeOldGoals(dailyGoals, sessions, goals, today = dayKey()) {
   }
   return { dailyGoals: out, changed };
 }
+
+// ---------------------------------------------------------------------------
+// "Share your rings" (Calendar → Share): which months to show and the totals.
+// ---------------------------------------------------------------------------
+
+// kind: 'month' | '3months' | 'year' → [{ year, month }] oldest first.
+// 'year' runs from January to this month.
+export function shareMonths(kind, today = dayKey()) {
+  const t = parseDayKey(today);
+  const y = t.getFullYear();
+  const m = t.getMonth();
+  const count = kind === 'month' ? 1 : kind === '3months' ? 3 : m + 1;
+  const out = [];
+  for (let k = count - 1; k >= 0; k -= 1) {
+    const d = new Date(y, m - k, 1);
+    out.push({ year: d.getFullYear(), month: d.getMonth() });
+  }
+  return out;
+}
+
+// "October 2026" · "Aug – Oct 2026" · "Nov 2025 – Jan 2026" · "2026"
+export function shareTitle(kind, months) {
+  const name = (x, style) => new Date(x.year, x.month, 1).toLocaleDateString('en-US', { month: style });
+  const a = months[0];
+  const b = months[months.length - 1];
+  if (kind === 'year') return String(b.year);
+  if (months.length === 1) return `${name(a, 'long')} ${a.year}`;
+  if (a.year === b.year) return `${name(a, 'short')} – ${name(b, 'short')} ${b.year}`;
+  return `${name(a, 'short')} ${a.year} – ${name(b, 'short')} ${b.year}`;
+}
+
+// Totals for the months shown, up to today: days with every ring closed,
+// words written, and the longest run of days in a row with writing.
+export function shareStats(sessions, dailyGoals, goals, months, today = dayKey()) {
+  const first = dayKey(new Date(months[0].year, months[0].month, 1));
+  const lastM = months[months.length - 1];
+  const endKey = dayKey(new Date(lastM.year, lastM.month + 1, 0));
+  const last = endKey < today ? endKey : today;
+  const inRange = sessions.filter((x) => x.day >= first && x.day <= last);
+  const days = [...new Set(inRange.map((x) => x.day))].sort();
+  let closed = 0;
+  for (const k of days) if (calendarDay(sessions, dailyGoals, goals, k, today).rings.closed) closed += 1;
+  let best = 0;
+  let run = 0;
+  let prev = null;
+  for (const k of days) {
+    const d = parseDayKey(k);
+    run = prev && Math.round((d - prev) / 86400000) === 1 ? run + 1 : 1;
+    best = Math.max(best, run);
+    prev = d;
+  }
+  return { closedDays: closed, words: summarize(inRange).words, bestStreak: best, daysWritten: days.length };
+}

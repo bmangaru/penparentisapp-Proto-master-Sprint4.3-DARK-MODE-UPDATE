@@ -23,6 +23,7 @@ import Rings, { RING_COLORS } from '../components/Rings';
 import RingStats from '../components/RingStats';
 import { LinearGradient } from 'expo-linear-gradient';
 import Cycler from '../components/Cycler';
+import ShareCalendarSheet from '../components/ShareCalendarSheet';
 import EventCountdown, { nextUpcoming } from '../components/EventCountdown';
 import { colors, gradients, lift, radius, space, themed } from '../theme';
 import { eventWhen, eventsByDay, loadEvents } from '../eventsService';
@@ -49,6 +50,7 @@ export default function CalendarScreen({ navigation }) {
     if (r === 'denied') setNotifyNote('denied');
   }
   const [selected, setSelected] = useState(today);
+  const [shareOpen, setShareOpen] = useState(false); // ⇪ Share your rings
   const scrollRef = useRef(null);
   const [earlier, setEarlier] = useState(0);
 
@@ -187,6 +189,10 @@ export default function CalendarScreen({ navigation }) {
         <View style={[s.card, lift, { paddingHorizontal: 10 }]}>
           <View style={s.titleRow}>
             <Text style={s.h}>Your writing calendar</Text>
+            <Pressable onPress={() => setShareOpen(true)} style={s.shareBtn} hitSlop={6} accessibilityRole="button" accessibilityLabel="Share your rings">
+              <Ionicons name="share-outline" size={14} color="#FFFFFF" />
+              <Text style={s.shareText}>Share</Text>
+            </Pressable>
           </View>
           <View style={s.legend}>
             <Legend color={RING_COLORS.light.minutes} label="Minutes" />
@@ -270,6 +276,7 @@ export default function CalendarScreen({ navigation }) {
         </View>
       </View>
 
+      <ShareCalendarSheet visible={shareOpen} onClose={() => setShareOpen(false)} sessions={data.sessions} dailyGoals={data.dailyGoals} goals={data.goals} />
     </Screen>
   );
 }
@@ -315,6 +322,8 @@ function Legend({ color, label }) {
 const s = themed(() => ({
   pad: { padding: space.lg, gap: space.md },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  shareBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: colors.royal, borderRadius: 999, paddingHorizontal: 12, minHeight: 30 },
+  shareText: { color: '#FFFFFF', fontSize: 12.5, fontWeight: '800' },
   h: { fontSize: 16, fontWeight: '700', color: colors.ink },
   body: { fontSize: 13, color: colors.body, lineHeight: 18 },
   card: { backgroundColor: '#FFFFFF', borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, padding: 14 },
