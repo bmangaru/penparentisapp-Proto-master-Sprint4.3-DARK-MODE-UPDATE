@@ -1,5 +1,6 @@
 // screens/HomeScreen.js — Home.
 //   • Blue banner: "Pen Parentis · parenting done, write." with ⚙ Settings.
+//   • From the blog: the newest posts from penparentis.org (components/BlogCarousel.js).
 //   • Follow Pen Parentis: Facebook, Instagram, LinkedIn, X and Bluesky as
 //     brand buttons (same style as Discord / YouTube / Spotify), each with its
 //     handle.
@@ -17,6 +18,7 @@ import SettingsSheet from '../components/SettingsSheet';
 import { BrandButton } from '../components/LinkButtons';
 import { takeSettingsOpen } from '../appearance';
 import DonorCrawl from '../components/DonorCrawl';
+import BlogCarousel from '../components/BlogCarousel';
 import { colors, lift, radius, space, themed } from '../theme';
 import { LINKS } from '../links';
 
@@ -67,7 +69,9 @@ export default function HomeScreen() {
       />
 
       <View style={s.pad}>
-        <Text style={s.h}>Follow Pen Parentis</Text>
+        <BlogCarousel />
+
+        <Text style={[s.h, { marginTop: space.md }]}>Follow Pen Parentis</Text>
         {SOCIALS.map((n) => (
           <BrandButton key={n.brand} brand={n.brand} icon={n.icon} label={n.label} sub={n.handle} onPress={() => openLink(n.url)} />
         ))}

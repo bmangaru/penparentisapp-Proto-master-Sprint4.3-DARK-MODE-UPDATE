@@ -581,3 +581,11 @@ Also: writing you're picking up from earlier today never counts twice. If you ta
 - **Donor scroll:** Pace University, Seidenberg School of Computer Science and Information Systems is now with the organizations; Brian M., Rony C., Rafael M. and Nala H. are with the people. The separate "developed by" sentence and the "Thank you" at the start are gone (the heading above says it).
   - **Fix:** names no longer pile on top of each other over time. The moving strip is now as long as the list instead of the screen's width, so its two copies sit end to end.
 - **Accountability groups:** one paragraph: "**Requires sustaining membership at the All-Access level.**" (bold gold) then the description, no line breaks.
+
+## Round 48 — "From the blog" on Home (sponsor request)
+
+- **Home → From the blog** (`components/BlogCarousel.js`), at the top under the banner: the 5 newest posts from https://penparentis.org/category/blog/ as cards you swipe through: featured picture, date ("SEP 8, 2026"), title and first line, with dots. **See all ›** opens the whole blog.
+- **Tapping a post** opens it inside the app (the phone's built-in browser sheet: Done to come back, and a button to open it in Safari), coloured to match light / dark mode.
+- **Always current** (`blogService.js`): the app reads the site's public WordPress post list (no key needed): it finds the "blog" category, then its newest posts with their pictures. If that isn't reachable it reads the blog's RSS feed instead. The last list is saved on the phone, so it still shows offline. A post without a picture shows the Pen Parentis logo.
+- **Needs** `expo-web-browser`: run `npx expo install expo-web-browser` once.
+- **Tested:** `test28` (WordPress posts, pictures, excerpts, RSS fallback, dates).
