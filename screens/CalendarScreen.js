@@ -149,7 +149,7 @@ export default function CalendarScreen({ navigation }) {
         {/* ---------- Top card: the selected day ↔ the next event's countdown ----------
             Switches every 6 s while today is selected; tapping another day
             shows that day and holds still. */}
-        <Cycler paused={selected !== today} resetKey={selected}>
+        <Cycler paused={selected !== today} resetKey={selected} arrows>
         <LinearGradient colors={gradients.header} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={s.dayCard}>
           <View style={s.dayHead}>
             <Text style={s.dayTitle} numberOfLines={1}>
