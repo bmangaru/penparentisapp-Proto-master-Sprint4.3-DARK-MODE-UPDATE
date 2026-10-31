@@ -217,7 +217,7 @@ export const CHAPTERS = [
       ...toWriter('Finishing happens on the writing page.'),
       {
         target: 'writer.finish', inline: true, section: 'Finish', marks: ['writer.finish'], markRound: 14, wait: true, noTyping: true,
-        text: 'When you’re done writing, Finish & check in saves your entry.',
+        text: 'When you’re done writing, Finish & check in saves your entry. (Nothing on this page yet? Type a line first.)',
         task: 'Tap Finish & check in.', hold: 600, on: (ev) => ev === 'session-saved',
       },
       {
@@ -275,11 +275,8 @@ export const CHAPTERS = [
         on: (ev, v) => ev === 'revealed' && v === 'bs.history',
       },
       {
-        target: 'bs.history', tab: 'Brainstorm', noRing: true, markRound: 16, marks: ['bs.folder'],
-        text: 'It’s all saved on your phone. Your writing is kept in a folder for the week: closed, it shows your most recent day.',
-        task: 'Tap the folder to open this week.', doneText: 'Every day this week, with how you felt. Tap a day any time to read it.', manual: true,
-        skipIf: () => !getTarget('bs.folder'), // only one day so far: nothing to open
-        on: (ev) => ev === 'folder-open',
+        target: 'bs.history', tab: 'Brainstorm', info: true, look: true, noRing: true, markRound: 16, marks: ['bs.folder'],
+        text: 'It’s all saved on your phone, in a folder for the week. Closed, it shows your most recent day; tap the folder any time to see everything else you wrote this week.',
       },
       {
         target: 'bs.history', tab: 'Brainstorm', info: true, look: true, noRing: true, markRound: 16, marks: ['bs.seeAll'],

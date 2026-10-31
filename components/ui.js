@@ -5,7 +5,7 @@ import { View, Text, ScrollView, Pressable, StyleSheet, Linking } from 'react-na
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, gradients, lift, radius, space, themed } from '../theme';
-import { TourScrollContext } from '../tourRun';
+import { TourScrollContext, stepOf, useRun } from '../tourRun';
 
 // The app tour can scroll a page to the spot it's pointing at.
 export function Screen({ children, scrollRef }) {
@@ -13,6 +13,12 @@ export function Screen({ children, scrollRef }) {
   const ref = scrollRef || own;
   const y = useRef(0);
   const tour = useMemo(() => ({ ref, y }), [ref]);
+  // While a tour step is showing, the page holds still (the tour scrolls it
+  // to the right spot itself). "Scroll down to…" steps and a tucked-away
+  // tour leave scrolling on.
+  const run = useRun();
+  const st = run && !run.min ? stepOf(run) : null;
+  const hold = !!run && !run.min && (run.phase === 'done' || (st && !st.reveal));
   return (
     <TourScrollContext.Provider value={tour}>
       <ScrollView
@@ -20,6 +26,7 @@ export function Screen({ children, scrollRef }) {
         style={{ flex: 1, backgroundColor: colors.paper }}
         contentContainerStyle={{ paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
+        scrollEnabled={!hold}
         onScroll={(e) => { y.current = e.nativeEvent.contentOffset.y; }}
         scrollEventThrottle={32}
       >

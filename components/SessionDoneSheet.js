@@ -7,7 +7,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import Sheet from './Sheet';
 import TourTarget from './TourTarget';
-import { tourEvent } from '../tourRun';
+import { tourEvent, useRun } from '../tourRun';
 import Face from './Face';
 import { MedalSummary } from './MedalProgress';
 import { colors, radius, space, themed } from '../theme';
@@ -49,6 +49,7 @@ export default function SessionDoneSheet({
   visible, words, seconds, dailyGoal, todayTotals, pct, nextRows = [], allRows = [],
   feeling, onPickFeeling, onShare, onDone, onMedalPress,
 }) {
+  const touring = !!useRun();
   const g = goalLine(dailyGoal, todayTotals, pct);
   const met = g.pct != null && g.pct >= 100;
   // "See all" opens every medal right here, so How do you feel? and Done
@@ -127,19 +128,21 @@ export default function SessionDoneSheet({
 
       <TourTarget id="done.buttons">
       <View style={s.actions}>
-        <Pressable style={[s.btn, s.btnOutline]} onPress={onShare}>
+        <Pressable style={[s.btn, s.btnOutline, touring && { opacity: 0.4 }]} onPress={onShare} disabled={touring} accessibilityState={{ disabled: touring }}>
           <Text style={[s.btnText, { color: colors.royal }]}>Send to myself</Text>
         </Pressable>
         <Pressable style={[s.btn, s.btnPrimary]} onPress={onDone}>
           <Text style={[s.btnText, { color: '#FFFFFF' }]}>Done</Text>
         </Pressable>
       </View>
+      {touring ? <Text style={s.tourNote}>Send to myself is off during the tour (it leaves the app). It works any time after.</Text> : null}
       </TourTarget>
     </Sheet>
   );
 }
 
 const s = themed(() => ({
+  tourNote: { fontSize: 12, color: colors.muted, textAlign: 'center', marginTop: 8 },
   medHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 },
   medKicker: { fontSize: 10.5, fontWeight: '800', letterSpacing: 0.9, color: colors.muted },
   medToggle: { fontSize: 13, fontWeight: '800', color: colors.royal },

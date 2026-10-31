@@ -27,6 +27,7 @@ import BottomBar from './components/BottomBar';
 import IntroSplash from './components/IntroSplash';
 import TourModal from './components/TourModal';
 import TourOverlay from './components/TourOverlay';
+import { useRun } from './tourRun';
 import { loadEvents, upcoming } from './eventsService';
 import { onNotificationTap, syncNotifications } from './notify';
 import { openLink } from './components/ui';
@@ -54,12 +55,14 @@ function BrainstormStack() {
 }
 
 function TabNavigator() {
+  // No swiping between tabs while the tour runs (tap the tab bar instead).
+  const touring = !!useRun();
   return (
     <Tabs.Navigator
       tabBarPosition="bottom"
       initialRouteName="Home"
       tabBar={(props) => <BottomBar {...props} />}
-      screenOptions={{ swipeEnabled: true }}
+      screenOptions={{ swipeEnabled: !touring }}
     >
       <Tabs.Screen name="Home" component={HomeScreen} />
       <Tabs.Screen name="Calendar" component={CalendarScreen} />

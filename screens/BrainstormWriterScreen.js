@@ -299,7 +299,10 @@ export default function BrainstormWriterScreen({ navigation, route }) {
   // Tour steps that ask you to write (freshLine) start on a fresh line at the
   // end of what you've written, with the keyboard up, ready to type.
   // Steps that only explain (noTyping): the keyboard goes away meanwhile.
-  useEffect(() => { if (tourStep?.noTyping) Keyboard.dismiss(); }, [tourStep?.noTyping]);
+  // (Except Finish on a page with nothing new yet, e.g. redoing chapter 6:
+  // then you can type a line first, since an empty page has nothing to save.)
+  const typingOff = !!tourStep?.noTyping && !(tourStep.target === 'writer.finish' && effortWords === 0);
+  useEffect(() => { if (typingOff) Keyboard.dismiss(); }, [typingOff]);
   const freshKey = tourStep?.freshLine ? `${tourRun.ch}.${tourRun.step}` : null;
   useEffect(() => {
     if (!freshKey || !ready) return undefined;
@@ -450,6 +453,11 @@ export default function BrainstormWriterScreen({ navigation, route }) {
 
   async function finish() {
     // Opened the page and left without writing anything new: nothing to log.
+    if (finalWords() === 0 && seconds < 60 && tourStep) {
+      flash('Write a few words first, then tap Finish & check in.');
+      inputRef.current?.focus();
+      return;
+    }
     if (finalWords() === 0 && seconds < 60) {
       saved.current = true;
       navigation.goBack();
@@ -620,7 +628,7 @@ export default function BrainstormWriterScreen({ navigation, route }) {
       {ready ? (
         <TextInput
           ref={inputRef}
-          editable={!tourStep?.noTyping}
+          editable={!typingOff}
           keyboardAppearance={isDark() ? 'dark' : 'light'}
           value={text}
           onChangeText={onChangeText}

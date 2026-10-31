@@ -799,3 +799,11 @@ No new behaviour: this zip has every file the on-app tour touches (rounds 56–5
 - **Tour 7.3:** tap the folder to open this week (pulsing), then a note on "See all my writing". If you've only written one day so far, the folder step is skipped.
 - **Fix:** a step could show its gold outline with no bubble (the bubble's size was sometimes reset just after it was measured, leaving it invisible). Now each measurement belongs to its step, so the bubble always shows.
 - **Take a break:** from a chapter's last card it ends there and "Continue the tour" starts the next chapter; leaving mid-chapter (✕ → End) means that chapter starts again from the top next time.
+
+## Round 71 — tour: steadier pages, redo chapter 6 fix
+
+- **Redo chapter 6:** the writing page opens blank, so 6.1 now lets you type a line if the page has nothing on it yet (Finish on an empty page used to close it without saving, and the tour waited forever). In the tour, Finish on an empty page says "Write a few words first".
+- **No swiping between tabs** while the tour runs (e.g. from the writing page to Calendar or Eventbrite); tap the tab bar instead.
+- **Pages hold still** while a tour step is showing (the tour scrolls to the right spot itself). "Scroll down to…" steps, and the tour tucked away with ✕, leave scrolling on.
+- **6.3:** Send to myself is greyed out during the tour, with a note that it works any time after.
+- **7.3:** no tapping the folder; the bubble just says the folder shows your most recent day and that tapping it shows everything else you wrote this week (the folder pulses).
