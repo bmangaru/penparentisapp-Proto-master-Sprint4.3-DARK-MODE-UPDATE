@@ -862,3 +862,9 @@ This month: big rings across the full width. 3 months: three small months in a r
 - **3.1:** "On the tab bar, the pencil is Brainstorm: where you write and set your goals."
 - **3.2:** the pulsing ring is drawn on the Edit goals button itself, so it stays with it.
 - **7.2 Log offline writing** and **9.3 Share your rings** are now look-only notes (Got it ›): they say where the feature is and what it does, without opening it.
+
+## Round 80 — light-mode tips and medal notes
+
+- **Tour in light mode:** the "Your turn" box is a pale blue with dark text (gold "Your turn", green progress) to match the light bubble; dark mode keeps the dark box.
+- **Medal notes** (tap a medal on Session saved, Log offline, etc.): pale blue with dark text in light mode, deep blue in dark mode (was always navy).
+- **9.3:** "Show off all the days you showed up to write! Tap Share to turn your calendar into a picture for friends or family, showing 1, 3 or 6 months. Only your rings and totals are included; your writing always stays private."
