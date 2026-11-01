@@ -1,6 +1,6 @@
 // components/TourCard.js — Home's welcome card for the app tour, above
 // "From the blog". Shows how far you are and continues where you left off.
-// "Hide for now" tucks it away; it's gone for good once every chapter is
+// "Hide the tour" tucks it away (Settings brings it back); it's gone for good once every chapter is
 // done. ⚙ Settings → The app tour brings the tour back any time.
 
 import React from 'react';
@@ -33,9 +33,10 @@ export default function TourCard() {
       <Pressable onPress={() => openTour()} style={({ pressed }) => [s.btn, pressed && { opacity: 0.85 }]} accessibilityRole="button">
         <Text style={s.btnText}>{started ? 'Continue the tour  ›' : 'Start the tour  ›'}</Text>
       </Pressable>
-      <Pressable onPress={() => setTourHidden(true)} hitSlop={6} style={{ alignSelf: 'center', marginTop: 8 }} accessibilityRole="button">
-        <Text style={s.hide}>Hide for now (it's in ⚙ Settings)</Text>
+      <Pressable onPress={() => setTourHidden(true)} style={({ pressed }) => [s.hideBtn, pressed && { opacity: 0.8 }]} accessibilityRole="button">
+        <Text style={s.hideText}>Hide the tour</Text>
       </Pressable>
+      <Text style={s.hide}>You can always find it again in ⚙ Settings.</Text>
     </View>
   );
 }
@@ -51,5 +52,7 @@ const s = themed(() => ({
   count: { fontSize: 12, fontWeight: '700', color: '#8A5E12', marginTop: 6 },
   btn: { backgroundColor: colors.royal, borderRadius: radius.md, minHeight: 48, alignItems: 'center', justifyContent: 'center', marginTop: 12 },
   btnText: { color: '#FFFFFF', fontWeight: '700', fontSize: 14.5 },
-  hide: { fontSize: 12.5, fontWeight: '700', color: colors.muted },
+  hideBtn: { borderWidth: 1.5, borderColor: colors.royal, borderRadius: radius.md, minHeight: 44, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
+  hideText: { color: colors.royal, fontWeight: '700', fontSize: 14 },
+  hide: { fontSize: 12, color: colors.muted, textAlign: 'center', marginTop: 6 },
 }));

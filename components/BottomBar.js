@@ -66,7 +66,9 @@ export default function BottomBar({ state, descriptors, navigation }) {
                 </LinearGradient>
               </View>
             ) : (
-              <Ionicons name={TAB_ICONS[route.name] || 'ellipse'} size={focused ? 23 : 22} color={color} style={s.icon} />
+              <View style={s.iconBox}>
+                <Ionicons name={TAB_ICONS[route.name] || 'ellipse'} size={focused ? 23 : 22} color={color} />
+              </View>
             )}
             <Text
               numberOfLines={1}
@@ -95,13 +97,14 @@ const s = themed(() => ({
   bar: {
     flexDirection: 'row', alignItems: 'flex-end',
     backgroundColor: colors.paper, borderTopWidth: 1, borderTopColor: colors.line,
-    paddingTop: 14,
+    paddingTop: 8,
   },
   slot: { flex: 1 },
   item: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', minHeight: 52 },
-  icon: { height: 26, textAlign: 'center' },
+  iconBox: { height: CIRCLE, alignItems: 'center', justifyContent: 'center' },
   circleWrap: {
-    marginTop: 0, // fully inside the bar (the bar is a touch taller for it)
+    // Every tab's icon sits in a box as tall as the circle, so the circle is
+    // fully inside the bar and all five labels line up.
     width: CIRCLE, height: CIRCLE, borderRadius: CIRCLE / 2,
     shadowColor: colors.royalDeep, shadowOpacity: 0.25, shadowRadius: 6, shadowOffset: { width: 0, height: 3 }, elevation: 5,
   },
