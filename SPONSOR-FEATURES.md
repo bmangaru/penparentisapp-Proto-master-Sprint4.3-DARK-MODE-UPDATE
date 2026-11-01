@@ -807,3 +807,45 @@ No new behaviour: this zip has every file the on-app tour touches (rounds 56–5
 - **Pages hold still** while a tour step is showing (the tour scrolls to the right spot itself). "Scroll down to…" steps, and the tour tucked away with ✕, leave scrolling on.
 - **6.3:** Send to myself is greyed out during the tour, with a note that it works any time after.
 - **7.3:** no tapping the folder; the bubble just says the folder shows your most recent day and that tapping it shows everything else you wrote this week (the folder pulses).
+
+## Round 72 — Share your rings: back to the original sizes
+
+This month: big rings across the full width. 3 months: three small months in a row. 6 months: 3 across, 2 down.
+
+## Round 73 — tour: play without saving, real switches
+
+- **7.1 Log offline writing:** try anything; "Add to today" is greyed out during the tour ("nothing is saved"), so the tour can't add fake writing or close the sheet.
+- **9.4 Previous salons** and **10.1 Never miss one:** the switches really work during the tour (turn them on if you want the reminder); flipping them doesn't move the tour on, only Got it does. On 9.4 the YouTube and Spotify buttons do nothing during the tour (they'd leave the app).
+
+## Round 74 — tour: chapters in order, clearer words
+
+- **Settings → The app tour:** "Chapters" (was "Open the tour") opens the chapter list; "Start over" restarts from the beginning.
+- **Chapter list:** finished chapters can be redone, and their sections (7.1, 7.2…) jumped to; the next chapter is ready to start; later chapters are locked (🔒) until you get there.
+- **See all chapters** on a chapter's last card opens the list over the tour; closing it (✕) brings you back to that card.
+- **9.2** "Each day's progress is shown as its own set of rings. The current week is at the top of the calendar; scroll up for earlier weeks. A gold ★ marks a salon day…"
+- **9.3** "Show off all the days you showed up to write! Share your calendar with friends or family."
+- **10.3** now outlines just the Accountability groups heading and description (not the whole table), so the bubble sits neatly.
+- **Tour complete:** "You've seen everything the Pen Parentis app can do."
+
+## Round 75 — tour details, tab bar fix
+
+- **Chapter cards:** "… more for the **Bronze / Silver / Gold / Diamond** Tour Guide medal" is written in that medal's colour.
+- **3.1:** sessions are "each time you sat down to use the app and write".
+- **4.2:** adds "No need to stress over every detail: you can always come back and add more."
+- **Chapter 7** starts with **7.1 Keep writing** (the big Brainstorm button: "Keep writing" / "Write a little more" picks up where you left off). Log offline writing is now 7.2, This week 7.3, Everything you've written 7.4.
+- **7.2:** Today and Choose date pulse gold too.
+- **9.1:** the top card always starts on today's rings when the step opens; tap › to see the countdown.
+- **Tour complete:** "consider a donation through Get Karma".
+- **Tab bar:** a little taller, so the blue Brainstorm circle sits fully inside it.
+
+## Round 76 — tab bar alignment, Hide the tour button
+
+- **Tab bar:** every tab's icon sits in a box as tall as the Brainstorm circle, so the circle is fully inside the bar (no longer touching its top edge) and all five labels sit on the same line.
+- **Home's tour card:** "Hide for now" is now a real button, **Hide the tour**, with "You can always find it again in ⚙ Settings." under it.
+
+## Round 77 — Edit goals button, appearance, latest blog
+
+- **Brainstorm's Today card:** "Edit goals" is now a pill button (like Edit in Your goals). In tour 3.2 it gets a round pulsing gold ring.
+- **1.2 Settings:** "Settings lives here on the Home page. Here you control how the app looks, and find this tour if you ever need a refresher."
+- **Appearance:** your current choice is shown selected (System on a new install), with the small "now" tag during the tour.
+- **2.1:** the blog always starts on the newest post when this step opens.
