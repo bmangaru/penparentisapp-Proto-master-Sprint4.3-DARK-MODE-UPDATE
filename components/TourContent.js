@@ -117,7 +117,7 @@ export const CHAPTERS = [
       },
       {
         target: 'bs.today', tab: 'Brainstorm', editPulse: true, section: 'Change your goals',
-        title: 'Edit goals', text: 'Your goals for every day, and today’s, are one tap away: the Edit goals button on the Today card.',
+        title: 'Edit goals', text: 'Here you set your goals. No worries if they aren’t right the first time: you can always change them later.',
         task: 'Tap Edit goals.', on: (ev, v) => ev === 'sheet-open' && v === 'plan',
       },
       {
@@ -226,7 +226,7 @@ export const CHAPTERS = [
       },
       {
         target: 'done.medals', wait: true, lock: true, round: 16,
-        title: 'Medals you moved', text: 'Writing moves your medals along. These are the ones this session moved (green is what you just added).',
+        title: 'Medals you progressed', text: 'Writing moves your medals along. These are the ones this session moved (green is what you just added).',
         task: 'Tap a medal to see what it counts.', doneText: 'Tap others too, then go on.', manual: true,
         on: (ev) => ev === 'medal-note',
       },
@@ -248,7 +248,7 @@ export const CHAPTERS = [
       tapTab('Brainstorm', 'Brainstorm', 'There’s more on Brainstorm: writing you did elsewhere, your week, and everything you’ve written.'),
       {
         target: 'bs.start', tab: 'Brainstorm', info: true, look: true, round: 16, section: 'Keep writing',
-        text: 'No worries if you have more to write. This button is always here: tap it (it says “Keep writing” or “Write a little more”) to pick up where you left off.',
+        text: 'Have more to write? This button is always here. Until your rings are closed it says “Keep writing”; once you’ve met today’s goal it says “Write a little more?” so you can keep going above and beyond. Either way, it picks up right where you left off.',
       },
       {
         target: 'bs.offline', tab: 'Brainstorm', info: true, look: true, round: 16, section: 'Log offline writing',
@@ -289,7 +289,7 @@ export const CHAPTERS = [
       },
       {
         target: 'bs.medals', tab: 'Brainstorm', info: true, look: true,
-        title: 'Your medals', text: 'Medals live here, at the bottom of Brainstorm. You earn them for words, time, sessions, streaks and goals met, plus a few for your words themselves.',
+        title: 'Your medals', text: 'Medals live here, at the bottom of Brainstorm. Every word you type, minute you spend, session you finish and goal you meet moves you closer to your next one, and there’s much more to earn!',
       },
       {
         target: 'bs.medals', tab: 'Brainstorm', info: true, look: true, section: 'Four tiers',

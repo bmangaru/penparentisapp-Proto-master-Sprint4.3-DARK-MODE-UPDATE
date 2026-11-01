@@ -868,3 +868,10 @@ This month: big rings across the full width. 3 months: three small months in a r
 - **Tour in light mode:** the "Your turn" box is a pale blue with dark text (gold "Your turn", green progress) to match the light bubble; dark mode keeps the dark box.
 - **Medal notes** (tap a medal on Session saved, Log offline, etc.): pale blue with dark text in light mode, deep blue in dark mode (was always navy).
 - **9.3:** "Show off all the days you showed up to write! Tap Share to turn your calendar into a picture for friends or family, showing 1, 3 or 6 months. Only your rings and totals are included; your writing always stays private."
+
+## Round 81 — tour wording
+
+- **3.2:** "Here you set your goals. No worries if they aren't right the first time: you can always change them later."
+- **6.2:** title "Medals you progressed".
+- **7.1:** explains the button says "Keep writing" until your rings are closed, then "Write a little more?" to keep going above and beyond; either way it picks up where you left off.
+- **8.1:** "Every word you type, minute you spend, session you finish and goal you meet moves you closer to your next one, and there's much more to earn!"
