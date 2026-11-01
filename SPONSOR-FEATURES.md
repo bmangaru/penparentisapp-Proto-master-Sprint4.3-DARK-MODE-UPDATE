@@ -849,3 +849,9 @@ This month: big rings across the full width. 3 months: three small months in a r
 - **1.2 Settings:** "Settings lives here on the Home page. Here you control how the app looks, and find this tour if you ever need a refresher."
 - **Appearance:** your current choice is shown selected (System on a new install), with the small "now" tag during the tour.
 - **2.1:** the blog always starts on the newest post when this step opens.
+
+## Round 78 — tour: Simple prompt first, outlines stay on their buttons
+
+- **5.1:** the first prompt shown in the tour is always a Simple one.
+- **7.2** (Today / Choose date) and **9.3** (This month / 3 months / 6 months): the pulsing gold rings are drawn on the buttons themselves, like the − / + rings, so they move with the page instead of lagging behind when you scroll.
+- **10.3:** "each group's meeting day and time are in the table just below."

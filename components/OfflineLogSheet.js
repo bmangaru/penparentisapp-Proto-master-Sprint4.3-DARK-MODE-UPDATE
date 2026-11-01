@@ -57,6 +57,8 @@ export default function OfflineLogSheet({ visible, onClose, onSave, sessions = [
   const [touched, setTouched] = useState(false);
   useEffect(() => { if (visible) setTouched(false); }, [visible]);
   const tip = useTapHint(isTourTarget('offline.card', run) && !touched);
+  // Today / Choose date pulse too, drawn on the chips so they move with them.
+  const chipTip = useTapHint(isTourTarget('offline.card', run));
 
   // The app's number pad: tap a number to type it; Next › goes to the next one.
   const pad = useNumberPad({
@@ -93,12 +95,14 @@ export default function OfflineLogSheet({ visible, onClose, onSave, sessions = [
         <TourTarget id="offline.today">
         <Pressable onPress={() => { setDay(today); setCalOpen(false); }} style={[s.chip, isToday && !calOpen && s.chipOn]} accessibilityRole="button" accessibilityState={{ selected: isToday && !calOpen }}>
           <Text style={[s.chipText, isToday && !calOpen && { color: '#FFFFFF' }]}>Today</Text>
+          {chipTip.ring(chipTip.on)}
         </Pressable>
         </TourTarget>
         <TourTarget id="offline.date">
         <Pressable onPress={() => setCalOpen((o) => !o)} style={[s.chip, (!isToday || calOpen) && s.chipOn]} accessibilityRole="button" accessibilityLabel={isToday ? 'Choose date' : `Date: ${shortDay(day)}. Change`}>
           <Ionicons name="calendar-outline" size={15} color={!isToday || calOpen ? '#FFFFFF' : colors.muted} />
           <Text style={[s.chipText, (!isToday || calOpen) && { color: '#FFFFFF' }]}>{isToday ? 'Choose date' : `${shortDay(day)}  ▾`}</Text>
+          {chipTip.ring(chipTip.on)}
         </Pressable>
         </TourTarget>
       </View>

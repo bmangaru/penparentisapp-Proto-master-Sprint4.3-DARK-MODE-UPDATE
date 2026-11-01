@@ -374,6 +374,12 @@ export default function BrainstormWriterScreen({ navigation, route }) {
   function showPrompt() {
     tourEvent('prompt-show');
     markActive();
+    // In the app tour the first prompt is always a Simple one.
+    if (tourRun && !prompt) {
+      setLevel('simple');
+      setPrompt(promptForDay(session.day, 'simple'));
+      return;
+    }
     setPrompt((p) => p || promptForDay(session.day, level));
   }
   // ✦ Prompt: tap to show, tap again to hide.

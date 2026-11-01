@@ -13,7 +13,8 @@ import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import Sheet from './Sheet';
 import TourTarget from './TourTarget';
-import { tourEvent, useRun } from '../tourRun';
+import { isTourTarget, tourEvent, useRun } from '../tourRun';
+import { useTapHint } from './TapHint';
 import Rings from './Rings';
 import { colors, radius, themed } from '../theme';
 import { calendarDay, dayKey, monthGrid, shareMonths, shareStats, shareTitle } from '../writingLogic';
@@ -25,7 +26,10 @@ const RANGES = [
 ];
 
 export default function ShareCalendarSheet({ visible, onClose, sessions = [], dailyGoals = {}, goals = null }) {
-  const touring = !!useRun();
+  const run = useRun();
+  const touring = !!run;
+  // In the tour the three ranges pulse, drawn on the chips so they move with them.
+  const chipTip = useTapHint(isTourTarget('share.card', run));
   const [range, setRange] = useState('3months');
   const [totals, setTotals] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -76,6 +80,7 @@ export default function ShareCalendarSheet({ visible, onClose, sessions = [], da
             <TourTarget key={r.id} id={`share.${r.id}`}>
             <Pressable onPress={() => { setRange(r.id); tourEvent('share-range', r.id); }} style={[s.chip, on && s.chipOn]} accessibilityRole="button" accessibilityState={{ selected: on }}>
               <Text style={[s.chipText, on && { color: '#FFFFFF' }]}>{r.label}</Text>
+              {chipTip.ring(chipTip.on)}
             </Pressable>
             </TourTarget>
           );

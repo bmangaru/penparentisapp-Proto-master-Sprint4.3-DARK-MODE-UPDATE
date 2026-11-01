@@ -256,7 +256,7 @@ export const CHAPTERS = [
         task: 'Tap Log offline writing.', on: (ev, v) => ev === 'sheet-open' && v === 'offline',
       },
       {
-        target: 'offline.card', wait: true, info: true, lock: true, noRing: true, place: 'top', marks: ['offline.today', 'offline.date'],
+        target: 'offline.card', wait: true, info: true, lock: true, noRing: true, place: 'top',
         text: 'Pick the day, then add the minutes, words and sessions you wrote. It counts toward your rings and most medals. Play with it: during the tour nothing is saved.',
       },
       {
@@ -327,7 +327,7 @@ export const CHAPTERS = [
         task: 'Tap Share.', on: (ev, v) => ev === 'sheet-open' && v === 'share',
       },
       {
-        target: 'share.card', wait: true, lock: true, noRing: true, place: 'top', marks: ['share.month', 'share.3months', 'share.6months'],
+        target: 'share.card', wait: true, lock: true, noRing: true, place: 'top',
         text: 'Pick how much to show and watch the picture change. It shows only rings and totals, never your writing. (Share image is off during the tour.)',
         task: 'Tap This month, 3 months or 6 months.', doneText: 'Try the others too, then go on.', manual: true,
         on: (ev) => ev === 'share-range',
@@ -367,7 +367,7 @@ export const CHAPTERS = [
       },
       {
         target: 'com.groupsInfo', tab: 'Community', info: true, look: true, section: 'Accountability groups',
-        text: 'Small groups of writer-parents who meet to set goals and keep each other writing. Pick a group by when you’re free; the list is just below. They’re for sustaining members at the All-Access level.',
+        text: 'Small groups of writer-parents who meet to set goals and keep each other writing. Pick a group by when you’re free: each group’s meeting day and time are in the table just below. They’re for sustaining members at the All-Access level.',
       },
     ],
   },
