@@ -29,7 +29,9 @@ export function AppearancePicker({ onPick }) {
   return (
     <View style={s.row} accessibilityRole="radiogroup">
       {OPTIONS.map((o) => {
-        const on = o.id === choice && !neutral;
+        // Your current choice is selected (System on a new install); in the
+        // tour it also gets a small "now" tag.
+        const on = o.id === choice;
         const now = o.id === choice && neutral;
         return (
           <Pressable

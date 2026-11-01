@@ -49,7 +49,7 @@ export const CHAPTERS = [
       { kind: 'welcome', go: { tab: 'Home' }, section: 'Welcome' },
       {
         target: 'home.settings', tab: 'Home', round: 20, section: 'Settings',
-        text: 'Settings lives here on Home: how the app looks, and this tour.',
+        text: 'Settings lives here on the Home page. Here you control how the app looks, and find this tour if you ever need a refresher.',
         task: 'Tap ⚙ Settings.', on: (ev, v) => ev === 'sheet-open' && v === 'settings',
       },
       {
@@ -116,8 +116,8 @@ export const CHAPTERS = [
         text: 'Minutes writing, words written and sessions (each time you sat down to use the app and write). They fill as you write and close when you meet the day’s goal.',
       },
       {
-        target: 'bs.today', tab: 'Brainstorm', marks: ['bs.editGoals'], markRound: 8, section: 'Change your goals',
-        title: 'Edit goals', text: 'Your goals for every day, and today’s, are one tap away.',
+        target: 'bs.today', tab: 'Brainstorm', marks: ['bs.editGoals'], markRound: 999, section: 'Change your goals',
+        title: 'Edit goals', text: 'Your goals for every day, and today’s, are one tap away: the Edit goals button on the Today card.',
         task: 'Tap Edit goals.', on: (ev, v) => ev === 'sheet-open' && v === 'plan',
       },
       {

@@ -183,8 +183,8 @@ export default function BrainstormHomeScreen({ navigation, route }) {
             <Text style={s.todayLabel}>Today · {todayLabel}{rest ? ' · rest day' : ''}</Text>
             {/* One link: today's goal and your usual goals, in one sheet. */}
             <TourTarget id="bs.editGoals">
-              <Pressable onPress={() => openPlan('edit')} hitSlop={8} accessibilityRole="button">
-                <Text style={s.todayLink}>Edit goals</Text>
+              <Pressable onPress={() => openPlan('edit')} hitSlop={6} style={({ pressed }) => [s.editBtn, pressed && { opacity: 0.8 }]} accessibilityRole="button">
+                <Text style={s.editBtnText}>Edit goals</Text>
               </Pressable>
             </TourTarget>
           </View>
@@ -311,9 +311,10 @@ const s = themed(() => ({
   offlineTitle: { fontSize: 14, fontWeight: '700', color: colors.royalDeep },
   offlineSub: { fontSize: 12, color: colors.muted, marginTop: 1 },
   today: { borderRadius: radius.lg, padding: 18, gap: 14 },
-  todayHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  todayHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   todayLabel: { fontSize: 12.5, fontWeight: '700', color: 'rgba(255,255,255,0.88)' },
-  todayLink: { fontSize: 12.5, fontWeight: '700', color: colors.cream, textDecorationLine: 'underline' },
+  editBtn: { borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.7)', backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 999, paddingHorizontal: 13, minHeight: 32, justifyContent: 'center' },
+  editBtnText: { color: '#FFFFFF', fontWeight: '700', fontSize: 13 },
   startWrap: { borderRadius: radius.md },
   start: { borderRadius: radius.md, paddingVertical: 13, paddingHorizontal: 16, alignItems: 'center', gap: 3 },
   startTitle: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
