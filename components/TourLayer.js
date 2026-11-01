@@ -347,16 +347,16 @@ export function Bubble({ run, step, lost, inline }) {
         ? <Text style={[c.text, d && { color: '#C9D1E6' }]}>This part of the app isn't on screen right now, so this step can't be shown. You can skip it.</Text>
         : text ? <Text style={[c.text, d && { color: '#C9D1E6' }]}>{text}</Text> : null}
       {step.task && !lost ? (
-        <View style={[c.task, d && c.taskDark, done && c.taskDone]}>
+        <View style={[c.task, d ? c.taskDark : c.taskLight, done && c.taskDone]}>
           <View style={{ flex: 1 }}>
-            <Text style={c.taskText}>
-              {done ? <Text style={{ fontWeight: '800' }}>Nice! </Text> : <Text style={c.your}>Your turn: </Text>}
+            <Text style={[c.taskText, !d && !done && { color: '#0A1633' }]}>
+              {done ? <Text style={{ fontWeight: '800' }}>Nice! </Text> : <Text style={[c.your, !d && { color: '#8A5E12' }]}>Your turn: </Text>}
               {done ? (step.doneText || (step.manual ? 'Tap Next when you’re ready.' : 'On to the next bit…')) : step.task}
             </Text>
-            {!done && run.progress ? <Text style={c.prog}>{run.progress}</Text> : null}
+            {!done && run.progress ? <Text style={[c.prog, !d && { color: '#1E7B3A' }]}>{run.progress}</Text> : null}
           </View>
-          {!done && run.frac != null ? <ProgressRing frac={run.frac} /> : (
-            <View style={[c.check, done && c.checkOn]}>{done ? <Ionicons name="checkmark" size={14} color="#1E7B3A" /> : null}</View>
+          {!done && run.frac != null ? <ProgressRing frac={run.frac} light={!d} /> : (
+            <View style={[c.check, !d && !done && { borderColor: 'rgba(10,22,51,0.3)' }, done && c.checkOn]}>{done ? <Ionicons name="checkmark" size={14} color="#1E7B3A" /> : null}</View>
           )}
         </View>
       ) : null}
@@ -383,14 +383,14 @@ export function Bubble({ run, step, lost, inline }) {
 }
 
 // How far along the task is (5 words, 3 levels…), as a small filling ring.
-function ProgressRing({ frac }) {
+function ProgressRing({ frac, light }) {
   const r = 10;
   const len = 2 * Math.PI * r;
   const f = Math.max(0, Math.min(1, frac));
   return (
     <Svg width={26} height={26} viewBox="0 0 26 26">
-      <Circle cx={13} cy={13} r={r} stroke="rgba(255,255,255,0.25)" strokeWidth={3.5} fill="none" />
-      <Circle cx={13} cy={13} r={r} stroke="#6FD49A" strokeWidth={3.5} fill="none" strokeLinecap="round" strokeDasharray={`${len * f} ${len}`} rotation={-90} origin="13, 13" />
+      <Circle cx={13} cy={13} r={r} stroke={light ? 'rgba(10,22,51,0.15)' : 'rgba(255,255,255,0.25)'} strokeWidth={3.5} fill="none" />
+      <Circle cx={13} cy={13} r={r} stroke={light ? '#1E9E50' : '#6FD49A'} strokeWidth={3.5} fill="none" strokeLinecap="round" strokeDasharray={`${len * f} ${len}`} rotation={-90} origin="13, 13" />
     </Svg>
   );
 }
@@ -603,6 +603,8 @@ const c = StyleSheet.create({
   ringGlow: { margin: -6, borderWidth: 4, borderColor: 'rgba(242,193,78,0.28)' },
   centerWrap: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', paddingHorizontal: 18 },
   bubbleDark: { backgroundColor: '#1C2541', borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)' },
+  // Light mode: a pale blue box with dark text, to match the light bubble.
+  taskLight: { backgroundColor: '#EEF2FB', borderWidth: 1, borderColor: '#C9D3EE' },
   taskDark: { backgroundColor: '#0D1324', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
   bubbleInline: { paddingTop: 9, paddingBottom: 6, shadowOpacity: 0.18, shadowRadius: 8, elevation: 3, borderWidth: 1.5, borderColor: GOLD },
   bubble: {

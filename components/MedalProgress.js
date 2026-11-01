@@ -160,8 +160,9 @@ const s = themed(() => ({
     alignSelf: 'flex-start', marginTop: 4, backgroundColor: '#FFF4D6', borderWidth: 1, borderColor: '#F0D48A', color: '#7A5208',
     fontSize: 10.5, fontWeight: '800', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, overflow: 'hidden',
   },
-  note: { backgroundColor: colors.ink, borderRadius: 12, padding: 12, marginTop: 4, marginBottom: 6 },
-  noteTitle: { fontSize: 13.5, fontWeight: '800', color: '#FFFFFF', marginBottom: 2 },
-  noteText: { fontSize: 12.5, lineHeight: 18, color: '#FFFFFF' },
-  noteGreen: { color: '#9BE3B0', fontWeight: '700' },
+  // Pale blue in light mode, deep blue in dark (themed() swaps it).
+  note: { backgroundColor: '#EEF2FB', borderRadius: 12, padding: 12, marginTop: 4, marginBottom: 6 },
+  noteTitle: { fontSize: 13.5, fontWeight: '800', color: colors.ink, marginBottom: 2 },
+  noteText: { fontSize: 12.5, lineHeight: 18, color: colors.body },
+  noteGreen: { color: '#1E7B3A', fontWeight: '700' },
 }));
