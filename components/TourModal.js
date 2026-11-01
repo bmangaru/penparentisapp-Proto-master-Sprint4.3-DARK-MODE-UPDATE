@@ -270,7 +270,7 @@ export default function TourModal({ navRef }) {
 
           <Text style={[s.kick, { textAlign: 'center', marginTop: space.lg }]}>THANK YOU FOR TAKING THE TOUR</Text>
           <Text style={[s.title, { textAlign: 'center' }]}>Keep the salons free</Text>
-          <Text style={[s.body, { textAlign: 'center' }]}>Pen Parentis is a nonprofit. If the app helps you write, consider a gift through Get Karma.</Text>
+          <Text style={[s.body, { textAlign: 'center' }]}>Pen Parentis is a nonprofit. If the app helps you write, consider a donation through Get Karma.</Text>
           <Pressable onPress={() => openLink(LINKS.donate)}>
             <LinearGradient colors={gradients.gold} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[s.karma, lift]}>
               <View style={{ flex: 1 }}>

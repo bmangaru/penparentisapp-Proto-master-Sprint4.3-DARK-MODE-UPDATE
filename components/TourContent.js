@@ -113,7 +113,7 @@ export const CHAPTERS = [
       tapTab('Brainstorm', 'Brainstorm', 'The pencil is Brainstorm: your goals, your rings and all your writing.', { section: 'Your three rings' }),
       {
         target: 'bs.today', tab: 'Brainstorm', info: true, look: true,
-        text: 'Minutes writing, words written and sessions (times you sat down). They fill as you write and close when you meet the day’s goal.',
+        text: 'Minutes writing, words written and sessions (each time you sat down to use the app and write). They fill as you write and close when you meet the day’s goal.',
       },
       {
         target: 'bs.today', tab: 'Brainstorm', marks: ['bs.editGoals'], markRound: 8, section: 'Change your goals',
@@ -157,7 +157,7 @@ export const CHAPTERS = [
       },
       {
         target: 'writer.page', inline: true, wait: true, section: 'Your first words', freshLine: true,
-        title: 'Just write', text: 'A blank page, just for this. Anything on your mind: a line, a memory, an idea. Watch the rings above fill as you type.',
+        title: 'Just write', text: 'A blank page, just for this. Anything on your mind: a line, a memory, an idea. Watch the rings above fill as you type. No need to stress over every detail: you can always come back and add more.',
         task: 'Write at least 5 words.', doneText: 'Keep writing as long as you like. Tap the button when you’re done (the rest of the tour is just looking).', manual: true, nextLabel: 'I’m done writing ›',
         on: (ev, v, d) => {
           if (ev !== 'words') return null;
@@ -247,12 +247,16 @@ export const CHAPTERS = [
     steps: [
       tapTab('Brainstorm', 'Brainstorm', 'There’s more on Brainstorm: writing you did elsewhere, your week, and everything you’ve written.'),
       {
+        target: 'bs.start', tab: 'Brainstorm', info: true, look: true, round: 16, section: 'Keep writing',
+        text: 'No worries if you have more to write. This button is always here: tap it (it says “Keep writing” or “Write a little more”) to pick up where you left off.',
+      },
+      {
         target: 'bs.offline', tab: 'Brainstorm', round: 16, section: 'Log offline writing',
         title: 'Wrote somewhere else?', text: 'Wrote in Word, a notebook or another app? You can add it here, on the honor system.',
         task: 'Tap Log offline writing.', on: (ev, v) => ev === 'sheet-open' && v === 'offline',
       },
       {
-        target: 'offline.card', wait: true, info: true, lock: true, noRing: true, place: 'top',
+        target: 'offline.card', wait: true, info: true, lock: true, noRing: true, place: 'top', marks: ['offline.today', 'offline.date'],
         text: 'Pick the day, then add the minutes, words and sessions you wrote. It counts toward your rings and most medals. Play with it: during the tour nothing is saved.',
       },
       {

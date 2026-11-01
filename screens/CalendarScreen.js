@@ -24,7 +24,7 @@ import RingStats from '../components/RingStats';
 import { LinearGradient } from 'expo-linear-gradient';
 import Cycler from '../components/Cycler';
 import TourTarget from '../components/TourTarget';
-import { tourEvent, tourRunning, useRun } from '../tourRun';
+import { isTourTarget, tourEvent, tourRunning, useRun } from '../tourRun';
 import ShareCalendarSheet from '../components/ShareCalendarSheet';
 import EventCountdown, { nextUpcoming } from '../components/EventCountdown';
 import { colors, gradients, lift, radius, space, themed } from '../theme';
@@ -162,7 +162,7 @@ export default function CalendarScreen({ navigation, route }) {
             Switches every 6 s while today is selected; tapping another day
             shows that day and holds still. */}
         <TourTarget id="cal.top">
-        <Cycler paused={selected !== today || !!tourRun} resetKey={selected} arrows tourId="cal" onIndex={(k) => tourEvent('cal-index', k)}>
+        <Cycler paused={selected !== today || !!tourRun} resetKey={isTourTarget('cal.top', tourRun) ? `tour-${selected}` : selected} arrows tourId="cal" onIndex={(k) => tourEvent('cal-index', k)}>
         <LinearGradient colors={gradients.header} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={s.dayCard}>
           <View style={s.dayHead}>
             <Text style={s.dayTitle} numberOfLines={1}>

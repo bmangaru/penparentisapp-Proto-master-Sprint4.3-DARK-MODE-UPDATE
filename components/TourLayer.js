@@ -512,6 +512,8 @@ function WelcomeCard() {
 // Chapter done.
 // ---------------------------------------------------------------------------
 const TIERS = [[3, 'Bronze'], [6, 'Silver'], [9, 'Gold'], [10, 'Diamond']];
+// Each medal's name in its own colour.
+const TIER_TINT = { Bronze: '#C98A52', Silver: '#AEB6C7', Gold: '#E0AE45', Diamond: '#9D8CFF' };
 
 const TIER_NAME = { bronze: 'Bronze', silver: 'Silver', gold: 'Gold', diamond: 'Diamond' };
 // What each Tour Guide tier celebrates (Bronze 3 · Silver 6 · Gold 9 · Diamond 10 chapters).
@@ -562,7 +564,7 @@ function DoneCard({ ch, earned }) {
       )}
       <Text style={[c.cardText, { color: colors.body }]}>
         {n} of {ids.length} chapters
-        {nextTier ? <Text> · {nextTier[0] - n} more for the <Text style={{ fontWeight: '800', color: '#C8912B' }}>{nextTier[1]} Tour Guide</Text> medal</Text> : null}
+        {nextTier ? <Text> · {nextTier[0] - n} more for the <Text style={{ fontWeight: '800', color: TIER_TINT[nextTier[1]] }}>{nextTier[1]} Tour Guide</Text> medal</Text> : null}
       </Text>
       <View style={[c.track, { backgroundColor: colors.line }]}><View style={[c.fill, { width: `${Math.max(4, (n / ids.length) * 100)}%`, backgroundColor: colors.royal }]} /></View>
       <View style={c.cardRow}>

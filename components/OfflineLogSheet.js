@@ -14,6 +14,7 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { PadValue, useNumberPad } from './NumberPad';
 import { Ionicons } from '@expo/vector-icons';
 import Sheet from './Sheet';
+import TourTarget from './TourTarget';
 import { TIP_TEXT, useTapHint } from './TapHint';
 import { isTourTarget, useRun } from '../tourRun';
 import Rings, { RING_LABEL } from './Rings';
@@ -89,13 +90,17 @@ export default function OfflineLogSheet({ visible, onClose, onSave, sessions = [
     <Sheet visible={visible} onClose={onClose} title="Log offline writing" subtitle="On the honor system: no need to paste your text." footer={pad.footer} scrollRef={scrollRef} tourId="offline">
       <Text style={s.k}>WHEN</Text>
       <View style={s.chips}>
+        <TourTarget id="offline.today">
         <Pressable onPress={() => { setDay(today); setCalOpen(false); }} style={[s.chip, isToday && !calOpen && s.chipOn]} accessibilityRole="button" accessibilityState={{ selected: isToday && !calOpen }}>
           <Text style={[s.chipText, isToday && !calOpen && { color: '#FFFFFF' }]}>Today</Text>
         </Pressable>
+        </TourTarget>
+        <TourTarget id="offline.date">
         <Pressable onPress={() => setCalOpen((o) => !o)} style={[s.chip, (!isToday || calOpen) && s.chipOn]} accessibilityRole="button" accessibilityLabel={isToday ? 'Choose date' : `Date: ${shortDay(day)}. Change`}>
           <Ionicons name="calendar-outline" size={15} color={!isToday || calOpen ? '#FFFFFF' : colors.muted} />
           <Text style={[s.chipText, (!isToday || calOpen) && { color: '#FFFFFF' }]}>{isToday ? 'Choose date' : `${shortDay(day)}  ▾`}</Text>
         </Pressable>
+        </TourTarget>
       </View>
 
       {calOpen ? (

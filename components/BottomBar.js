@@ -95,13 +95,13 @@ const s = themed(() => ({
   bar: {
     flexDirection: 'row', alignItems: 'flex-end',
     backgroundColor: colors.paper, borderTopWidth: 1, borderTopColor: colors.line,
-    paddingTop: 10,
+    paddingTop: 14,
   },
   slot: { flex: 1 },
   item: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', minHeight: 52 },
   icon: { height: 26, textAlign: 'center' },
   circleWrap: {
-    marginTop: -4, // sits a touch higher than the other icons, still inside the bar
+    marginTop: 0, // fully inside the bar (the bar is a touch taller for it)
     width: CIRCLE, height: CIRCLE, borderRadius: CIRCLE / 2,
     shadowColor: colors.royalDeep, shadowOpacity: 0.25, shadowRadius: 6, shadowOffset: { width: 0, height: 3 }, elevation: 5,
   },
