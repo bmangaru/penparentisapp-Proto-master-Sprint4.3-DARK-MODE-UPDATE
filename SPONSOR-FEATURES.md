@@ -855,3 +855,10 @@ This month: big rings across the full width. 3 months: three small months in a r
 - **5.1:** the first prompt shown in the tour is always a Simple one.
 - **7.2** (Today / Choose date) and **9.3** (This month / 3 months / 6 months): the pulsing gold rings are drawn on the buttons themselves, like the − / + rings, so they move with the page instead of lagging behind when you scroll.
 - **10.3:** "each group's meeting day and time are in the table just below."
+
+## Round 79 — Session saved card, simpler 7.2 and 9.3
+
+- **Session saved:** the "Today" summary is now the same card as Brainstorm's Today card: the date (and "All rings closed ✓" when they are), the three rings and their horizontal bars.
+- **3.1:** "On the tab bar, the pencil is Brainstorm: where you write and set your goals."
+- **3.2:** the pulsing ring is drawn on the Edit goals button itself, so it stays with it.
+- **7.2 Log offline writing** and **9.3 Share your rings** are now look-only notes (Got it ›): they say where the feature is and what it does, without opening it.

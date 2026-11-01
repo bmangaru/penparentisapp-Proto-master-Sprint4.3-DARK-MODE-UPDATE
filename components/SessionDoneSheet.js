@@ -10,48 +10,20 @@ import TourTarget from './TourTarget';
 import { tourEvent, useRun } from '../tourRun';
 import Face from './Face';
 import { MedalSummary } from './MedalProgress';
-import { colors, radius, space, themed } from '../theme';
+import { colors, gradients, radius, space, themed } from '../theme';
 import { FEELINGS, feelingLabel } from '../feelings';
-import Rings from './Rings';
-import { isRestGoal, ringProgress, timeClock, timeText, toGoText } from '../writingLogic';
+import RingStats from './RingStats';
+import { LinearGradient } from 'expo-linear-gradient';
+import { isRestGoal, ringProgress, timeText } from '../writingLogic';
 
-function goalLine(goal, totals, pct) {
-  if (goal && goal.plan && !isRestGoal(goal)) {
-    // Three rings: minutes, words, sessions.
-    const r = ringProgress(goal, totals);
-    const t = r.targets;
-    return {
-      title: `Today: ${totals.words.toLocaleString()} of ${t.words.toLocaleString()} words · ${timeClock(totals.seconds)} of ${t.minutes} min · ${totals.count} of ${t.sessions} session${t.sessions === 1 ? '' : 's'}`,
-      right: r.closed ? 'All rings closed' : `${toGoText(goal, totals)} to go`,
-      pct,
-      rings: r,
-    };
-  }
-  if (!goal || isRestGoal(goal) || pct == null) {
-    return { title: `Today: ${totals.words.toLocaleString()} words · ${timeText(totals.seconds)}`, right: null, pct: null };
-  }
-  if (goal.type === 'time') {
-    const left = goal.target * 60 - totals.seconds;
-    return {
-      title: `Today: ${timeClock(totals.seconds)} of ${goal.target} min`,
-      right: pct >= 100 ? 'Goal met' : `${timeText(left)} to go`,
-      pct,
-    };
-  }
-  return {
-    title: `Today: ${totals.words.toLocaleString()} of ${goal.target.toLocaleString()} words`,
-    right: pct >= 100 ? 'Goal met' : `${(goal.target - totals.words).toLocaleString()} to go`,
-    pct,
-  };
-}
 
 export default function SessionDoneSheet({
   visible, words, seconds, dailyGoal, todayTotals, pct, nextRows = [], allRows = [],
   feeling, onPickFeeling, onShare, onDone, onMedalPress,
 }) {
   const touring = !!useRun();
-  const g = goalLine(dailyGoal, todayTotals, pct);
-  const met = g.pct != null && g.pct >= 100;
+  const summaryNow = { words: todayTotals?.words || 0, seconds: todayTotals?.seconds || 0, minutes: Math.floor((todayTotals?.seconds || 0) / 60), count: todayTotals?.count || 0 };
+  const ringsNow = ringProgress(dailyGoal, summaryNow);
   // "See all" opens every medal right here, so How do you feel? and Done
   // are never skipped. It starts folded each time.
   const [all, setAll] = useState(false);
@@ -66,21 +38,15 @@ export default function SessionDoneSheet({
       title="Session saved"
       subtitle={`${words.toLocaleString()} word${words === 1 ? '' : 's'} · ${timeText(seconds)} · in My Writing`}
     >
-      <TourTarget id="done.summary" style={s.goal}>
-        <View style={s.goalHead}>
-          <Text style={s.goalTitle}>{g.title}</Text>
-          {g.right && !g.rings ? <Text style={[s.goalRight, met && s.goalMet]}>{g.right}</Text> : null}
-        </View>
-        {g.rings ? (
-          <View style={s.ringsRow}>
-            <Rings minutes={g.rings.minutes} words={g.rings.words} sessions={g.rings.sessions} size={44} />
-            <Text style={[s.goalRight, { flex: 1 }, met && s.goalMet]}>{g.right}</Text>
-          </View>
-        ) : g.pct != null && (
-          <View style={s.track}>
-            <View style={[s.fill, { width: `${Math.min(100, Math.max(2, g.pct))}%` }, met && { backgroundColor: colors.karma }]} />
-          </View>
-        )}
+      {/* Today, the same card as Brainstorm's: the date, the three rings and their bars. */}
+      <TourTarget id="done.summary">
+        <LinearGradient colors={gradients.header} style={s.today}>
+          <Text style={s.todayLabel}>
+            Today · {new Date().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+            {ringsNow.closed ? '  ·  All rings closed ✓' : ''}
+          </Text>
+          <RingStats summary={summaryNow} rings={ringsNow} off={isRestGoal(dailyGoal)} size={84} />
+        </LinearGradient>
       </TourTarget>
 
       {/* Up to 3 medals this session moved, closest first (any just earned lead), or all 9.
@@ -147,6 +113,8 @@ const s = themed(() => ({
   medKicker: { fontSize: 10.5, fontWeight: '800', letterSpacing: 0.9, color: colors.muted },
   medToggle: { fontSize: 13, fontWeight: '800', color: colors.royal },
   medPanel: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: colors.line, borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 2 },
+  today: { borderRadius: radius.lg, padding: 16, gap: 12 },
+  todayLabel: { fontSize: 12.5, fontWeight: '700', color: 'rgba(255,255,255,0.88)' },
   goal: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: colors.line, borderRadius: radius.md, padding: 12, gap: 8 },
   goalHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 },
   goalTitle: { flex: 1, fontSize: 13, fontWeight: '700', color: colors.ink },

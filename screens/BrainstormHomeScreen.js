@@ -29,7 +29,8 @@ import {
 import { addOfflineSession, loadAll, saveDailyGoal, saveGoals, syncMedals, useToday } from '../writingStore';
 import PromptHeader from '../components/PromptHeader';
 import TourTarget from '../components/TourTarget';
-import { tourEvent, tourRunning } from '../tourRun';
+import { stepOf, tourEvent, tourRunning, useRun } from '../tourRun';
+import { useTapHint } from '../components/TapHint';
 
 export default function BrainstormHomeScreen({ navigation, route }) {
   const today = useToday();
@@ -164,6 +165,11 @@ export default function BrainstormHomeScreen({ navigation, route }) {
     .map((k) => daySummary(sessions, dailyGoals, k, goals))
     .filter((d) => d.count > 0 || d.key !== today);
 
+  // The tour's pulsing ring on Edit goals, drawn on the button so it moves with it.
+  const tourRunNow = useRun();
+  const tourStepNow = tourRunNow && !tourRunNow.min ? stepOf(tourRunNow) : null;
+  const editTip = useTapHint(!!tourStepNow?.editPulse && !tourRunNow.taskDone);
+
   // The folder: closed shows the most recent day you wrote (else the newest row).
   const [folderOpen, setFolderOpen] = useState(false);
   const latest = weekDays.find((d) => d.count > 0) || weekDays[0];
@@ -185,6 +191,7 @@ export default function BrainstormHomeScreen({ navigation, route }) {
             <TourTarget id="bs.editGoals">
               <Pressable onPress={() => openPlan('edit')} hitSlop={6} style={({ pressed }) => [s.editBtn, pressed && { opacity: 0.8 }]} accessibilityRole="button">
                 <Text style={s.editBtnText}>Edit goals</Text>
+                {editTip.ring(editTip.on)}
               </Pressable>
             </TourTarget>
           </View>

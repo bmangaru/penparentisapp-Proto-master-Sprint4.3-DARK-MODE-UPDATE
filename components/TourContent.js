@@ -110,13 +110,13 @@ export const CHAPTERS = [
   {
     id: 'goals', title: 'Your goals & rings', short: 'Goals', sub: 'Minutes, words and sessions', prelude: [0],
     steps: [
-      tapTab('Brainstorm', 'Brainstorm', 'The pencil is Brainstorm: your goals, your rings and all your writing.', { section: 'Your three rings' }),
+      tapTab('Brainstorm', 'Brainstorm', 'On the tab bar, the pencil is Brainstorm: where you write and set your goals.', { section: 'Your three rings' }),
       {
         target: 'bs.today', tab: 'Brainstorm', info: true, look: true,
         text: 'Minutes writing, words written and sessions (each time you sat down to use the app and write). They fill as you write and close when you meet the day’s goal.',
       },
       {
-        target: 'bs.today', tab: 'Brainstorm', marks: ['bs.editGoals'], markRound: 999, section: 'Change your goals',
+        target: 'bs.today', tab: 'Brainstorm', editPulse: true, section: 'Change your goals',
         title: 'Edit goals', text: 'Your goals for every day, and today’s, are one tap away: the Edit goals button on the Today card.',
         task: 'Tap Edit goals.', on: (ev, v) => ev === 'sheet-open' && v === 'plan',
       },
@@ -251,18 +251,8 @@ export const CHAPTERS = [
         text: 'No worries if you have more to write. This button is always here: tap it (it says “Keep writing” or “Write a little more”) to pick up where you left off.',
       },
       {
-        target: 'bs.offline', tab: 'Brainstorm', round: 16, section: 'Log offline writing',
-        title: 'Wrote somewhere else?', text: 'Wrote in Word, a notebook or another app? You can add it here, on the honor system.',
-        task: 'Tap Log offline writing.', on: (ev, v) => ev === 'sheet-open' && v === 'offline',
-      },
-      {
-        target: 'offline.card', wait: true, info: true, lock: true, noRing: true, place: 'top',
-        text: 'Pick the day, then add the minutes, words and sessions you wrote. It counts toward your rings and most medals. Play with it: during the tour nothing is saved.',
-      },
-      {
-        target: 'offline.close', wait: true, round: 18,
-        text: 'Nothing is added unless you tap Save, so you can look around safely.', task: 'Close it with ×.',
-        on: (ev, v) => ev === 'sheet-close' && v === 'offline',
+        target: 'bs.offline', tab: 'Brainstorm', info: true, look: true, round: 16, section: 'Log offline writing',
+        title: 'Wrote somewhere else?', text: 'Wrote in Word, a notebook or another app? Tap Log offline writing any time to add the minutes, words and sessions, on the honor system. It works just like setting your goals, and counts toward your rings and most medals.',
       },
       {
         target: 'bs.week', reveal: true, hold: 500, section: 'This week',
@@ -322,20 +312,8 @@ export const CHAPTERS = [
         text: 'Each day’s progress is shown as its own set of rings. The current week is at the top of the calendar; scroll up for earlier weeks. A gold ★ marks a salon day. Tap a past day to read what you wrote that day.',
       },
       {
-        target: 'cal.share', tab: 'Calendar', round: 999, section: 'Share your rings',
-        text: 'Show off all the days you showed up to write! Share your calendar with friends or family.',
-        task: 'Tap Share.', on: (ev, v) => ev === 'sheet-open' && v === 'share',
-      },
-      {
-        target: 'share.card', wait: true, lock: true, noRing: true, place: 'top',
-        text: 'Pick how much to show and watch the picture change. It shows only rings and totals, never your writing. (Share image is off during the tour.)',
-        task: 'Tap This month, 3 months or 6 months.', doneText: 'Try the others too, then go on.', manual: true,
-        on: (ev) => ev === 'share-range',
-      },
-      {
-        target: 'share.close', wait: true, round: 18,
-        text: 'Share sends it to friends or family whenever you like. For now, close it.', task: 'Close it with ×.',
-        on: (ev, v) => ev === 'sheet-close' && v === 'share',
+        target: 'cal.share', tab: 'Calendar', info: true, look: true, round: 999, section: 'Share your rings',
+        text: 'Show off all the days you showed up to write! Tap Share any time to turn your calendar into a picture for friends or family: this month, 3 months or 6 months. It shows only rings and totals, never your writing.',
       },
       {
         target: 'cal.past', reveal: true, hold: 500, section: 'Previous salons',
