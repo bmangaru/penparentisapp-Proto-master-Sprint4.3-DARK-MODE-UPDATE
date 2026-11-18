@@ -848,17 +848,22 @@ export function startButtonState(sessions, dailyGoals, key, goals) {
     sub = "We'll ask “What's your goal today?” first";
   } else if (state === 'continue') {
     title = 'Keep writing';
-    // Each ring's % done, in the rings' own order and numbers
-    // (e.g. "Minutes 15% · Words 39% · Sessions 50%"), so it can't be
-    // misread as words written.
-    const rp = pct != null ? ringProgress(goal, sum) : null;
-    const done = rp
-      ? [['Minutes', rp.minutes], ['Words', rp.words], ['Sessions', rp.sessions]]
-          .filter(([, p]) => p != null)
-          .map(([label, p]) => `${label} ${p}%`)
-          .join(' · ')
-      : '';
-    sub = done || `${sum.words.toLocaleString()} words so far · picks up where you left off`;
+    // What's still left, in the rings' order, e.g.
+    //   "4:14 min · 61 words · 1 session\nleft to reach today's goals"
+    // Goals already met drop off; one goal left says "goal".
+    const t = pct != null ? dayTargets(goal) : null;
+    const left = [];
+    if (t) {
+      if (t.minutes && sum.seconds < t.minutes * 60) left.push(timeText(t.minutes * 60 - sum.seconds));
+      if (t.words && sum.words < t.words) left.push(`${(t.words - sum.words).toLocaleString()} words`);
+      if (t.sessions && sum.count < t.sessions) {
+        const n = t.sessions - sum.count;
+        left.push(`${n} session${n === 1 ? '' : 's'}`);
+      }
+    }
+    sub = left.length
+      ? `${left.join(' · ')}\nleft to reach today’s goal${left.length === 1 ? '' : 's'}`
+      : `${sum.words.toLocaleString()} words so far · picks up where you left off`;
   } else if (state === 'met') {
     title = 'Goal met — write a little more?';
     sub = `All rings closed · ${sum.words.toLocaleString()} words today · anything extra is a bonus`;
