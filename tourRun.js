@@ -59,6 +59,27 @@ let reveal = null;      // (routeKey) => show that page (its tab, nothing on top
 let chapterDone = null; // (chapterIndex) => mark it, medals…
 export function setTourNavigator(fn) { goTo = fn; }
 export function setTourReveal(fn) { reveal = fn; }
+let swiper = null;      // (dir) => the next tab (+1) or the one before (-1)
+export function setTourSwipe(fn) { swiper = fn; }
+export function swipeTab(dir) { if (swiper) swiper(dir); }
+
+// Pages that scroll (components/ui.js Screen), so a drag on the tour's dim
+// can scroll the page that's showing (you can always scroll during the tour).
+const pageScrolls = new Set();
+export function registerPageScroll(s) {
+  pageScrolls.add(s);
+  return () => pageScrolls.delete(s);
+}
+// What a drag on the dim should scroll: the step's own page or sheet; for a
+// spot that isn't in one (the tab bar), the page showing behind it.
+export function scrollForStep(host = 'root') {
+  const st = stepOf();
+  const t = st?.target ? getTarget(st.target) : null;
+  if (t?.scroll) return t.scroll;
+  if (host !== 'root') return null; // a sheet: never scroll the page behind it
+  for (const s of pageScrolls) if (!s.onScreen || safe(s.onScreen)) return s;
+  return null;
+}
 
 // Is this spot on a page that's showing right now? (A spot can still be
 // loaded while covered: Medals opened over Brainstorm, or another tab.)
@@ -204,7 +225,8 @@ export function setTourEarned(tiers) {
 // tapping Finish & check in) still moves it on, and the next step shows again.
 export function minimizeTour(on = true) {
   if (!run) return;
-  set({ ...run, min: on });
+  // `resumed` counts comebacks, so the page scrolls to the spot again.
+  set({ ...run, min: on, resumed: on ? run.resumed || 0 : (run.resumed || 0) + 1 });
   if (!on) resumeHere();
 }
 

@@ -41,7 +41,12 @@ export default function Sheet({ visible, onClose, title, subtitle, children, foo
   // The tour can scroll the sheet to the part it's pointing at.
   const ownScroll = useRef(null);
   const scrollY = useRef(0);
-  const tourScroll = useRef({ ref: scrollRef || ownScroll, y: scrollY }).current;
+  const scrollSize = useRef({ view: 0, content: 0 });
+  const tourScroll = useRef({
+    ref: scrollRef || ownScroll,
+    y: scrollY,
+    max: () => Math.max(0, scrollSize.current.content - scrollSize.current.view),
+  }).current;
   const [footerH, setFooterH] = useState(0);
   const maxH = footer ? Math.max(180, height * 0.9 - footerH - 110) : Math.max(420, height * 0.72);
   return (
@@ -69,6 +74,8 @@ export default function Sheet({ visible, onClose, title, subtitle, children, foo
               style={{ maxHeight: maxH }}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
+              onLayout={(e) => { scrollSize.current.view = e.nativeEvent.layout.height; }}
+              onContentSizeChange={(w, h) => { scrollSize.current.content = h; }}
               onScroll={(e) => { scrollY.current = e.nativeEvent.contentOffset.y; }}
               scrollEventThrottle={32}
             >

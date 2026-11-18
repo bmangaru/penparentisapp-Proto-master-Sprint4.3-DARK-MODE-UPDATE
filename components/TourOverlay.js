@@ -11,7 +11,7 @@ import { View, StyleSheet } from 'react-native';
 import TourLayer from './TourLayer';
 import { CHAPTERS, CHAPTER_IDS } from './TourContent';
 import { CommonActions, StackActions } from '@react-navigation/native';
-import { setTourChapterDone, setTourChapters, setTourEarned, setTourNavigator, setTourReveal, stopTour } from '../tourRun';
+import { setTourChapterDone, setTourChapters, setTourEarned, setTourNavigator, setTourReveal, setTourSwipe, stopTour } from '../tourRun';
 import { markChapter, openTour } from '../tour';
 import { syncMedals } from '../writingStore';
 
@@ -73,6 +73,15 @@ export default function TourOverlay({ navRef }) {
         }
       });
     });
+    // A sideways swipe on the tour's dim (tab-bar steps): the next tab or
+    // the one before, in tab-bar order.
+    setTourSwipe((dir) => {
+      const nav = navRef?.current;
+      if (!nav || !nav.isReady?.()) return;
+      const root = nav.getRootState();
+      const next = root?.routes?.[root.index + dir];
+      if (next) nav.navigate(next.name);
+    });
     setTourChapterDone(async (idx) => {
       const first = await markChapter(CHAPTERS[idx].id, CHAPTER_IDS);
       const { newlyEarned } = await syncMedals();
@@ -82,7 +91,7 @@ export default function TourOverlay({ navRef }) {
       if (tiers.length) setTourEarned(tiers);
       if (first) { stopTour(); setTimeout(() => openTour('__end'), 300); }
     });
-    return () => { setTourNavigator(null); setTourReveal(null); setTourChapterDone(null); };
+    return () => { setTourNavigator(null); setTourReveal(null); setTourSwipe(null); setTourChapterDone(null); };
   }, [navRef]);
 
   return (

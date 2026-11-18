@@ -12,7 +12,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  View, Text, Pressable, StyleSheet, Image, Animated, Easing, Keyboard, Platform, useWindowDimensions,
+  View, Text, Pressable, StyleSheet, Image, Animated, Easing, Keyboard, Platform, PanResponder, useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,7 +23,7 @@ import { colors, isDark } from '../theme';
 import Medal from './Medal';
 import { MEDALS } from '../medals';
 import {
-  getRun, getTarget, tourEvent, getTourChapters, minimizeTour, nextStep, revealTarget, sectionOf, startChapter, stepOf, stopTour, topHost, useRun,
+  getRun, getTarget, tourEvent, getTourChapters, minimizeTour, nextStep, revealTarget, scrollForStep, sectionOf, startChapter, stepOf, stopTour, swipeTab, topHost, useRun,
 } from '../tourRun';
 
 const safeCall = (fn) => { try { return !!fn(); } catch { return true; } };
@@ -87,6 +87,7 @@ export default function TourLayer({ host = 'root' }) {
       // and not while the tour is tucked away (you're using the app).
       if (t.onScreen && !safeCall(t.onScreen)) {
         setRect(null);
+        scrolledFor.current = null; // back on its page → scroll to the spot again
         const r = getRun();
         if (host === 'root' && r && !r.min && !r.taskDone) {
           const now = Date.now();
@@ -155,8 +156,11 @@ export default function TourLayer({ host = 'root' }) {
             n.measureInWindow((mx, my, mw, mh) => { if (mw || mh) out[i] = { x: mx, y: my, w: mw, h: mh }; done(); });
           });
         } else setMarkRects((prev) => (prev ? null : prev));
-        // Below the fold (or under the header)? Scroll the page to it, once.
-        if (t.scroll && scrolledFor.current !== key) {
+        // Below the fold (or under the header)? Scroll the page to it: when
+        // the step starts, when you come back to the tour (Tour pill), and
+        // when its page is brought back. Not otherwise, so you can scroll
+        // around freely; never while the tour is tucked away.
+        if (t.scroll && scrolledFor.current !== key && !getRun()?.min) {
           scrolledFor.current = key;
           const top = insets.top + 8;
           const bottom = H - 96;
@@ -173,6 +177,48 @@ export default function TourLayer({ host = 'root' }) {
   }, [key, host]);
 
   useEffect(() => { if (run?.phase === 'done') Keyboard.dismiss(); }, [run?.phase]);
+
+  // Back from the Tour pill: scroll to the step's spot again.
+  useEffect(() => { scrolledFor.current = null; }, [run?.resumed]);
+
+  // The dim takes taps (only the bright spot can be tapped), but a drag on it
+  // still scrolls the page (or sheet) underneath, so you can always look
+  // around. On the tab-bar steps, a sideways swipe changes tab, like swiping
+  // the app normally does.
+  const drag = useRef(null);
+  const pan = useRef(null);
+  if (!pan.current) {
+    const clamp = (v, sc) => Math.max(0, Math.min(v, sc.max ? sc.max() : v));
+    pan.current = PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderTerminationRequest: () => false,
+      onPanResponderGrant: () => {
+        const sc = scrollForStep(host);
+        drag.current = { sc, from: sc ? sc.y.current : 0 };
+      },
+      onPanResponderMove: (_, g) => {
+        const d = drag.current;
+        if (!d?.sc || Math.abs(g.dy) < 4 || Math.abs(g.dx) > Math.abs(g.dy) * 1.5) return;
+        d.sc.ref.current?.scrollTo({ y: clamp(d.from - g.dy, d.sc), animated: false });
+      },
+      onPanResponderRelease: (_, g) => {
+        const d = drag.current;
+        drag.current = null;
+        if (Math.abs(g.dx) > 70 && Math.abs(g.dx) > Math.abs(g.dy) * 2) {
+          const st = stepOf(getRun());
+          if (host === 'root' && /^tab(\.|bar$)/.test(st?.target || '')) swipeTab(g.dx < 0 ? 1 : -1);
+          return;
+        }
+        // A flick keeps going a little, like a normal scroll.
+        if (d?.sc && Math.abs(g.dy) > 4 && Math.abs(g.vy) > 0.3) {
+          d.sc.ref.current?.scrollTo({ y: clamp(d.from - g.dy - g.vy * 220, d.sc), animated: true });
+        }
+      },
+      onPanResponderTerminate: () => { drag.current = null; },
+    });
+  }
+  const dragProps = pan.current.panHandlers;
 
   // The marks breathe, so they read as "tap me".
   const marking = !!(markRects && markRects.length);
@@ -276,7 +322,6 @@ export default function TourLayer({ host = 'root' }) {
   const hw = Math.min(W - hx, box.w + PAD * 2);
   const hh = box.h + PAD * 2 + growTop;
   const dim = step.free ? null : `${DIM}${step.dim ?? 0.62})`;
-  const block = () => true;
 
   // Where the bubble goes: below the spot, else above, else at the top.
   const bubbleH = bubble.key === key ? bubble.h : 0;
@@ -297,14 +342,14 @@ export default function TourLayer({ host = 'root' }) {
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       {dim ? (
         <>
-          <View style={[c.abs, { left: 0, top: 0, width: W, height: hy, backgroundColor: dim }]} onStartShouldSetResponder={block} />
-          <View style={[c.abs, { left: 0, top: hy + hh, width: W, height: Math.max(0, H - hy - hh) + 60, backgroundColor: dim }]} onStartShouldSetResponder={block} />
-          <View style={[c.abs, { left: 0, top: hy, width: hx, height: hh, backgroundColor: dim }]} onStartShouldSetResponder={block} />
-          <View style={[c.abs, { left: hx + hw, top: hy, width: Math.max(0, W - hx - hw), height: hh, backgroundColor: dim }]} onStartShouldSetResponder={block} />
+          <View style={[c.abs, { left: 0, top: 0, width: W, height: hy, backgroundColor: dim }]} {...dragProps} />
+          <View style={[c.abs, { left: 0, top: hy + hh, width: W, height: Math.max(0, H - hy - hh) + 60, backgroundColor: dim }]} {...dragProps} />
+          <View style={[c.abs, { left: 0, top: hy, width: hx, height: hh, backgroundColor: dim }]} {...dragProps} />
+          <View style={[c.abs, { left: hx + hw, top: hy, width: Math.max(0, W - hx - hw), height: hh, backgroundColor: dim }]} {...dragProps} />
         </>
       ) : null}
       {step.look ? (
-        <View style={[c.abs, { left: hx, top: hy, width: hw, height: hh }]} onStartShouldSetResponder={block} />
+        <View style={[c.abs, { left: hx, top: hy, width: hw, height: hh }]} {...dragProps} />
       ) : null}
       {ring && ringRects && ringRects.length ? ringRects.map((r, i) => (
         <View key={i} pointerEvents="none" style={[c.abs, c.ring, { left: r.x - 4, top: r.y - 4, width: r.w + 8, height: r.h + 8, borderRadius: 999 }]}>

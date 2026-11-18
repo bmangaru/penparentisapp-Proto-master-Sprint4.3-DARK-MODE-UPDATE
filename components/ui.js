@@ -1,24 +1,36 @@
 // components/ui.js — the small set of pieces every screen is built from.
 
-import React, { useMemo, useRef } from 'react';
+import React, { useContext, useEffect, useMemo, useRef } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet, Linking } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, gradients, lift, radius, space, themed } from '../theme';
-import { TourScrollContext, stepOf, useRun } from '../tourRun';
+import { NavigationContext } from '@react-navigation/native';
+import { TourScrollContext, registerPageScroll } from '../tourRun';
 
-// The app tour can scroll a page to the spot it's pointing at.
+// The app tour can scroll a page to the spot it's pointing at. You can
+// always scroll yourself too, tour or not (a drag on the tour's dim scrolls
+// the page that's showing: components/TourLayer.js).
 export function Screen({ children, scrollRef }) {
   const own = useRef(null);
   const ref = scrollRef || own;
   const y = useRef(0);
-  const tour = useMemo(() => ({ ref, y }), [ref]);
-  // While a tour step is showing, the page holds still (the tour scrolls it
-  // to the right spot itself). "Scroll down to…" steps and a tucked-away
-  // tour leave scrolling on.
-  const run = useRun();
-  const st = run && !run.min ? stepOf(run) : null;
-  const hold = !!run && !run.min && (run.phase === 'done' || (st && !st.reveal));
+  const size = useRef({ view: 0, content: 0 });
+  const nav = useContext(NavigationContext);
+  const navNow = useRef(nav);
+  navNow.current = nav;
+  const tour = useMemo(() => ({
+    ref,
+    y,
+    // How far down the page can go (so the tour never scrolls past the end).
+    max: () => Math.max(0, size.current.content - size.current.view),
+    // Is this page the one showing?
+    onScreen: () => {
+      const n = navNow.current;
+      return !n || typeof n.isFocused !== 'function' || n.isFocused();
+    },
+  }), [ref]);
+  useEffect(() => registerPageScroll(tour), [tour]);
   return (
     <TourScrollContext.Provider value={tour}>
       <ScrollView
@@ -26,7 +38,8 @@ export function Screen({ children, scrollRef }) {
         style={{ flex: 1, backgroundColor: colors.paper }}
         contentContainerStyle={{ paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
-        scrollEnabled={!hold}
+        onLayout={(e) => { size.current.view = e.nativeEvent.layout.height; }}
+        onContentSizeChange={(w, h) => { size.current.content = h; }}
         onScroll={(e) => { y.current = e.nativeEvent.contentOffset.y; }}
         scrollEventThrottle={32}
       >
