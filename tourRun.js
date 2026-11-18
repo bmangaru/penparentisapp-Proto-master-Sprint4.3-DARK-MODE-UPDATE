@@ -55,8 +55,23 @@ export function isTourTarget(id, r = run) {
 
 // App-level hooks (set by components/TourOverlay.js).
 let goTo = null;        // (go) => navigate somewhere for a step
+let reveal = null;      // (routeKey) => show that page (its tab, nothing on top of it)
 let chapterDone = null; // (chapterIndex) => mark it, medals…
 export function setTourNavigator(fn) { goTo = fn; }
+export function setTourReveal(fn) { reveal = fn; }
+
+// Is this spot on a page that's showing right now? (A spot can still be
+// loaded while covered: Medals opened over Brainstorm, or another tab.)
+export function targetOnScreen(id) {
+  const t = getTarget(id);
+  if (!t) return false;
+  return !t.onScreen || safe(t.onScreen);
+}
+// Bring a covered spot's page back into view.
+export function revealTarget(id) {
+  const t = getTarget(id);
+  if (t?.routeKey && reveal) reveal(t.routeKey);
+}
 export function setTourChapterDone(fn) { chapterDone = fn; }
 
 let advanceTimer = null;
@@ -188,7 +203,22 @@ export function setTourEarned(tiers) {
 // can carry on using the app; it keeps listening, so doing the task (e.g.
 // tapping Finish & check in) still moves it on, and the next step shows again.
 export function minimizeTour(on = true) {
-  if (run) set({ ...run, min: on });
+  if (!run) return;
+  set({ ...run, min: on });
+  if (!on) resumeHere();
+}
+
+// Back from ✕ after using the app: if the step's spot is gone (e.g. you
+// closed the sheet or left the writing page it was on), start its section
+// again, which walks you back there. A spot that's only covered (another
+// page on top, another tab) is brought back by TourLayer instead.
+function resumeHere() {
+  if (!run || run.phase !== 'step' || run.taskDone) return;
+  const st = stepOf();
+  if (!st?.target || getTarget(st.target)) return;
+  let at = null;
+  sectionsOf(run.ch).forEach((s) => { if (s.at <= run.step) at = s.at; });
+  if (at != null && at < run.step) startChapter(run.ch, at);
 }
 
 export function stopTour() {

@@ -23,8 +23,10 @@ import { colors, isDark } from '../theme';
 import Medal from './Medal';
 import { MEDALS } from '../medals';
 import {
-  getRun, getTarget, tourEvent, getTourChapters, minimizeTour, nextStep, sectionOf, startChapter, stepOf, stopTour, topHost, useRun,
+  getRun, getTarget, tourEvent, getTourChapters, minimizeTour, nextStep, revealTarget, sectionOf, startChapter, stepOf, stopTour, topHost, useRun,
 } from '../tourRun';
+
+const safeCall = (fn) => { try { return !!fn(); } catch { return true; } };
 import { openTour, useTour } from '../tour';
 
 const DIM = 'rgba(3,6,15,';
@@ -47,6 +49,8 @@ export default function TourLayer({ host = 'root' }) {
   const [markRects, setMarkRects] = useState(null); // step.marks: pulsing gold rings ("tap here")
   const pulse = useRef(new Animated.Value(1)).current;
   const scrolledFor = useRef(null);
+  const hiddenSince = useRef(0); // when the spot's page got covered
+  const lastReveal = useRef(0);  // when we last brought it back
 
   const step = stepOf(run);
   const key = run ? `${run.ch}.${run.step}.${run.phase}` : 'off';
@@ -76,6 +80,26 @@ export default function TourLayer({ host = 'root' }) {
         setMissing(host === 'root' && !t && Date.now() - since > (step.wait ? 6000 : 1800));
         return;
       }
+      // Its page is loaded but covered (Medals opened on top of Brainstorm,
+      // another tab showing…): never outline whatever is on top. Bring the
+      // page back instead, once it's clearly not just a page change in
+      // progress (a finished task is about to move the tour on by itself),
+      // and not while the tour is tucked away (you're using the app).
+      if (t.onScreen && !safeCall(t.onScreen)) {
+        setRect(null);
+        const r = getRun();
+        if (host === 'root' && r && !r.min && !r.taskDone) {
+          const now = Date.now();
+          if (!hiddenSince.current) hiddenSince.current = now;
+          else if (now - hiddenSince.current > 500 && now - lastReveal.current > 2000) {
+            lastReveal.current = now;
+            revealTarget(step.target);
+          }
+        } else hiddenSince.current = 0;
+        setMissing(host === 'root' && Date.now() - since > (step.wait ? 8000 : 4000));
+        return;
+      }
+      hiddenSince.current = 0;
       setMissing(false);
       const node = t.ref.current;
       if (!node || !node.measureInWindow) return;
