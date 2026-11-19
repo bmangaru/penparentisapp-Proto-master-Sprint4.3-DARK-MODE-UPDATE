@@ -299,9 +299,8 @@ export default function BrainstormWriterScreen({ navigation, route }) {
   // Tour steps that ask you to write (freshLine) start on a fresh line at the
   // end of what you've written, with the keyboard up, ready to type.
   // Steps that only explain (noTyping): the keyboard goes away meanwhile.
-  // (Except Finish on a page with nothing new yet, e.g. redoing chapter 6:
-  // then you can type a line first, since an empty page has nothing to save.)
-  const typingOff = !!tourStep?.noTyping && !(tourStep.target === 'writer.finish' && effortWords === 0);
+  // (Finish isn't one of them: you can keep writing until you tap it.)
+  const typingOff = !!tourStep?.noTyping;
   useEffect(() => { if (typingOff) Keyboard.dismiss(); }, [typingOff]);
   const freshKey = tourStep?.freshLine ? `${tourRun.ch}.${tourRun.step}` : null;
   useEffect(() => {

@@ -17,11 +17,17 @@
 //   steps: start on a new line with the keyboard up).
 //   subsection ('Title': an extra part shown as e.g. 5.2a), noTyping (the
 //   writing page can't be typed in during this step), marks ([ids] pulsing
-//   "tap here" rings), noRing, inline (the tip sits inside the writing page).
+//   "tap here" rings), noRing, inline (the tip sits inside the writing page),
+//   offNote (a 🔒 line in the tips box: this button is off during the tour).
 // Every chapter now runs on the app. (TourModal.js can still show chapters
 // made of `cards` — a picture, a title and a few sentences — if one is added.)
 
 import { getTarget } from '../tourRun';
+
+// For spots that work normally but are turned off while the tour shows them
+// (they'd take you away from it): a short note in the tips box, so it's
+// clear the button isn't broken. Shown under the step's text.
+const offInTour = (what, plural) => `${what} ${plural ? 'are' : 'is'} turned off during the tour, so a tap can’t take you away from it. ${plural ? 'They work' : 'It works'} as soon as you’re done: come back here any time.`;
 
 // Shared steps.
 // Each chapter starts at the tab bar, so you learn where everything is.
@@ -98,11 +104,11 @@ export const CHAPTERS = [
       },
       {
         target: 'home.socials', tab: 'Home', section: 'Website & socials',
-        info: true, look: true,
+        info: true, look: true, offNote: offInTour('These buttons', true),
         text: 'Visit penparentis.org, or follow Pen Parentis on Facebook, Instagram, LinkedIn, X and Bluesky. Each button shows the account it opens.',
       },
       {
-        target: 'home.supporters', tab: 'Home', info: true, look: true, section: 'Our supporters',
+        target: 'home.supporters', tab: 'Home', info: true, look: true, section: 'Our supporters', offNote: offInTour('Give'),
         text: 'Get Karma keeps the salons free. The names scrolling here are the organizations and people who keep Pen Parentis going. Thank you!',
       },
     ],
@@ -216,8 +222,8 @@ export const CHAPTERS = [
     steps: [
       ...toWriter('Finishing happens on the writing page.'),
       {
-        target: 'writer.finish', inline: true, section: 'Finish', marks: ['writer.finish'], markRound: 14, wait: true, noTyping: true,
-        text: 'When you’re done writing, Finish & check in saves your entry. (Nothing on this page yet? Type a line first.)',
+        target: 'writer.finish', inline: true, section: 'Finish', marks: ['writer.finish'], markRound: 14, wait: true,
+        text: 'Keep writing as long as you like. When you’re done, Finish & check in saves your entry. (Nothing on this page yet? Type a line first.)',
         task: 'Tap Finish & check in.', hold: 600, on: (ev) => ev === 'session-saved',
       },
       {
@@ -247,11 +253,11 @@ export const CHAPTERS = [
     steps: [
       tapTab('Brainstorm', 'Brainstorm', 'There’s more on Brainstorm: writing you did elsewhere, your week, and everything you’ve written.'),
       {
-        target: 'bs.start', tab: 'Brainstorm', info: true, look: true, round: 16, section: 'Keep writing',
+        target: 'bs.start', tab: 'Brainstorm', info: true, look: true, round: 16, section: 'Keep writing', offNote: offInTour('Keep writing'),
         text: 'Have more to write? This button is always here. Until your rings are closed it says “Keep writing”; once you’ve met today’s goal it says “Write a little more?” so you can keep going above and beyond. Either way, it picks up right where you left off.',
       },
       {
-        target: 'bs.offline', tab: 'Brainstorm', info: true, look: true, round: 16, section: 'Log offline writing',
+        target: 'bs.offline', tab: 'Brainstorm', info: true, look: true, round: 16, section: 'Log offline writing', offNote: offInTour('Log offline writing'),
         title: 'Wrote somewhere else?', text: 'Wrote in Word, a notebook or another app? Tap Log offline writing any time to add the minutes, words and sessions, on the honor system. It works just like setting your goals, and counts toward your rings and most medals.',
       },
       {
@@ -269,11 +275,11 @@ export const CHAPTERS = [
         on: (ev, v) => ev === 'revealed' && v === 'bs.history',
       },
       {
-        target: 'bs.history', tab: 'Brainstorm', info: true, look: true, noRing: true, markRound: 16, marks: ['bs.folder'],
+        target: 'bs.history', tab: 'Brainstorm', info: true, look: true, noRing: true, markRound: 16, marks: ['bs.folder'], offNote: offInTour('Opening the folder'),
         text: 'It’s all saved on your phone, in a folder for the week. Closed, it shows your most recent day; tap the folder any time to see everything else you wrote this week.',
       },
       {
-        target: 'bs.history', tab: 'Brainstorm', info: true, look: true, noRing: true, markRound: 16, marks: ['bs.seeAll'],
+        target: 'bs.history', tab: 'Brainstorm', info: true, look: true, noRing: true, markRound: 16, marks: ['bs.seeAll'], offNote: offInTour('See all my writing'),
         text: '“See all my writing” has every day you’ve ever written, by week.',
       },
     ],
@@ -292,7 +298,7 @@ export const CHAPTERS = [
         title: 'Your medals', text: 'Medals live here, at the bottom of Brainstorm. Every word you type, minute you spend, session you finish and goal you meet moves you closer to your next one, and there’s much more to earn!',
       },
       {
-        target: 'bs.medals', tab: 'Brainstorm', info: true, look: true, section: 'Four tiers',
+        target: 'bs.medals', tab: 'Brainstorm', info: true, look: true, section: 'Four tiers', offNote: offInTour('Opening your medals'),
         title: 'Bronze, Silver, Gold, Diamond', text: 'Every medal has four tiers. Its bar is the colour of the medal you have and shows how close the next one is. Tap this card any time to see them all.',
       },
     ],
@@ -308,11 +314,11 @@ export const CHAPTERS = [
         on: (ev, v) => ev === 'cal-index' && v > 0,
       },
       {
-        target: 'cal.grid', tab: 'Calendar', info: true, look: true, section: 'Your writing calendar',
+        target: 'cal.grid', tab: 'Calendar', info: true, look: true, section: 'Your writing calendar', offNote: offInTour('Tapping a day'),
         text: 'Each day’s progress is shown as its own set of rings. The current week is at the top of the calendar; scroll up for earlier weeks. A gold ★ marks a salon day. Tap a past day to read what you wrote that day.',
       },
       {
-        target: 'cal.share', tab: 'Calendar', info: true, look: true, round: 999, section: 'Share your rings',
+        target: 'cal.share', tab: 'Calendar', info: true, look: true, round: 999, section: 'Share your rings', offNote: offInTour('Share'),
         text: 'Show off all the days you showed up to write! Tap Share to turn your calendar into a picture for friends or family, showing 1, 3 or 6 months. Only your rings and totals are included; your writing always stays private.',
       },
       {
@@ -331,7 +337,7 @@ export const CHAPTERS = [
     steps: [
       tapTab('Eventbrite', 'Eventbrite', 'Pen Parentis salons: monthly, free and online.', { section: 'Monthly salons' }),
       {
-        target: 'ev.next', tab: 'Eventbrite', info: true, look: true, wait: true,
+        target: 'ev.next', tab: 'Eventbrite', info: true, look: true, wait: true, offNote: offInTour('These buttons', true),
         text: 'The next salon. Register on Eventbrite, watch it live on YouTube, add it to your calendar, or share it with a friend.',
       },
       {
@@ -340,7 +346,7 @@ export const CHAPTERS = [
       },
       tapTab('Community', 'Community', 'People to write with.', { section: 'Community' }),
       {
-        target: 'com.links', tab: 'Community', info: true, look: true,
+        target: 'com.links', tab: 'Community', info: true, look: true, offNote: offInTour('The Discord and Facebook buttons', true),
         text: 'The Pen Parentis Discord runs around the clock (there’s almost always someone up), and the Facebook group is there too. Both are free.',
       },
       {

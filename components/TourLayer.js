@@ -50,6 +50,23 @@ export default function TourLayer({ host = 'root' }) {
   const pulse = useRef(new Animated.Value(1)).current;
   const scrolledFor = useRef(null);
   const hiddenSince = useRef(0); // when the spot's page got covered
+  // Is the spot (mostly) off screen, above or below what you can see?
+  const outOfView = (y, h) => y < insets.top + 8 || y + Math.min(h, H * 0.45) > H - 96;
+  // Scroll its page so the spot sits about a quarter of the way down.
+  const scrollSpotIntoView = (t, y, h) => {
+    const want = h > H * 0.45 ? insets.top + 24 : H * 0.28;
+    const max = t.scroll.max ? t.scroll.max() : Infinity;
+    t.scroll.ref.current?.scrollTo({ y: Math.max(0, Math.min(max, t.scroll.y.current + y - want)), animated: true });
+  };
+  // "Show me": bring the step's spot back into view (its page, then scroll).
+  const findSpot = () => {
+    const st = stepOf(getRun());
+    const t = st?.target ? getTarget(st.target) : null;
+    if (!t) return;
+    if (t.onScreen && !safeCall(t.onScreen)) { revealTarget(st.target); scrolledFor.current = null; return; }
+    if (!t.scroll) return;
+    t.ref.current?.measureInWindow?.((x, y, w, h) => { if (w || h) scrollSpotIntoView(t, y, h); });
+  };
   const lastReveal = useRef(0);  // when we last brought it back
 
   const step = stepOf(run);
@@ -160,14 +177,14 @@ export default function TourLayer({ host = 'root' }) {
         // the step starts, when you come back to the tour (Tour pill), and
         // when its page is brought back. Not otherwise, so you can scroll
         // around freely; never while the tour is tucked away.
-        if (t.scroll && scrolledFor.current !== key && !getRun()?.min) {
-          scrolledFor.current = key;
-          const top = insets.top + 8;
-          const bottom = H - 96;
-          if (y < top || y + h > bottom) {
-            const want = h > H * 0.45 ? insets.top + 24 : H * 0.28;
-            t.scroll.ref.current?.scrollTo({ y: Math.max(0, t.scroll.y.current + y - want), animated: true });
-          }
+        // (Up to 3 tries, in case a flick still moving undid the first.)
+        const sf = scrolledFor.current;
+        const fresh = !sf || sf.key !== key;
+        if (t.scroll && !getRun()?.min && (fresh || (sf.tries < 3 && Date.now() - sf.at > 700))) {
+          if (outOfView(y, h)) {
+            scrolledFor.current = { key, tries: fresh ? 1 : sf.tries + 1, at: Date.now() };
+            scrollSpotIntoView(t, y, h);
+          } else scrolledFor.current = { key, tries: 3, at: Date.now() };
         }
       });
     };
@@ -187,38 +204,67 @@ export default function TourLayer({ host = 'root' }) {
   // the app normally does.
   const drag = useRef(null);
   const pan = useRef(null);
+  const bubblePan = useRef(null);
   if (!pan.current) {
     const clamp = (v, sc) => Math.max(0, Math.min(v, sc.max ? sc.max() : v));
+    const grant = () => {
+      const sc = scrollForStep(host);
+      drag.current = { sc, from: sc ? sc.y.current : 0 };
+    };
+    const move = (_, g) => {
+      const d = drag.current;
+      if (!d?.sc || Math.abs(g.dy) < 4 || Math.abs(g.dx) > Math.abs(g.dy) * 1.5) return;
+      d.sc.ref.current?.scrollTo({ y: clamp(d.from - g.dy, d.sc), animated: false });
+    };
+    const release = (_, g) => {
+      const d = drag.current;
+      drag.current = null;
+      if (Math.abs(g.dx) > 70 && Math.abs(g.dx) > Math.abs(g.dy) * 2) {
+        const st = stepOf(getRun());
+        if (host === 'root' && /^tab(\.|bar$)/.test(st?.target || '')) swipeTab(g.dx < 0 ? 1 : -1);
+        return;
+      }
+      // A flick keeps going a little, like a normal scroll.
+      if (d?.sc && Math.abs(g.dy) > 4 && Math.abs(g.vy) > 0.3) {
+        d.sc.ref.current?.scrollTo({ y: clamp(d.from - g.dy - g.vy * 220, d.sc), animated: true });
+      }
+    };
+    const end = () => { drag.current = null; };
+    // On the dim: takes every touch (taps do nothing, drags scroll).
     pan.current = PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
       onPanResponderTerminationRequest: () => false,
-      onPanResponderGrant: () => {
-        const sc = scrollForStep(host);
-        drag.current = { sc, from: sc ? sc.y.current : 0 };
-      },
-      onPanResponderMove: (_, g) => {
-        const d = drag.current;
-        if (!d?.sc || Math.abs(g.dy) < 4 || Math.abs(g.dx) > Math.abs(g.dy) * 1.5) return;
-        d.sc.ref.current?.scrollTo({ y: clamp(d.from - g.dy, d.sc), animated: false });
-      },
-      onPanResponderRelease: (_, g) => {
-        const d = drag.current;
-        drag.current = null;
-        if (Math.abs(g.dx) > 70 && Math.abs(g.dx) > Math.abs(g.dy) * 2) {
-          const st = stepOf(getRun());
-          if (host === 'root' && /^tab(\.|bar$)/.test(st?.target || '')) swipeTab(g.dx < 0 ? 1 : -1);
-          return;
-        }
-        // A flick keeps going a little, like a normal scroll.
-        if (d?.sc && Math.abs(g.dy) > 4 && Math.abs(g.vy) > 0.3) {
-          d.sc.ref.current?.scrollTo({ y: clamp(d.from - g.dy - g.vy * 220, d.sc), animated: true });
-        }
-      },
-      onPanResponderTerminate: () => { drag.current = null; },
+      onPanResponderGrant: grant,
+      onPanResponderMove: move,
+      onPanResponderRelease: release,
+      onPanResponderTerminate: end,
+    });
+    // On the tips box: taps go to its buttons; a clear up/down drag scrolls
+    // the page (a big spot can leave little dim to drag on).
+    bubblePan.current = PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 8 && Math.abs(g.dy) > Math.abs(g.dx),
+      onPanResponderTerminationRequest: () => false,
+      onPanResponderGrant: grant,
+      onPanResponderMove: move,
+      onPanResponderRelease: release,
+      onPanResponderTerminate: end,
     });
   }
   const dragProps = pan.current.panHandlers;
+  const bubbleDragProps = bubblePan.current.panHandlers;
+
+  // The edge arrow (spot off screen) bobs toward the spot.
+  const bob = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const loop = Animated.loop(Animated.sequence([
+      Animated.timing(bob, { toValue: 1, duration: 520, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+      Animated.timing(bob, { toValue: 0, duration: 520, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+    ]));
+    loop.start();
+    return () => loop.stop();
+  }, []);
 
   // The marks breathe, so they read as "tap me".
   const marking = !!(markRects && markRects.length);
@@ -336,6 +382,12 @@ export default function TourLayer({ host = 'root' }) {
   else if (above >= bh + 14) top = hy - 12 - bh;
   else if (below >= above) top = Math.max(insets.top + 6, floor - bh);
   else top = insets.top + 6;
+  // The spot scrolled off screen (you can scroll during the tour): an arrow
+  // at that edge points to it, and the tips box stays on screen next to it.
+  const off = box.y + box.h < insets.top + 30 ? 'up' : box.y > floor - 30 ? 'down' : null;
+  if (off === 'up') top = insets.top + 62;
+  else if (off === 'down') top = floor - 62 - bh;
+  top = Math.max(insets.top + 6, Math.min(top, floor - bh));
   const ring = (!step.free || step.ring) && !step.noRing;
 
   return (
@@ -363,12 +415,21 @@ export default function TourLayer({ host = 'root' }) {
       {marking ? markRects.map((r, i) => (
         <Animated.View key={`m${i}`} pointerEvents="none" style={[c.abs, c.mark, { left: r.x - 5, top: r.y - 5, width: r.w + 10, height: r.h + 10, borderRadius: step.markRound ?? 999, opacity: pulse }]} />
       )) : null}
+      {off ? (
+        <Animated.View style={[c.abs, c.edgeWrap, off === 'up' ? { top: insets.top + 8 } : { top: floor - 50 }, { transform: [{ translateY: bob.interpolate({ inputRange: [0, 1], outputRange: [0, off === 'up' ? -6 : 6] }) }] }]}>
+          <Pressable onPress={findSpot} style={c.edge} accessibilityRole="button" accessibilityLabel={off === 'up' ? 'The spot is above. Scroll back to it' : 'The spot is below. Scroll back to it'}>
+            <Ionicons name={off === 'up' ? 'arrow-up' : 'arrow-down'} size={16} color="#0A1633" />
+            <Text style={c.edgeText}>{off === 'up' ? 'It’s up here' : 'It’s down here'}</Text>
+          </Pressable>
+        </Animated.View>
+      ) : null}
       <View
         key={key} // a fresh bubble per step, so it's always measured (and shown)
         style={[c.abs, { left: 14, right: 14, top, opacity: bubbleH ? 1 : 0 }]}
         onLayout={(e) => { const h = Math.round(e.nativeEvent.layout.height); setBubble({ key, h }); }}
+        {...bubbleDragProps}
       >
-        <Bubble run={run} step={step} />
+        <Bubble run={run} step={step} off={off} onFind={findSpot} />
       </View>
     </View>
   );
@@ -377,7 +438,7 @@ export default function TourLayer({ host = 'root' }) {
 // ---------------------------------------------------------------------------
 // The speech bubble.
 // ---------------------------------------------------------------------------
-export function Bubble({ run, step, lost, inline }) {
+export function Bubble({ run, step, lost, inline, off, onFind }) {
   const chapters = getTourChapters();
   const chapter = chapters[run.ch];
   const steps = chapter.steps.filter((x) => x.kind !== 'welcome');
@@ -415,6 +476,12 @@ export function Bubble({ run, step, lost, inline }) {
       {lost
         ? <Text style={[c.text, d && { color: '#C9D1E6' }]}>This part of the app isn't on screen right now, so this step can't be shown. You can skip it.</Text>
         : text ? <Text style={[c.text, d && { color: '#C9D1E6' }]}>{text}</Text> : null}
+      {step.offNote && !lost ? (
+        <View style={[c.offNote, d && c.offNoteDark]}>
+          <Ionicons name="lock-closed" size={12} color={d ? '#E7B85A' : '#8A5E12'} style={{ marginTop: 2 }} />
+          <Text style={[c.offNoteText, d && { color: '#E9DDBE' }]}>{step.offNote}</Text>
+        </View>
+      ) : null}
       {step.task && !lost ? (
         <View style={[c.task, d ? c.taskDark : c.taskLight, done && c.taskDone]}>
           <View style={{ flex: 1 }}>
@@ -430,6 +497,13 @@ export function Bubble({ run, step, lost, inline }) {
         </View>
       ) : null}
       <View style={c.foot}>
+        {/* The spot scrolled away? "Show me" scrolls back to it. */}
+        {off && onFind && !lost ? (
+          <Pressable onPress={onFind} hitSlop={8} style={({ pressed }) => [c.find, d && c.findDark, pressed && { opacity: 0.8 }]} accessibilityRole="button" accessibilityLabel="Show me: scroll back to the spot">
+            <Ionicons name={off === 'up' ? 'arrow-up' : 'arrow-down'} size={13} color={d ? '#C9D1E6' : '#1B3FA0'} />
+            <Text style={[c.findText, d && { color: '#C9D1E6' }]}>Show me</Text>
+          </Pressable>
+        ) : null}
         {/* No ‹ Back or Skip ›: every chapter is done start to finish (Redo is
             on the chapter's last card). Only a step whose spot can't be
             found offers a way past it, so the tour can never get stuck. */}
@@ -699,6 +773,15 @@ const c = StyleSheet.create({
   foot: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, alignItems: 'center', marginTop: 7, minHeight: 20 },
   skip: { fontSize: 12.5, fontWeight: '700', color: '#5A6484' },
   got: { backgroundColor: '#1B3FA0', borderRadius: 10, paddingVertical: 7, paddingHorizontal: 14 },
+  find: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 10, paddingVertical: 6, paddingHorizontal: 12, borderWidth: 1.5, borderColor: '#1B3FA0' },
+  findDark: { borderColor: 'rgba(201,209,230,0.6)' },
+  findText: { color: '#1B3FA0', fontWeight: '800', fontSize: 13 },
+  offNote: { flexDirection: 'row', gap: 7, marginTop: 8, padding: 9, borderRadius: 10, backgroundColor: 'rgba(242,193,78,0.16)' },
+  offNoteDark: { backgroundColor: 'rgba(242,193,78,0.12)' },
+  offNoteText: { flex: 1, fontSize: 12.5, lineHeight: 17, color: '#5C4210' },
+  edgeWrap: { left: 0, right: 0, alignItems: 'center' },
+  edge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: GOLD, borderRadius: 999, paddingVertical: 8, paddingHorizontal: 14, shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } },
+  edgeText: { color: '#0A1633', fontWeight: '800', fontSize: 13 },
   gotText: { color: '#FFFFFF', fontWeight: '800', fontSize: 13 },
   card: {
     borderRadius: 22, borderWidth: 1, paddingHorizontal: 18, paddingVertical: 20,

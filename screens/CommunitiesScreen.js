@@ -7,7 +7,7 @@
 //     description. It replaced the old "Find a weekly accountability group"
 //     button, which linked to it.
 //   • Credits at the very bottom, like the end of a film (text only, no logo): Pace University,
-//     led by, facilitated by, and the developers of the app.
+//     the developers of the app, then the faculty (also shown at the end of the tour).
 
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable, ActivityIndicator, Platform } from 'react-native';
@@ -135,11 +135,14 @@ function AirtableView() {
   );
 }
 
-// The credits, centred like the end of a film.
+// The credits, centred like the end of a film: the app's developers first,
+// then the faculty who supported the project, in one section.
 const CREDITS = {
-  ledBy: { name: 'Dr. Li-Chiou Chen', role: 'Professor, Interim Dean' },
-  facilitatedBy: { name: 'Dr. Tom Schmidt', role: 'Clinical Assistant Professor' },
   developers: ['Brian Mangaru', 'Rony Castillo', 'Rafael Mendoza', 'Nala Hamer'],
+  faculty: [
+    { name: 'Dr. Li-Chiou Chen', role: 'Professor, Interim Dean' },
+    { name: 'Dr. Tom Schmidt', role: 'Clinical Assistant Professor' },
+  ],
 };
 
 // Also shown at the end of the app tour.
@@ -151,16 +154,16 @@ export function Credits() {
       <Text style={[s.school, { marginTop: 12 }]}>Pace University</Text>
       <Text style={s.dept}>Seidenberg School of Computer Science{'\n'}and Information Systems</Text>
 
-      <Text style={[s.kicker, s.group]}>LED BY</Text>
-      <Text style={s.person}>{CREDITS.ledBy.name}</Text>
-      <Text style={s.role}>{CREDITS.ledBy.role}</Text>
-
-      <Text style={[s.kicker, s.group]}>FACILITATED BY</Text>
-      <Text style={s.person}>{CREDITS.facilitatedBy.name}</Text>
-      <Text style={s.role}>{CREDITS.facilitatedBy.role}</Text>
-
       <Text style={[s.kicker, s.group]}>DEVELOPERS OF THE APP</Text>
       {CREDITS.developers.map((n) => <Text key={n} style={s.dev}>{n}</Text>)}
+
+      <Text style={[s.kicker, s.group]}>FACULTY</Text>
+      {CREDITS.faculty.map((f, i) => (
+        <View key={f.name} style={{ alignItems: 'center', marginTop: i ? 10 : 0 }}>
+          <Text style={s.person}>{f.name}</Text>
+          <Text style={s.role}>{f.role}</Text>
+        </View>
+      ))}
 
       <Text style={s.thanks}>Built for Pen Parentis with care.</Text>
     </View>
