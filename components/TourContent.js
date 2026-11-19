@@ -218,13 +218,13 @@ export const CHAPTERS = [
     ],
   },
   {
-    id: 'finish', title: 'Finish & check in', short: 'Finish', sub: 'Save it, and how you feel', prelude: [0, 1],
+    id: 'finish', title: 'Save & check in', short: 'Save your writing', sub: 'Save it, and how you feel', prelude: [0, 1],
     steps: [
-      ...toWriter('Finishing happens on the writing page.'),
+      ...toWriter('Saving happens on the writing page.'),
       {
-        target: 'writer.finish', inline: true, section: 'Finish', marks: ['writer.finish'], markRound: 14, wait: true,
-        text: 'Keep writing as long as you like. Need more room? Tap Hide up here to tuck the tour away; when you’re done, tap Finish & check in and the tour comes back. (Nothing on this page yet? Type a line first.)',
-        task: 'Tap Finish & check in.', hold: 600, on: (ev) => ev === 'session-saved',
+        target: 'writer.finish', inline: true, section: 'Save & check in', marks: ['writer.finish'], markRound: 14, wait: true,
+        text: 'Keep writing as long as you like. Need more room? Tap Hide up here to tuck the tour away; when you’re done, tap Save & check in and the tour comes back. (Nothing on this page yet? Type a line first.)',
+        task: 'Tap Save & check in.', hold: 600, on: (ev) => ev === 'session-saved',
       },
       {
         target: 'done.summary', wait: true, lock: true, info: true, look: true, round: 16, section: 'Your summary', jump: false,

@@ -459,7 +459,7 @@ export default function BrainstormWriterScreen({ navigation, route }) {
   async function finish() {
     // Opened the page and left without writing anything new: nothing to log.
     if (finalWords() === 0 && seconds < 60 && tourStep) {
-      flash('Write a few words first, then tap Finish & check in.');
+      flash('Write a few words first, then tap Save & check in.');
       inputRef.current?.focus();
       return;
     }
@@ -677,7 +677,7 @@ export default function BrainstormWriterScreen({ navigation, route }) {
       {tourHolds ? null : <View style={[s.bottomBar, { paddingBottom: insets.bottom + 14 }]}>
         <TourTarget id="writer.finish">
           <Pressable style={s.finishBtn} onPress={finish}>
-            <Text style={s.finishText}>Finish &amp; check in</Text>
+            <Text style={s.finishText}>Save &amp; check in</Text>
           </Pressable>
         </TourTarget>
       </View>}
