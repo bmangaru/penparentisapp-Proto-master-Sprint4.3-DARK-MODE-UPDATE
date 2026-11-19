@@ -206,8 +206,8 @@ export default function BrainstormWriterScreen({ navigation, route }) {
         stats: medalStats(sessions, dailyGoals, goals),
         goalMetBefore: (dailyPct(goal, earlier) ?? 0) >= 100,
       };
-      // Today's writing so far, to carry on from (the tour too: its tips can
-      // be hidden for room, so there's no need for a blank page any more).
+      // All of today's writing so far, as one page you can carry on, edit or
+      // delete in (the tour too: its tips can be hidden for room).
       const piece = textToContinue(sessions, session.day);
       if (piece && piece.text.trim()) {
         const t = piece.text.replace(/\s*$/, ' ');
@@ -406,6 +406,7 @@ export default function BrainstormWriterScreen({ navigation, route }) {
       appRating,
       feeling: null,
       continues: continues.current,
+      wholeDay: continues.current, // the page showed (and saves) all of today
       prompt: prompt || null,
       answers: cleanAnswers(textRef.current, answersRef.current),
       draft: false,

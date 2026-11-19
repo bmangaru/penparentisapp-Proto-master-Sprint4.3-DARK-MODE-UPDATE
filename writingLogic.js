@@ -760,6 +760,10 @@ export function dayPieces(sessions, key) {
       });
       continue;
     }
+    // A save of the whole day's page (wholeDay): today's earlier pieces become
+    // one piece first (the page showed them all, and you may have edited any
+    // of it), then this save carries on from it like any "Keep writing".
+    if (s.continues && s.wholeDay) collapseWritten(pieces);
     // "Keep writing" continues the last piece written in the app.
     const last = [...pieces].reverse().find((p) => !p.offline);
     if (s.continues && last) {
@@ -792,9 +796,54 @@ export function dayPieces(sessions, key) {
 }
 
 // What today's writing page should open with ('' = a blank page).
+// Today's page in the writing screen: ALL of today's writing in the app, as
+// one document you can read, edit and delete in, like a word processor.
+// Pieces saved separately (older versions of the app) are joined with a
+// blank line; their prompt answers move with them. Saved with `wholeDay`.
 export function textToContinue(sessions, key) {
-  const pieces = dayPieces(sessions, key).filter((p) => !p.offline);
-  return pieces.length ? pieces[pieces.length - 1] : null;
+  const written = dayPieces(sessions, key).filter((p) => !p.offline && (p.text || '').trim());
+  if (!written.length) return null;
+  if (written.length === 1) return written[0];
+  let text = '';
+  const answers = [];
+  for (const p of written) {
+    if (text) text += '\n\n';
+    const at = text.length;
+    for (const a of cleanAnswers(p.text || '', p.answers)) answers.push({ ...a, at: a.at + at });
+    text += (p.text || '').replace(/\s+$/, '');
+  }
+  return { ...written[written.length - 1], text, answers };
+}
+
+// Join a day's written pieces into one (where the first one was), keeping
+// "Written elsewhere" logs as they are. Totals and feelings add up.
+function collapseWritten(pieces) {
+  const idx = pieces.map((p, i) => (p.offline ? -1 : i)).filter((i) => i >= 0);
+  if (idx.length < 2) return;
+  const first = pieces[idx[0]];
+  let text = '';
+  const answers = [];
+  for (const i of idx) {
+    const p = pieces[i];
+    if (!(p.text || '').trim()) continue;
+    if (text) text += '\n\n';
+    const at = text.length;
+    for (const a of cleanAnswers(p.text || '', p.answers)) answers.push({ ...a, at: a.at + at });
+    text += (p.text || '').replace(/\s+$/, '');
+  }
+  const merged = { ...first, text, answers };
+  for (const i of idx.slice(1)) {
+    const p = pieces[i];
+    merged.words += p.words || 0;
+    merged.seconds += p.seconds || 0;
+    merged.lastAt = p.lastAt;
+    merged.rating = p.rating || merged.rating;
+    merged.sessionIds = [...merged.sessionIds, ...p.sessionIds];
+    merged.prompts = [...new Set([...merged.prompts, ...p.prompts])];
+    merged.feelings = [...merged.feelings, ...p.feelings];
+  }
+  for (const i of idx.slice(1).reverse()) pieces.splice(i, 1);
+  pieces[idx[0]] = merged;
 }
 
 // Everything a day bubble shows.
