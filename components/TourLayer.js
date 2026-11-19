@@ -50,6 +50,7 @@ export default function TourLayer({ host = 'root' }) {
   const pulse = useRef(new Animated.Value(1)).current;
   const scrolledFor = useRef(null);
   const hiddenSince = useRef(0); // when the spot's page got covered
+  const barTop = useRef(0);      // where the tab bar starts (pages scroll behind it)
   // Is the spot (mostly) off screen, above or below what you can see?
   const outOfView = (y, h) => y < insets.top + 8 || y + Math.min(h, H * 0.45) > H - 96;
   // Scroll its page so the spot sits about a quarter of the way down.
@@ -119,6 +120,7 @@ export default function TourLayer({ host = 'root' }) {
       }
       hiddenSince.current = 0;
       setMissing(false);
+      if (host === 'root') getTarget('tabbar')?.ref.current?.measureInWindow?.((bx, by, bw, bh) => { if (bh) barTop.current = by; });
       const node = t.ref.current;
       if (!node || !node.measureInWindow) return;
       node.measureInWindow((x, y, w, h) => {
@@ -288,6 +290,9 @@ export default function TourLayer({ host = 'root' }) {
   // Chapters (pick another) and End.
   if (run.min && run.phase === 'step') {
     if (topHost() !== host) return null;
+    // On the writing page it's a slim strip inside the page (TourInline), so
+    // it never covers ×, Prompt, Aa or Pause.
+    if (step?.inline) return null;
     return (
       <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
         <View style={[c.paused, { top: insets.top + 2 }]}>
@@ -342,7 +347,7 @@ export default function TourLayer({ host = 'root' }) {
     if (!markRects || !markRects.length) return null;
     return (
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
-        {markRects.map((r, i) => (
+        {markRects.filter((r) => { const cy = r.y + r.h / 2; const bottom = Math.min(barTop.current || H, kb ? H - kb : H); return cy > insets.top && cy < bottom; }).map((r, i) => (
           <Animated.View key={`m${i}`} style={[c.abs, c.mark, { left: r.x - 5, top: r.y - 5, width: r.w + 10, height: r.h + 10, borderRadius: step.markRound ?? 999, opacity: pulse }]} />
         ))}
       </View>
@@ -382,10 +387,17 @@ export default function TourLayer({ host = 'root' }) {
   // at that edge points to it, and the tips box stays on screen next to it.
   // Partly off counts too: its top is cut off above, or (if it would fit
   // on screen) its bottom is cut off below.
+  // What you can actually see: below the status bar, and above the tab bar
+  // (a page scrolls behind it) or the keyboard. A spot that IS in the tab
+  // bar, or in a sheet, only stops at the bottom of the screen.
+  const inBar = /^tab(\.|bar$)/.test(step.target || '');
+  let visBottom = H;
+  if (host === 'root' && !inBar && barTop.current) visBottom = barTop.current;
+  if (kb) visBottom = Math.min(visBottom, H - kb);
   const fullUp = box.y + box.h < insets.top + 30;
-  const fullDown = box.y > floor - 30;
+  const fullDown = box.y > visBottom - 30;
   const partUp = !fullUp && box.y < insets.top - 4;
-  const partDown = !fullDown && box.h < floor - insets.top - 20 && box.y + box.h > floor + 8;
+  const partDown = !fullDown && box.h < visBottom - insets.top - 20 && box.y + box.h > visBottom + 6;
   const off = fullUp || partUp ? 'up' : fullDown || partDown ? 'down' : null;
   const partly = partUp || partDown;
   if (fullUp) top = insets.top + 62;
@@ -419,7 +431,7 @@ export default function TourLayer({ host = 'root' }) {
           <View style={[StyleSheet.absoluteFill, c.ringGlow, { borderRadius: (step.round ?? 14) + 4 }]} />
         </View>
       ) : null}
-      {marking ? markRects.map((r, i) => (
+      {marking ? markRects.filter((r) => r.y + r.h / 2 > insets.top && r.y + r.h / 2 < visBottom).map((r, i) => (
         <Animated.View key={`m${i}`} pointerEvents="none" style={[c.abs, c.mark, { left: r.x - 5, top: r.y - 5, width: r.w + 10, height: r.h + 10, borderRadius: step.markRound ?? 999, opacity: pulse }]} />
       )) : null}
       {off ? (
@@ -477,10 +489,19 @@ export function Bubble({ run, step, lost, inline, off, onFind }) {
         <View style={c.dots}>
           {steps.map((_, i) => <View key={i} style={[c.dot, d && { backgroundColor: 'rgba(255,255,255,0.22)' }, i < at && c.dotDone, i === at && c.dotOn, i === at && d && { backgroundColor: '#9DB4FF' }]} />)}
         </View>
-        {/* Exit: red and labelled, so it can't be mistaken for a sheet's ×. */}
-        <Pressable onPress={() => setConfirm(true)} hitSlop={8} style={({ pressed }) => [c.exit, pressed && { opacity: 0.8 }]} accessibilityRole="button" accessibilityLabel="Exit the tour">
-          <Text style={c.exitText}>Exit</Text>
-        </Pressable>
+        {/* Exit: red and labelled, so it can't be mistaken for a sheet's ×.
+            On the writing page (inline tips) it's Hide instead: tuck the tour
+            away for more room to write (the "Tour paused" card can end it). */}
+        {inline ? (
+          <Pressable onPress={() => minimizeTour(true)} hitSlop={8} style={({ pressed }) => [c.hide, d && c.hideDark, pressed && { opacity: 0.8 }]} accessibilityRole="button" accessibilityLabel="Hide the tour for now" accessibilityHint="Gives you more room to write; the tour keeps your place">
+            <Ionicons name="chevron-up" size={13} color={d ? '#C9D1E6' : '#1B3FA0'} />
+            <Text style={[c.hideText, d && { color: '#C9D1E6' }]}>Hide</Text>
+          </Pressable>
+        ) : (
+          <Pressable onPress={() => setConfirm(true)} hitSlop={8} style={({ pressed }) => [c.exit, pressed && { opacity: 0.8 }]} accessibilityRole="button" accessibilityLabel="Exit the tour">
+            <Text style={c.exitText}>Exit</Text>
+          </Pressable>
+        )}
       </View>
       {confirm ? <ExitConfirm dark={d} onCancel={() => setConfirm(false)} /> : null}
       {confirm ? null : <>
@@ -539,7 +560,7 @@ export function Bubble({ run, step, lost, inline, off, onFind }) {
 }
 
 // The "Tour paused" card (the tour is hidden while you use the app).
-function PausedCard({ run }) {
+function PausedCard({ run, slim }) {
   const [ending, setEnding] = useState(false);
   const sec = sectionOf(run);
   const where = sec ? `${sec.num} · ${sec.title}` : `Chapter ${run.ch + 1}`;
@@ -556,6 +577,21 @@ function PausedCard({ run }) {
             <Text style={[c.pausedBtnText, { color: '#FFFFFF' }]}>End tour</Text>
           </Pressable>
         </View>
+      </View>
+    );
+  }
+  // Slim (the writing page): one row, so your words keep the room.
+  if (slim) {
+    return (
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Ionicons name="pause-circle" size={17} color="#0A1633" />
+        <Text style={[c.pausedTitle, { flex: 1, fontSize: 13.5 }]} numberOfLines={1}>Tour hidden</Text>
+        <Pressable onPress={() => minimizeTour(false)} style={({ pressed }) => [c.pausedBtn, c.pausedGo, { flex: 0, paddingHorizontal: 12, paddingVertical: 6 }, pressed && { opacity: 0.85 }]} accessibilityRole="button" accessibilityLabel={`Show the tour tips again, at ${where}`}>
+          <Text style={[c.pausedBtnText, { color: '#FFFFFF' }]}>Show tips</Text>
+        </Pressable>
+        <Pressable onPress={() => setEnding(true)} style={({ pressed }) => [c.pausedBtn, c.pausedEndOutline, { flex: 0, paddingHorizontal: 12, paddingVertical: 6 }, pressed && { opacity: 0.8 }]} accessibilityRole="button" accessibilityLabel="End the tour">
+          <Text style={[c.pausedBtnText, { color: '#B42626' }]}>End</Text>
+        </Pressable>
       </View>
     );
   }
@@ -625,7 +661,14 @@ function ProgressRing({ frac, light }) {
 export function TourInline() {
   const run = useRun();
   const step = stepOf(run);
-  if (!run || run.min || !step || !step.inline) return null;
+  if (!run || !step || !step.inline) return null;
+  if (run.min) {
+    return (
+      <View style={[c.pausedStrip, { marginHorizontal: 14, marginBottom: 8 }]}>
+        <PausedCard run={run} slim />
+      </View>
+    );
+  }
   return (
     <View style={{ marginHorizontal: 14, marginBottom: 8 }}>
       <Bubble run={run} step={step} inline />
@@ -820,6 +863,7 @@ const c = StyleSheet.create({
   ring: { borderWidth: 2.5, borderColor: GOLD },
   // The tucked-away tour: a small gold pill, top centre.
   paused: { position: 'absolute', left: 14, right: 14, backgroundColor: GOLD, borderRadius: 16, padding: 12, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 8 },
+  pausedStrip: { backgroundColor: GOLD, borderRadius: 14, paddingVertical: 8, paddingHorizontal: 10 },
   pausedTitle: { fontSize: 14.5, fontWeight: '800', color: '#0A1633' },
   pausedSub: { fontSize: 12.5, color: '#3A2C08' },
   pausedRow: { flexDirection: 'row', gap: 8 },
@@ -854,6 +898,9 @@ const c = StyleSheet.create({
   x: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#EEF1F7' },
   exit: { backgroundColor: '#C62F2F', borderRadius: 999, paddingHorizontal: 11, paddingVertical: 4 },
   exitText: { color: '#FFFFFF', fontWeight: '800', fontSize: 12 },
+  hide: { flexDirection: 'row', alignItems: 'center', gap: 3, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3, borderWidth: 1.5, borderColor: '#1B3FA0' },
+  hideDark: { borderColor: 'rgba(201,209,230,0.6)' },
+  hideText: { color: '#1B3FA0', fontWeight: '800', fontSize: 12 },
   exitBig: { backgroundColor: '#C62F2F', borderRadius: 10, paddingVertical: 7, paddingHorizontal: 14 },
   confirmRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10, marginTop: 4 },
   title: { fontSize: 16, fontWeight: '800', color: '#0A1633', marginTop: 5 },

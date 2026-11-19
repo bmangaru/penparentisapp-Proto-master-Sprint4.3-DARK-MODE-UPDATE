@@ -261,12 +261,16 @@ export function tourEvent(name, value) {
   try { r = st.on(name, value, run.data || {}); } catch { r = null; }
   if (!r) return;
   const res = r === true ? { done: true } : r;
+  // Doing the task while the tour is hidden (e.g. Finish & check in after
+  // Hide on the writing page) brings the tour back for what comes next.
+  const back = !!res.done && run.min;
   set({
     ...run,
     data: res.data !== undefined ? res.data : run.data,
     progress: res.progress !== undefined ? res.progress : run.progress,
     frac: res.frac !== undefined ? res.frac : run.frac,
     taskDone: !!res.done,
+    ...(back ? { min: false, resumed: (run.resumed || 0) + 1 } : {}),
   });
   // manual steps wait for "Next ›" (time to read, or to keep writing).
   // back: when done, return to the step before (e.g. 5.2a → 5.2).
