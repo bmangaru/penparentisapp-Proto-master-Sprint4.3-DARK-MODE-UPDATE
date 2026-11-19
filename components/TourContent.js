@@ -27,7 +27,7 @@ import { getTarget } from '../tourRun';
 // For spots that work normally but are turned off while the tour shows them
 // (they'd take you away from it): a short note in the tips box, so it's
 // clear the button isn't broken. Shown under the step's text.
-const offInTour = (what, plural) => `${what} ${plural ? 'are' : 'is'} turned off during the tour, so a tap can’t take you away from it. ${plural ? 'They work' : 'It works'} as soon as you’re done: come back here any time.`;
+const offInTour = (what, plural) => `${what} ${plural ? 'are' : 'is'} turned off while the tour is running, so tapping ${plural ? 'them' : 'it'} won’t take you out of the tour. ${plural ? 'They work' : 'It works'} again as soon as you’re done: come back here any time.`;
 
 // Shared steps.
 // Each chapter starts at the tab bar, so you learn where everything is.
@@ -108,7 +108,7 @@ export const CHAPTERS = [
         text: 'Visit penparentis.org, or follow Pen Parentis on Facebook, Instagram, LinkedIn, X and Bluesky. Each button shows the account it opens.',
       },
       {
-        target: 'home.supporters', tab: 'Home', info: true, look: true, section: 'Our supporters', offNote: offInTour('Give'),
+        target: 'home.supporters', tab: 'Home', info: true, look: true, section: 'Our supporters', offNote: offInTour('Get Karma'),
         text: 'Get Karma keeps the salons free. The names scrolling here are the organizations and people who keep Pen Parentis going. Thank you!',
       },
     ],
@@ -275,7 +275,7 @@ export const CHAPTERS = [
         on: (ev, v) => ev === 'revealed' && v === 'bs.history',
       },
       {
-        target: 'bs.history', tab: 'Brainstorm', info: true, look: true, noRing: true, markRound: 16, marks: ['bs.folder'], offNote: offInTour('Opening the folder'),
+        target: 'bs.history', tab: 'Brainstorm', info: true, look: true, noRing: true, markRound: 16, marks: ['bs.folder'], offNote: offInTour('The folder'),
         text: 'It’s all saved on your phone, in a folder for the week. Closed, it shows your most recent day; tap the folder any time to see everything else you wrote this week.',
       },
       {
@@ -298,7 +298,7 @@ export const CHAPTERS = [
         title: 'Your medals', text: 'Medals live here, at the bottom of Brainstorm. Every word you type, minute you spend, session you finish and goal you meet moves you closer to your next one, and there’s much more to earn!',
       },
       {
-        target: 'bs.medals', tab: 'Brainstorm', info: true, look: true, section: 'Four tiers', offNote: offInTour('Opening your medals'),
+        target: 'bs.medals', tab: 'Brainstorm', info: true, look: true, section: 'Four tiers', offNote: offInTour('The medals card'),
         title: 'Bronze, Silver, Gold, Diamond', text: 'Every medal has four tiers. Its bar is the colour of the medal you have and shows how close the next one is. Tap this card any time to see them all.',
       },
     ],
@@ -314,7 +314,7 @@ export const CHAPTERS = [
         on: (ev, v) => ev === 'cal-index' && v > 0,
       },
       {
-        target: 'cal.grid', tab: 'Calendar', info: true, look: true, section: 'Your writing calendar', offNote: offInTour('Tapping a day'),
+        target: 'cal.grid', tab: 'Calendar', info: true, look: true, section: 'Your writing calendar', offNote: offInTour('The days', true),
         text: 'Each day’s progress is shown as its own set of rings. The current week is at the top of the calendar; scroll up for earlier weeks. A gold ★ marks a salon day. Tap a past day to read what you wrote that day.',
       },
       {
@@ -337,7 +337,7 @@ export const CHAPTERS = [
     steps: [
       tapTab('Eventbrite', 'Eventbrite', 'Pen Parentis salons: monthly, free and online.', { section: 'Monthly salons' }),
       {
-        target: 'ev.next', tab: 'Eventbrite', info: true, look: true, wait: true, offNote: offInTour('These buttons', true),
+        target: 'ev.next', tab: 'Eventbrite', info: true, look: true, wait: true, offNote: offInTour('The event’s buttons', true),
         text: 'The next salon. Register on Eventbrite, watch it live on YouTube, add it to your calendar, or share it with a friend.',
       },
       {

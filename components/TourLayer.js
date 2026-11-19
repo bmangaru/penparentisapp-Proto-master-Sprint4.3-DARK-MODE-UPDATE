@@ -283,19 +283,15 @@ export default function TourLayer({ host = 'root' }) {
   const chapter = chapters[run.ch];
   if (!chapter) return null;
 
-  // Tucked away (✕): just a small pill to bring it back, or end the tour.
+  // Hidden for now (Exit → Hide for now): a small "Tour paused" card, so
+  // it's clear the tour is off right now, with Continue (where you were),
+  // Chapters (pick another) and End.
   if (run.min && run.phase === 'step') {
     if (topHost() !== host) return null;
     return (
       <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-        <View style={[c.pill, { top: insets.top + 2 }]}>
-          <Pressable onPress={() => minimizeTour(false)} hitSlop={8} style={c.pillMain} accessibilityRole="button" accessibilityLabel="Show the tour again">
-            <Ionicons name="compass-outline" size={15} color="#0A1633" />
-            <Text style={c.pillText}>Tour</Text>
-          </Pressable>
-          <Pressable onPress={stopTour} hitSlop={8} style={c.pillEnd} accessibilityRole="button" accessibilityLabel="End the tour">
-            <Text style={c.pillEndText}>End</Text>
-          </Pressable>
+        <View style={[c.paused, { top: insets.top + 2 }]}>
+          <PausedCard run={run} />
         </View>
       </View>
     );
@@ -384,10 +380,21 @@ export default function TourLayer({ host = 'root' }) {
   else top = insets.top + 6;
   // The spot scrolled off screen (you can scroll during the tour): an arrow
   // at that edge points to it, and the tips box stays on screen next to it.
-  const off = box.y + box.h < insets.top + 30 ? 'up' : box.y > floor - 30 ? 'down' : null;
-  if (off === 'up') top = insets.top + 62;
-  else if (off === 'down') top = floor - 62 - bh;
+  // Partly off counts too: its top is cut off above, or (if it would fit
+  // on screen) its bottom is cut off below.
+  const fullUp = box.y + box.h < insets.top + 30;
+  const fullDown = box.y > floor - 30;
+  const partUp = !fullUp && box.y < insets.top - 4;
+  const partDown = !fullDown && box.h < floor - insets.top - 20 && box.y + box.h > floor + 8;
+  const off = fullUp || partUp ? 'up' : fullDown || partDown ? 'down' : null;
+  const partly = partUp || partDown;
+  if (fullUp) top = insets.top + 62;
+  else if (fullDown) top = floor - 62 - bh;
   top = Math.max(insets.top + 6, Math.min(top, floor - bh));
+  // The arrow sits at that edge, or just past the tips box if it's there.
+  let arrowTop = off === 'up' ? insets.top + 8 : floor - 50;
+  if (off === 'up' && top < insets.top + 56) arrowTop = top + bh + 10;
+  if (off === 'down' && top + bh > floor - 56) arrowTop = top - 50;
   const ring = (!step.free || step.ring) && !step.noRing;
 
   return (
@@ -416,10 +423,10 @@ export default function TourLayer({ host = 'root' }) {
         <Animated.View key={`m${i}`} pointerEvents="none" style={[c.abs, c.mark, { left: r.x - 5, top: r.y - 5, width: r.w + 10, height: r.h + 10, borderRadius: step.markRound ?? 999, opacity: pulse }]} />
       )) : null}
       {off ? (
-        <Animated.View style={[c.abs, c.edgeWrap, off === 'up' ? { top: insets.top + 8 } : { top: floor - 50 }, { transform: [{ translateY: bob.interpolate({ inputRange: [0, 1], outputRange: [0, off === 'up' ? -6 : 6] }) }] }]}>
+        <Animated.View style={[c.abs, c.edgeWrap, { top: arrowTop }, { transform: [{ translateY: bob.interpolate({ inputRange: [0, 1], outputRange: [0, off === 'up' ? -6 : 6] }) }] }]}>
           <Pressable onPress={findSpot} style={c.edge} accessibilityRole="button" accessibilityLabel={off === 'up' ? 'The spot is above. Scroll back to it' : 'The spot is below. Scroll back to it'}>
             <Ionicons name={off === 'up' ? 'arrow-up' : 'arrow-down'} size={16} color="#0A1633" />
-            <Text style={c.edgeText}>{off === 'up' ? 'It’s up here' : 'It’s down here'}</Text>
+            <Text style={c.edgeText}>{partly ? (off === 'up' ? 'Scroll up to see it all' : 'Scroll down to see it all') : (off === 'up' ? 'It’s up here' : 'It’s down here')}</Text>
           </Pressable>
         </Animated.View>
       ) : null}
@@ -455,6 +462,8 @@ export function Bubble({ run, step, lost, inline, off, onFind }) {
   // A manual "Next ›" only works a moment after it appears, so a tap meant for
   // the keyboard or the page can't end the step by accident.
   const [armed, setArmed] = useState(false);
+  const [confirm, setConfirm] = useState(false); // "Exit the tour?" showing
+  useEffect(() => { setConfirm(false); }, [run.ch, run.step]);
   useEffect(() => {
     setArmed(false);
     if (!done || !step.manual) return undefined;
@@ -468,10 +477,13 @@ export function Bubble({ run, step, lost, inline, off, onFind }) {
         <View style={c.dots}>
           {steps.map((_, i) => <View key={i} style={[c.dot, d && { backgroundColor: 'rgba(255,255,255,0.22)' }, i < at && c.dotDone, i === at && c.dotOn, i === at && d && { backgroundColor: '#9DB4FF' }]} />)}
         </View>
-        <Pressable onPress={() => minimizeTour(true)} hitSlop={10} style={[c.x, d && { backgroundColor: 'rgba(255,255,255,0.1)' }]} accessibilityRole="button" accessibilityLabel="Hide the tour for now">
-          <Ionicons name="close" size={15} color={d ? '#C9D1E6' : '#5A6484'} />
+        {/* Exit: red and labelled, so it can't be mistaken for a sheet's ×. */}
+        <Pressable onPress={() => setConfirm(true)} hitSlop={8} style={({ pressed }) => [c.exit, pressed && { opacity: 0.8 }]} accessibilityRole="button" accessibilityLabel="Exit the tour">
+          <Text style={c.exitText}>Exit</Text>
         </Pressable>
       </View>
+      {confirm ? <ExitConfirm dark={d} onCancel={() => setConfirm(false)} /> : null}
+      {confirm ? null : <>
       {showTitle ? <Text style={[c.title, d && { color: '#EEF1F8' }, inline && { fontSize: 14.5, marginTop: 3 }]}>{title}</Text> : null}
       {lost
         ? <Text style={[c.text, d && { color: '#C9D1E6' }]}>This part of the app isn't on screen right now, so this step can't be shown. You can skip it.</Text>
@@ -520,6 +532,76 @@ export function Bubble({ run, step, lost, inline, off, onFind }) {
             <Text style={[c.skip, d && { color: '#A7B2CF' }]}>{lost ? 'Skip this step ›' : 'Skip ›'}</Text>
           </Pressable>
         ) : null}
+      </View>
+      </>}
+    </View>
+  );
+}
+
+// The "Tour paused" card (the tour is hidden while you use the app).
+function PausedCard({ run }) {
+  const [ending, setEnding] = useState(false);
+  const sec = sectionOf(run);
+  const where = sec ? `${sec.num} · ${sec.title}` : `Chapter ${run.ch + 1}`;
+  if (ending) {
+    return (
+      <View style={{ gap: 8 }}>
+        <Text style={c.pausedTitle}>End the tour?</Text>
+        <Text style={c.pausedSub}>Chapters you’ve finished stay done. Start it again any time from ⚙ Settings on Home.</Text>
+        <View style={c.pausedRow}>
+          <Pressable onPress={() => setEnding(false)} style={({ pressed }) => [c.pausedBtn, pressed && { opacity: 0.8 }]} accessibilityRole="button">
+            <Text style={c.pausedBtnText}>Keep it</Text>
+          </Pressable>
+          <Pressable onPress={stopTour} style={({ pressed }) => [c.pausedBtn, c.pausedEnd, pressed && { opacity: 0.85 }]} accessibilityRole="button">
+            <Text style={[c.pausedBtnText, { color: '#FFFFFF' }]}>End tour</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
+  return (
+    <View style={{ gap: 8 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Ionicons name="pause-circle" size={18} color="#0A1633" />
+        <View style={{ flex: 1 }}>
+          <Text style={c.pausedTitle}>Tour paused</Text>
+          <Text style={c.pausedSub} numberOfLines={1}>You were on {where}</Text>
+        </View>
+      </View>
+      <View style={c.pausedRow}>
+        <Pressable onPress={() => minimizeTour(false)} style={({ pressed }) => [c.pausedBtn, c.pausedGo, pressed && { opacity: 0.85 }]} accessibilityRole="button" accessibilityLabel={`Continue the tour at ${where}`}>
+          <Ionicons name="play" size={13} color="#FFFFFF" />
+          <Text style={[c.pausedBtnText, { color: '#FFFFFF' }]}>Continue</Text>
+        </Pressable>
+        <Pressable onPress={() => openTour('__list')} style={({ pressed }) => [c.pausedBtn, pressed && { opacity: 0.8 }]} accessibilityRole="button" accessibilityLabel="Pick another chapter">
+          <Text style={c.pausedBtnText}>Chapters</Text>
+        </Pressable>
+        <Pressable onPress={() => setEnding(true)} style={({ pressed }) => [c.pausedBtn, c.pausedEndOutline, pressed && { opacity: 0.8 }]} accessibilityRole="button" accessibilityLabel="End the tour">
+          <Text style={[c.pausedBtnText, { color: '#B42626' }]}>End</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+// "Exit the tour?" — shown in the tips box when you tap Exit. Hide for now
+// keeps your place (a small "Tour paused" card stays on screen).
+function ExitConfirm({ dark, onCancel }) {
+  return (
+    <View style={{ marginTop: 6, gap: 6 }}>
+      <Text style={[c.title, dark && { color: '#EEF1F8' }]}>Exit the tour?</Text>
+      <Text style={[c.text, dark && { color: '#C9D1E6' }]}>Chapters you’ve finished stay done. You can come back to the tour any time from ⚙ Settings on the Home screen.</Text>
+      <View style={c.confirmRow}>
+        <Pressable onPress={onCancel} hitSlop={8} accessibilityRole="button">
+          <Text style={[c.skip, dark && { color: '#A7B2CF' }]}>Keep going</Text>
+        </Pressable>
+        <View style={{ flex: 1 }} />
+        <Pressable onPress={() => minimizeTour(true)} style={({ pressed }) => [c.find, dark && c.findDark, pressed && { opacity: 0.8 }]} accessibilityRole="button" accessibilityHint="Hides the tour but keeps your place">
+          <Text style={[c.findText, dark && { color: '#C9D1E6' }]}>Hide for now</Text>
+        </Pressable>
+        <Pressable onPress={stopTour} style={({ pressed }) => [c.exitBig, pressed && { opacity: 0.85 }]} accessibilityRole="button">
+          <Text style={c.gotText}>Exit tour</Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -737,6 +819,15 @@ const c = StyleSheet.create({
   abs: { position: 'absolute' },
   ring: { borderWidth: 2.5, borderColor: GOLD },
   // The tucked-away tour: a small gold pill, top centre.
+  paused: { position: 'absolute', left: 14, right: 14, backgroundColor: GOLD, borderRadius: 16, padding: 12, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 8 },
+  pausedTitle: { fontSize: 14.5, fontWeight: '800', color: '#0A1633' },
+  pausedSub: { fontSize: 12.5, color: '#3A2C08' },
+  pausedRow: { flexDirection: 'row', gap: 8 },
+  pausedBtn: { flex: 1, flexDirection: 'row', gap: 5, alignItems: 'center', justifyContent: 'center', borderRadius: 10, paddingVertical: 8, backgroundColor: 'rgba(255,255,255,0.55)' },
+  pausedGo: { flex: 1.3, backgroundColor: '#1B3FA0' },
+  pausedEnd: { backgroundColor: '#C62F2F' },
+  pausedEndOutline: { backgroundColor: 'rgba(255,255,255,0.55)', borderWidth: 1.5, borderColor: '#B42626' },
+  pausedBtnText: { fontSize: 13, fontWeight: '800', color: '#0A1633' },
   pill: { position: 'absolute', alignSelf: 'center', flexDirection: 'row', alignItems: 'center', backgroundColor: GOLD, borderRadius: 999, paddingLeft: 12, paddingRight: 4, paddingVertical: 4, gap: 8, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 6, shadowOffset: { width: 0, height: 3 }, elevation: 8 },
   pillMain: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   pillText: { fontSize: 13, fontWeight: '800', color: '#0A1633' },
@@ -761,6 +852,10 @@ const c = StyleSheet.create({
   dotDone: { backgroundColor: '#1E7B3A' },
   dotOn: { width: 14, backgroundColor: '#1B3FA0' },
   x: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#EEF1F7' },
+  exit: { backgroundColor: '#C62F2F', borderRadius: 999, paddingHorizontal: 11, paddingVertical: 4 },
+  exitText: { color: '#FFFFFF', fontWeight: '800', fontSize: 12 },
+  exitBig: { backgroundColor: '#C62F2F', borderRadius: 10, paddingVertical: 7, paddingHorizontal: 14 },
+  confirmRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10, marginTop: 4 },
   title: { fontSize: 16, fontWeight: '800', color: '#0A1633', marginTop: 5 },
   text: { fontSize: 13.5, lineHeight: 19, color: '#2A3352', marginTop: 3 },
   task: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#0A1633', borderRadius: 11, paddingVertical: 8, paddingHorizontal: 10, marginTop: 9 },
