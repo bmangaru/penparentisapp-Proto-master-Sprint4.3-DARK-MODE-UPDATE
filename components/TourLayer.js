@@ -398,6 +398,7 @@ export default function TourLayer({ host = 'root' }) {
   const fullDown = box.y > visBottom - 30;
   const partUp = !fullUp && box.y < insets.top - 4;
   const partDown = !fullDown && box.h < visBottom - insets.top - 20 && box.y + box.h > visBottom + 6;
+  const gone = fullUp || fullDown; // nothing of it left to outline
   const off = fullUp || partUp ? 'up' : fullDown || partDown ? 'down' : null;
   const partly = partUp || partDown;
   if (fullUp) top = insets.top + 62;
@@ -411,7 +412,12 @@ export default function TourLayer({ host = 'root' }) {
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-      {dim ? (
+      {/* Spot scrolled right off the screen: no outline left stuck at the
+          edge, just the dim (still draggable) and the arrow pointing to it. */}
+      {gone && dim ? (
+        <View style={[c.abs, { left: 0, top: 0, width: W, height: H + 60, backgroundColor: dim }]} {...dragProps} />
+      ) : null}
+      {dim && !gone ? (
         <>
           <View style={[c.abs, { left: 0, top: 0, width: W, height: hy, backgroundColor: dim }]} {...dragProps} />
           <View style={[c.abs, { left: 0, top: hy + hh, width: W, height: Math.max(0, H - hy - hh) + 60, backgroundColor: dim }]} {...dragProps} />
@@ -419,10 +425,10 @@ export default function TourLayer({ host = 'root' }) {
           <View style={[c.abs, { left: hx + hw, top: hy, width: Math.max(0, W - hx - hw), height: hh, backgroundColor: dim }]} {...dragProps} />
         </>
       ) : null}
-      {step.look ? (
+      {step.look && !gone ? (
         <View style={[c.abs, { left: hx, top: hy, width: hw, height: hh }]} {...dragProps} />
       ) : null}
-      {ring && ringRects && ringRects.length ? ringRects.map((r, i) => (
+      {gone ? null : ring && ringRects && ringRects.length ? ringRects.map((r, i) => (
         <View key={i} pointerEvents="none" style={[c.abs, c.ring, { left: r.x - 4, top: r.y - 4, width: r.w + 8, height: r.h + 8, borderRadius: 999 }]}>
           <View style={[StyleSheet.absoluteFill, c.ringGlow, { borderRadius: 999 }]} />
         </View>
@@ -632,10 +638,10 @@ function ExitConfirm({ dark, onCancel }) {
       <Text style={[c.title, dark && { color: '#EEF1F8' }]}>Hide the tour?</Text>
       <Text style={[c.text, dark && { color: '#C9D1E6' }]}>Hide it to use the app for a bit: the tour keeps your place, and you can carry on any time. Or exit the tour: chapters you’ve finished stay done, and you can come back to it from ⚙ Settings on the Home screen.</Text>
       <View style={c.confirmRow}>
-        <Pressable onPress={onCancel} hitSlop={8} accessibilityRole="button">
-          <Text style={[c.skip, dark && { color: '#A7B2CF' }]}>Keep going</Text>
+        <Pressable onPress={onCancel} style={({ pressed }) => [c.goBig, pressed && { opacity: 0.85 }]} accessibilityRole="button" accessibilityLabel="Continue the tour">
+          <Ionicons name="play" size={12} color="#FFFFFF" />
+          <Text style={c.gotText}>Continue</Text>
         </Pressable>
-        <View style={{ flex: 1 }} />
         <Pressable onPress={() => minimizeTour(true)} style={({ pressed }) => [c.hideBig, pressed && { opacity: 0.85 }]} accessibilityRole="button" accessibilityHint="Hides the tour but keeps your place">
           <Ionicons name="pause" size={13} color="#0A1633" />
           <Text style={c.hideGoldText}>Hide</Text>
@@ -874,7 +880,7 @@ const c = StyleSheet.create({
   pausedSub: { fontSize: 12.5, color: '#3A2C08' },
   pausedRow: { flexDirection: 'row', gap: 8 },
   pausedBtn: { flex: 1, flexDirection: 'row', gap: 5, alignItems: 'center', justifyContent: 'center', borderRadius: 10, paddingVertical: 8, backgroundColor: 'rgba(255,255,255,0.55)' },
-  pausedGo: { backgroundColor: '#1B3FA0' },
+  pausedGo: { backgroundColor: '#1E7B3A' }, // green, like every "go on" button
   pausedSlimBtn: { flex: 0, paddingHorizontal: 11, paddingVertical: 6 },
   pausedEnd: { backgroundColor: '#C62F2F' },
   pausedEndOutline: { backgroundColor: 'rgba(255,255,255,0.55)', borderWidth: 1.5, borderColor: '#B42626' },
@@ -908,11 +914,12 @@ const c = StyleSheet.create({
   hide: { flexDirection: 'row', alignItems: 'center', gap: 3, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3, borderWidth: 1.5, borderColor: '#1B3FA0' },
   hideDark: { borderColor: 'rgba(201,209,230,0.6)' },
   hideText: { color: '#1B3FA0', fontWeight: '800', fontSize: 12 },
-  exitBig: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#C62F2F', borderRadius: 10, paddingVertical: 7, paddingHorizontal: 14 },
+  exitBig: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#C62F2F', borderRadius: 10, paddingVertical: 7, paddingHorizontal: 12 },
   hideGold: { backgroundColor: GOLD, borderRadius: 999, paddingHorizontal: 11, paddingVertical: 4 },
   hideGoldText: { color: '#0A1633', fontWeight: '800', fontSize: 12.5 },
-  hideBig: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: GOLD, borderRadius: 10, paddingVertical: 7, paddingHorizontal: 14 },
-  confirmRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10, marginTop: 4 },
+  hideBig: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: GOLD, borderRadius: 10, paddingVertical: 7, paddingHorizontal: 12 },
+  confirmRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-end', gap: 8, marginTop: 4 },
+  goBig: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#1E7B3A', borderRadius: 10, paddingVertical: 7, paddingHorizontal: 12 },
   title: { fontSize: 16, fontWeight: '800', color: '#0A1633', marginTop: 5 },
   text: { fontSize: 13.5, lineHeight: 19, color: '#2A3352', marginTop: 3 },
   task: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#0A1633', borderRadius: 11, paddingVertical: 8, paddingHorizontal: 10, marginTop: 9 },

@@ -164,7 +164,7 @@ export const CHAPTERS = [
       {
         target: 'writer.page', inline: true, wait: true, section: 'Your first words', freshLine: true,
         title: 'Just write', text: 'A blank page, just for this. Anything on your mind: a line, a memory, an idea. Watch the rings above fill as you type. No need to stress over every detail: you can always come back and add more.',
-        task: 'Write at least 5 words.', doneText: 'Keep writing as long as you like. Tap the button when you’re done (the rest of the tour is just looking).', manual: true, nextLabel: 'I’m done writing ›',
+        task: 'Write at least 5 words.', doneText: 'Keep writing as long as you like. Need more room to write? Tap Hide up top to tuck the tour away. When you’re done, tap I’m done writing.', manual: true, nextLabel: 'I’m done writing ›',
         on: (ev, v, d) => {
           if (ev !== 'words') return null;
           const base = d.base ?? v - 1; // words already written today, before this step
