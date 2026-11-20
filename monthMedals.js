@@ -306,3 +306,23 @@ export function deletionImpact(sessions, dailyGoals, goals, removeIds, extra = {
     medals,
   };
 }
+
+// Medals reached during a week (start..end day keys): each medal whose tier
+// went up, and the month's medal(s) too. For the week in review.
+//   [{ id, name, tier, monthly }]
+export function weekMedals(sessions, dailyGoals, goals, start, end) {
+  const before = sessions.filter((s) => s.day < start);
+  const upTo = sessions.filter((s) => s.day <= end);
+  const a = allMedalProgress(before, dailyGoals, goals);
+  const b = allMedalProgress(upTo, dailyGoals, goals);
+  const out = [];
+  b.forEach((p, i) => {
+    if (p.id !== 'tour' && p.tierIndex > a[i].tierIndex && p.tier) out.push({ id: p.id, name: p.name, tier: p.tier, monthly: false });
+  });
+  for (const mk of [...new Set([monthKeyOf(start), monthKeyOf(end)])]) {
+    const pa = monthProgress(before, mk);
+    const pb = monthProgress(upTo, mk);
+    if (pb.tierIndex > pa.tierIndex && pb.tier) out.push({ id: pb.id, name: pb.name, tier: pb.tier, monthly: true, when: pb.when });
+  }
+  return out;
+}

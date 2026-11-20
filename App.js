@@ -22,6 +22,7 @@ import MyWritingScreen from './screens/MyWritingScreen';
 import DayScreen from './screens/DayScreen';
 import MedalsScreen from './screens/MedalsScreen';
 import MedalDetailScreen from './screens/MedalDetailScreen';
+import WeekReviewScreen from './screens/WeekReviewScreen';
 import CommunitiesScreen from './screens/CommunitiesScreen';
 import BottomBar from './components/BottomBar';
 import IntroSplash from './components/IntroSplash';
@@ -29,7 +30,8 @@ import TourModal from './components/TourModal';
 import TourOverlay from './components/TourOverlay';
 import { tabsLocked, tourEvent, useRun } from './tourRun';
 import { loadEvents, upcoming } from './eventsService';
-import { onNotificationTap, syncNotifications } from './notify';
+import { onNotificationTap, planAll, syncNotifications } from './notify';
+import { onDataChange } from './writingStore';
 import { openLink } from './components/ui';
 import { LINKS } from './links';
 import { applyScheme, colors } from './theme';
@@ -50,6 +52,7 @@ function BrainstormStack() {
       <BrainstormStackNav.Screen name="BrainstormDay" component={DayScreen} />
       <BrainstormStackNav.Screen name="Medals" component={MedalsScreen} />
       <BrainstormStackNav.Screen name="MedalDetail" component={MedalDetailScreen} />
+      <BrainstormStackNav.Screen name="WeekReview" component={WeekReviewScreen} />
     </BrainstormStackNav.Navigator>
   );
 }
@@ -87,13 +90,33 @@ export default function App() {
     loadEvents().then((r) => syncNotifications({ events: upcoming(r.events), podcast: r.podcast })).catch(() => {});
   }, []);
 
-  // Tapping a notification: a salon reminder opens that event; a new episode opens Spotify.
+  // Writing reminders, Streak saver, medals, week in review (notify.js →
+  // reminders.js): planned at start and again whenever your writing, goals or
+  // rest days change, so what they say stays true.
+  useEffect(() => {
+    planAll();
+    let t = null;
+    const off = onDataChange(() => { clearTimeout(t); t = setTimeout(planAll, 800); });
+    return () => { clearTimeout(t); off(); };
+  }, []);
+
+  // Tapping a notification: a salon reminder opens that event; a new episode
+  // opens Spotify; a writing reminder or the Streak saver's "Write now" opens
+  // Brainstorm (the writing page for Write now); medal notes open Medals; the
+  // Sunday one opens the week in review. (🌙 Rest day is handled in notify.js.)
   useEffect(() => onNotificationTap((data) => {
     if (data.kind === 'episode') { openLink(data.url || LINKS.spotify); return; }
-    if (data.kind === 'salon') {
-      const go = () => navRef.navigate('Eventbrite', { openEventId: data.eventId, at: Date.now() });
-      if (navRef.isReady()) go(); else setTimeout(go, 600);
+    let go = null;
+    if (data.kind === 'salon') go = () => navRef.navigate('Eventbrite', { openEventId: data.eventId, at: Date.now() });
+    if (data.kind === 'reminder' || data.kind === 'streak') {
+      go = data.action === 'write'
+        ? () => navRef.navigate('Brainstorm', { screen: 'BrainstormWriter' })
+        : () => navRef.navigate('Brainstorm', { screen: 'BrainstormHome' });
     }
+    if (data.kind === 'medals') go = () => navRef.navigate('Brainstorm', { screen: 'Medals' });
+    if (data.kind === 'week') go = () => navRef.navigate('Brainstorm', { screen: 'WeekReview' });
+    if (!go) return;
+    if (navRef.isReady()) go(); else setTimeout(go, 600);
   }), []);
 
   // Appearance (Settings): System / Light / Dark. The colours are applied

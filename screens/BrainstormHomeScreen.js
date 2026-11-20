@@ -13,7 +13,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import { Screen } from '../components/ui';
 import RingStats from '../components/RingStats';
-import WeekRings from '../components/WeekRings';
+import WeekCarousel from '../components/WeekCarousel';
+import { takeRestDay } from '../notify';
 import GoalsSheet from '../components/GoalsSheet';
 import TodayPlanSheet from '../components/TodayPlanSheet';
 import DayBubble from '../components/DayBubble';
@@ -24,7 +25,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, gradients, lift, radius, space, themed } from '../theme';
 import {
   DEFAULT_GOALS, daySummary, describeDailyGoal, goalForDay, isRestGoal, parseDayKey, ringProgress,
-  sessionsOnDay, startButtonState, summarize, weekDayKeys, weekSummary,
+  sessionsOnDay, startButtonState, summarize, weekDayKeys, weekSummary, weekReview, streakDays, restLeft,
 } from '../writingLogic';
 import { addOfflineSession, loadAll, saveDailyGoal, saveGoals, syncMedals, useToday } from '../writingStore';
 import { monthKeyOf, monthTiersCrossed, monthWords } from '../monthMedals';
@@ -175,6 +176,11 @@ export default function BrainstormHomeScreen({ navigation, route }) {
   const rest = isRestGoal(todayGoal);
   const button = startButtonState(sessions, dailyGoals, today, goals);
   const week = weekSummary(sessions, dailyGoals, goals);
+  const lastWeek = weekReview(sessions, dailyGoals, goals);
+  // 🌙 Rest day: offered when you're on a streak and haven't written today.
+  const streakNow = streakDays(sessions, new Date(), dailyGoals);
+  const restsLeft = restLeft(dailyGoals, sessions);
+  const offerRest = !todaySum.count && !rest && streakNow > 0 && restsLeft > 0 && !tourRunning();
   // This week's days, newest first, up to today. A day only gets a white
   // bubble once something was written; earlier empty days show as dashed rows
   // and today shows nothing until the first session.
@@ -245,12 +251,20 @@ export default function BrainstormHomeScreen({ navigation, route }) {
         </Pressable>
         </TourTarget>
 
+        {offerRest ? (
+          <Pressable onPress={() => takeRestDay(today)} style={({ pressed }) => [s.restLink, pressed && { opacity: 0.7 }]} accessibilityRole="button" accessibilityHint="Keeps your streak going today without writing">
+            <Text style={s.restText}>🌙 Taking today off? <Text style={{ fontWeight: '800', color: colors.royal }}>Make it a rest day</Text></Text>
+            <Text style={s.restSub}>Keeps your {streakNow}-day streak · {restsLeft} left this week</Text>
+          </Pressable>
+        ) : null}
+
         {/* This week: seven ring sets */}
         <TourTarget id="bs.week">
           <TourInline at="bs.week" flush />
-          <WeekRings
-            week={week}
+          <WeekCarousel
+            week={week} last={lastWeek}
             onPressDay={(d) => navigation.navigate('BrainstormDay', { day: d.key })}
+            onOpenReview={() => navigation.navigate('WeekReview')}
           />
         </TourTarget>
 
@@ -363,6 +377,9 @@ const s = themed(() => ({
   folderToggle: { fontSize: 12.5, fontWeight: '800', color: colors.royal },
   allLink: { alignItems: 'center', paddingVertical: 10, minHeight: 44, justifyContent: 'center' },
   link: { color: colors.royal, fontSize: 13, fontWeight: '700' },
+  restLink: { alignItems: 'center', paddingVertical: 4, marginTop: -6 },
+  restText: { fontSize: 13.5, color: colors.muted },
+  restSub: { fontSize: 11.5, color: colors.muted, marginTop: 2 },
 }));
 
 export { describeDailyGoal };

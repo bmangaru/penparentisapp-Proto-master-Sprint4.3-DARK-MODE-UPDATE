@@ -1,6 +1,7 @@
 // components/WeekRings.js — "This week": seven small ring sets, Sunday to
 // Saturday (each day against its own goal), plus plain totals of what you
-// wrote this week. A day you chose to rest is labelled "rest".
+// wrote this week. A day you chose to rest is labelled "🌙 rest".
+// title / meta / footer: the same card for "Last week" (Brainstorm's carousel).
 
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
@@ -8,13 +9,13 @@ import Rings from './Rings';
 import { colors, lift, themed } from '../theme';
 import { timeClock, timeLabel } from '../writingLogic';
 
-export default function WeekRings({ week, onPressDay }) {
+export default function WeekRings({ week, onPressDay, title = 'This week', meta = null, footer = null }) {
   const { days, done, closedDays } = week;
   return (
     <View style={[s.card, lift]}>
       <View style={s.head}>
-        <Text style={s.h}>This week</Text>
-        <Text style={s.meta}>{closedDays} day{closedDays === 1 ? '' : 's'} with all rings closed</Text>
+        <Text style={s.h}>{title}</Text>
+        <Text style={s.meta}>{meta || `${closedDays} day${closedDays === 1 ? '' : 's'} with all rings closed`}</Text>
       </View>
       <View style={s.row}>
         {days.map((d) => (
@@ -31,7 +32,7 @@ export default function WeekRings({ week, onPressDay }) {
               minutes={d.rings.minutes} words={d.rings.words} sessions={d.rings.sessions}
               faded={d.future} size={38}
             />
-            <Text style={s.note}>{d.isToday ? 'today' : d.off ? 'rest' : ''}</Text>
+            <Text style={s.note}>{d.isToday ? 'today' : d.rest ? '🌙 rest' : d.off ? 'rest' : ''}</Text>
           </Pressable>
         ))}
       </View>
@@ -41,6 +42,7 @@ export default function WeekRings({ week, onPressDay }) {
         <Total n={timeClock(done.seconds)} label="writing" unit={`(${timeLabel(done.seconds)})`} divider />
         <Total n={String(done.count)} label={done.count === 1 ? 'session' : 'sessions'} divider />
       </View>
+      {footer}
     </View>
   );
 }

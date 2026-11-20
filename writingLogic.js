@@ -642,12 +642,49 @@ export function weekSummary(sessions, dailyGoals, goals, date = new Date()) {
     done.words += sum.words;
     done.seconds += sum.seconds;
     done.count += sum.count;
-    return { key, label: labels[i], isToday: key === today, future: key > today, off: !rings.targets, rings, ...sum };
+    return { key, label: labels[i], isToday: key === today, future: key > today, off: !rings.targets, rest: dailyGoals?.[key]?.plan === 'rest' && !sum.count, rings, ...sum };
   });
   return { days, done, closedDays };
 }
 
 
+
+// ---------------------------------------------------------------------------
+// Week in review: last week (Sunday to Saturday, the full week before this
+// one), next to the week before it.
+//   { start, end, days, done, closedDays, prev, best, feelings, restDays }
+// ---------------------------------------------------------------------------
+export function weekReview(sessions, dailyGoals, goals, date = new Date()) {
+  const last = startOfWeek(date);
+  last.setDate(last.getDate() - 7);
+  const before = new Date(last);
+  before.setDate(before.getDate() - 7);
+  const wk = weekSummary(sessions, dailyGoals, goals, last);
+  const prev = weekSummary(sessions, dailyGoals, goals, before).done;
+  const keys = wk.days.map((d) => d.key);
+  const inWeek = sessions.filter((s) => keys.includes(s.day));
+  let best = null;
+  for (const d of wk.days) if (d.words > 0 && (!best || d.words > best.words)) best = { key: d.key, words: d.words };
+  const counts = {};
+  for (const s of inWeek) if (s.feeling) counts[s.feeling] = (counts[s.feeling] || 0) + 1;
+  const feelings = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const rest = restDayKeys(dailyGoals, sessions);
+  return {
+    start: keys[0], end: keys[6],
+    days: wk.days.map((d) => ({ ...d, isToday: false, future: false, rest: rest.has(d.key) })),
+    done: wk.done, closedDays: wk.closedDays, prev, best, feelings,
+    restDays: keys.filter((k) => rest.has(k)).length,
+    empty: wk.done.words === 0 && wk.done.count === 0,
+  };
+}
+
+// "+32%" / "−10%" / "new" next to last week's numbers.
+export function changeText(now, before) {
+  if (!before) return now > 0 ? 'new' : '';
+  const pct = Math.round(((now - before) / before) * 100);
+  if (pct === 0) return 'same';
+  return `${pct > 0 ? '▲' : '▼'} ${Math.abs(pct)}%`;
+}
 
 export function describeDailyGoal(goal) {
   if (!goal) return 'No goal set yet';
@@ -950,8 +987,47 @@ function median(nums) {
   return a.length % 2 ? a[mid] : (a[mid - 1] + a[mid]) / 2;
 }
 
-export function streakDays(sessions, date = new Date()) {
+// ---------------------------------------------------------------------------
+// Rest days. A day you chose to rest (Rest today, or 🌙 Rest day on the
+// streak-saver notification) keeps a streak going, up to REST_PER_WEEK a week
+// (Sunday to Saturday), so a streak still means showing up. A rest day you
+// then wrote on is just a writing day (it doesn't use one up).
+// ---------------------------------------------------------------------------
+export const REST_PER_WEEK = 2;
+
+// The rest days that count (Set of day keys), oldest first within each week.
+export function restDayKeys(dailyGoals = {}, sessions = []) {
+  const written = new Set(sessions.map((s) => s.day));
+  const byWeek = {};
+  for (const k of Object.keys(dailyGoals || {}).sort()) {
+    if (dailyGoals[k]?.plan !== 'rest' || written.has(k)) continue;
+    const wk = dayKey(startOfWeek(parseDayKey(k)));
+    byWeek[wk] = (byWeek[wk] || 0) + 1;
+    if (byWeek[wk] <= REST_PER_WEEK) byWeek[`${wk}:keys`] = [...(byWeek[`${wk}:keys`] || []), k];
+  }
+  const out = new Set();
+  for (const [wk, v] of Object.entries(byWeek)) if (wk.endsWith(':keys')) v.forEach((k) => out.add(k));
+  return out;
+}
+
+// How many rest days are left in the week of `date` (rest days already taken
+// that week, not counting days you wrote on).
+export function restLeft(dailyGoals = {}, sessions = [], date = new Date()) {
+  const wk = weekDayKeys(date);
+  const written = new Set(sessions.map((s) => s.day));
+  const used = wk.filter((k) => dailyGoals?.[k]?.plan === 'rest' && !written.has(k)).length;
+  return Math.max(0, REST_PER_WEEK - used);
+}
+
+// Days that keep a streak alive: days you wrote, and rest days that count.
+function streakDaySet(sessions, dailyGoals) {
   const days = new Set(sessions.map((s) => s.day));
+  for (const k of restDayKeys(dailyGoals, sessions)) days.add(k);
+  return days;
+}
+
+export function streakDays(sessions, date = new Date(), dailyGoals = {}) {
+  const days = streakDaySet(sessions, dailyGoals);
   const d = new Date(date);
   // Today not written yet doesn't break a streak that ran through yesterday.
   if (!days.has(dayKey(d))) d.setDate(d.getDate() - 1);
@@ -963,8 +1039,8 @@ export function streakDays(sessions, date = new Date()) {
   return n;
 }
 
-export function longestStreak(sessions) {
-  const keys = [...new Set(sessions.map((s) => s.day))].sort();
+export function longestStreak(sessions, dailyGoals = {}) {
+  const keys = [...streakDaySet(sessions, dailyGoals)].sort();
   let best = 0;
   let run = 0;
   let prev = null;
@@ -1005,7 +1081,7 @@ export function buildInsights(sessions, dailyGoals = {}, now = new Date(), goals
   const todaySum = summarize(sessionsOnDay(sessions, today));
   const todayGoal = goalForDay(dailyGoals, goals, today);
   const todayPct = dailyPct(todayGoal, todaySum);
-  const streak = streakDays(sessions, now);
+  const streak = streakDays(sessions, now, dailyGoals);
 
   const tier = total >= TIER_DEEP ? 'deep' : total >= TIER_LEARNING ? 'learning' : 'new';
   const lines = [];
@@ -1067,7 +1143,7 @@ export function buildInsights(sessions, dailyGoals = {}, now = new Date(), goals
       if (change >= 10) lines.push(`Up ${change}% on the week before.`);
       else if (change <= -10) lines.push(`A quieter week than the last — that's allowed.`);
     }
-    const best_streak = longestStreak(sessions);
+    const best_streak = longestStreak(sessions, dailyGoals);
     if (best_streak > streak) lines.push(`Longest streak so far: ${best_streak} days.`);
   }
 

@@ -71,7 +71,7 @@ export default function HomeScreen() {
         subtitle="parenting done, write."
         right={(
           <TourTarget id="home.settings">
-            <Pressable onPress={() => setSettingsOpen(true)} hitSlop={6} style={s.settings} accessibilityRole="button" accessibilityLabel="Settings">
+            <Pressable onPress={() => setSettingsOpen('root')} hitSlop={6} style={s.settings} accessibilityRole="button" accessibilityLabel="Settings">
               <Ionicons name="settings-outline" size={14} color="#F2C14E" />
               <Text style={s.settingsText}>Settings</Text>
             </Pressable>
@@ -125,7 +125,7 @@ export default function HomeScreen() {
       <DonorCrawl />
       </TourTarget>
 
-      <SettingsSheet visible={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <SettingsSheet visible={!!settingsOpen} page={typeof settingsOpen === 'string' ? settingsOpen : 'root'} onClose={() => setSettingsOpen(false)} />
     </Screen>
   );
 }

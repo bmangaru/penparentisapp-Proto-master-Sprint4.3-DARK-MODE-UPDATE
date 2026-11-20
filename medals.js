@@ -35,7 +35,7 @@ export const MEDALS = [
   },
   {
     id: 'streak', name: 'On a Roll', icon: 'flame-outline', unit: 'days in a row',
-    desc: 'Your longest run of days in a row with at least one session. Your best streak is kept, even if it ends.',
+    desc: 'Your longest run of days in a row with at least one session. Rest days count too (up to 2 a week). Your best streak is kept, even if it ends.',
     tiers: [3, 7, 30, 100],
   },
   {
@@ -123,7 +123,7 @@ export function medalStats(sessions, dailyGoals = {}, goals = null, extra = {}) 
     words: sum.words,
     time: sum.seconds,
     sessions: sum.count,
-    streak: longestStreak(sessions),
+    streak: longestStreak(sessions, dailyGoals),
     goals: goalsMet,
     tour: Number(extra.tour) || 0,
     ...totals,
@@ -262,7 +262,7 @@ export function offlinePreview(sessions, dailyGoals, goals, stats, day, values, 
   const metBefore = (dailyPct(goal, before) ?? 0) >= 100 && dailyPct(goal, before) != null;
   const metAfter = (dailyPct(goal, after) ?? 0) >= 100 && dailyPct(goal, after) != null;
   const hadWriting = sessionsOnDay(sessions, day).length > 0;
-  const streakAfter = pending ? longestStreak(withLog) : stats.streak;
+  const streakAfter = pending ? longestStreak(withLog, dailyGoals) : stats.streak;
 
   const afterValue = {
     words: stats.words + added.words,

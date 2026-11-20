@@ -45,6 +45,7 @@ export function effectiveScheme(choice, phone) {
 }
 
 // The app redraws after a switch; this keeps Settings open through it.
+// (page: which page of Settings to come back to, e.g. 'appearance'.)
 let reopen = false;
-export const keepSettingsOpen = () => { reopen = true; };
+export const keepSettingsOpen = (page = 'root') => { reopen = page || 'root'; };
 export const takeSettingsOpen = () => { const r = reopen; reopen = false; return r; };

@@ -70,13 +70,27 @@ export const CHAPTERS = [
         task: 'Tap ⚙ Settings.', on: (ev, v) => ev === 'sheet-open' && v === 'settings',
       },
       {
+        target: 'settings.rowAppearance', wait: true, round: 12,
+        title: 'Settings, row by row', text: 'Like your phone’s Settings: each row opens a page, and ‹ takes you back.',
+        task: 'Tap Appearance.', on: (ev, v) => ev === 'settings-page' && v === 'appearance',
+      },
+      {
         target: 'settings.appearance', wait: true,
-        text: 'Pick how the app looks. System follows your phone, so the app turns dark when your phone does. Try each one: the whole app changes as you tap.',
+        text: 'Each picture shows the app in that look. System follows your phone, so the app turns dark when your phone does. Try each one: the whole app changes as you tap.',
         task: 'Tap Light, Dark or System.', doneText: 'Try the others too, then tap Next with the one you like.', manual: true,
         on: (ev) => ev === 'appearance',
       },
       {
-        target: 'settings.tour', wait: true, info: true, look: true, offNote: offInTour('Chapters and Start over', true),
+        target: 'settings.back', wait: true, round: 12,
+        text: 'That’s Appearance.', task: 'Tap ‹ Settings to go back.', on: (ev, v) => ev === 'settings-page' && v === 'root',
+      },
+      {
+        target: 'settings.rowNotify', wait: true, info: true, look: true, round: 12,
+        title: 'Notifications', text: 'Writing reminders (Morning, Lunch, Evening; add your own), a streak saver, medal news, a Sunday week in review and salon alerts. Each one shows an example of what it says, so you can pick the ones you want.',
+        offNote: offInTour('Notifications', true),
+      },
+      {
+        target: 'settings.rowTour', wait: true, info: true, look: true, round: 12, offNote: offInTour('App tour'),
         title: 'This tour lives here', text: 'Come back any time to go over a chapter again, or start the tour over.',
       },
       {
@@ -278,7 +292,7 @@ export const CHAPTERS = [
       },
       {
         target: 'bs.week', inline: 'bs.week', tab: 'Brainstorm', info: true, look: true,
-        title: 'Your week at a glance', text: 'Seven sets of rings, Sunday to Saturday, with the week’s totals underneath. Tip: a day with all three rings closed is a day you met your goal.',
+        title: 'Your week at a glance', text: 'Seven sets of rings, Sunday to Saturday, with the week’s totals underneath. Tip: a day with all three rings closed is a day you met your goal. Swipe it sideways (or tap Last week ›) for last week and your week in review; a 🌙 marks a rest day.',
       },
       {
         target: 'bs.history', reveal: true, hold: 500, section: 'Everything you’ve written',
