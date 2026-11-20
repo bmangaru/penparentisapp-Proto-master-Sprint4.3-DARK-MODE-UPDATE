@@ -126,8 +126,8 @@ export async function syncMedals(data) {
   const tour = await readJSON(TOUR_KEY, {});
   const medals = allMedalProgress(sessions, dailyGoals, goals, { tour: Object.keys(tour?.ever || tour?.done || {}).filter((id) => TOUR_CHAPTER_IDS.includes(id)).length });
   const stored = await readJSON(MEDALS_KEY, null);
-  const { record, newlyEarned } = diffMedals(medals, stored || {});
-  if (!stored || newlyEarned.length) await AsyncStorage.setItem(MEDALS_KEY, JSON.stringify(record));
+  const { record, newlyEarned, changed } = diffMedals(medals, stored || {});
+  if (!stored || changed) await AsyncStorage.setItem(MEDALS_KEY, JSON.stringify(record));
   return { medals, record, newlyEarned: stored ? newlyEarned : [] };
 }
 

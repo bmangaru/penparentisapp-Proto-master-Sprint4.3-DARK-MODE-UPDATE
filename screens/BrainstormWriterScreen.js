@@ -38,7 +38,7 @@ import {
 } from '../writingLogic';
 import { loadAll, saveSession, shareWriting, syncMedals } from '../writingStore';
 import { MEDALS, TIER_LABEL, liveMedalStats, medalStats, nextMedals, reachNudge, reachTitle, summaryRow, summaryRows, textStats } from '../medals';
-import { monthKeyOf, monthProgress, monthWords } from '../monthMedals';
+import { monthKeyOf, monthProgress, monthTiersCrossed, monthWords } from '../monthMedals';
 import { LEVEL_LABEL, nextLevel, nextPrompt, promptForDay } from '../prompts';
 import usePromptLevel, { LEVEL_STYLE } from '../components/usePromptLevel';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -163,6 +163,7 @@ export default function BrainstormWriterScreen({ navigation, route }) {
   // The one end-of-session sheet: saved + goal + new medal + "How do you feel?".
   const [sheet, setSheet] = useState(null); // null | 'medals' (new-medal popup) | 'done'
   const [newMedals, setNewMedals] = useState([]);
+  const toMedalsAfter = useRef(false); // a medal row was tapped in the summary
   const [nextRows, setNextRows] = useState([]); // "Next medals" on Session saved
   const [allRows, setAllRows] = useState([]); // …and all of them (See all)
   const [feeling, setFeeling] = useState(null);
@@ -491,7 +492,6 @@ export default function BrainstormWriterScreen({ navigation, route }) {
     setSaveState('saved');
     tourEvent('session-saved');
     const { newlyEarned, medals } = await syncMedals();
-    setNewMedals(newlyEarned);
     // The Tour Guide medal isn't moved by writing: count it as it is now, so
     // it never shows up as "+4 chapters" in a session's summary.
     const tourNow = medals.find((m) => m.id === 'tour')?.value;
@@ -504,8 +504,10 @@ export default function BrainstormWriterScreen({ navigation, route }) {
     const others = nextMedals(base, medals);
     setNextRows(monthRow.before.maxed ? others : [monthRow, ...others].slice(0, 3));
     setAllRows([monthRow, ...summaryRows(base, medals)]);
-    // A new medal gets its own moment first; the check-in sheet follows.
-    setSheet(newlyEarned.length ? 'medals' : 'done');
+    // New medals (this month's tiers too) get their own page, after the
+    // summary: see done().
+    setNewMedals([...monthTiersCrossed(mk, mBefore, mBefore + (rec.words || 0)), ...newlyEarned]);
+    setSheet('done');
   }
 
   // Saved straight away, so the choice sticks even if the app is closed next.
@@ -516,7 +518,9 @@ export default function BrainstormWriterScreen({ navigation, route }) {
     saveSession(finishedRec.current);
   }
 
+  // Summary → Done: any new medals celebrate first, one page each; then back.
   function done() {
+    if (newMedals.length && sheet !== 'medals') { setSheet('medals'); return; }
     tourEvent('session-done');
     setSheet(null);
     navigation.goBack();
@@ -739,8 +743,8 @@ export default function BrainstormWriterScreen({ navigation, route }) {
       {sheet === 'medals' ? (
         <MedalPopup
           medals={newMedals}
-          onClose={() => setSheet('done')}
-          onSeeMedals={() => { setSheet(null); navigation.replace('Medals'); }}
+          onClose={() => { setNewMedals([]); tourEvent('session-done'); setSheet(null); if (toMedalsAfter.current) navigation.replace('Medals'); else navigation.goBack(); }}
+          onSeeMedals={() => { setNewMedals([]); tourEvent('session-done'); setSheet(null); navigation.replace('Medals'); }}
         />
       ) : null}
 
@@ -757,7 +761,11 @@ export default function BrainstormWriterScreen({ navigation, route }) {
         onPickFeeling={pickFeeling}
         onShare={() => shareWriting(finishedRec.current || buildRecord())}
         onDone={done}
-        onMedalPress={() => { setSheet(null); navigation.replace('Medals'); }}
+        onMedalPress={() => {
+          // New medals still celebrate first; then on to the Medals page.
+          if (newMedals.length) { toMedalsAfter.current = true; setSheet('medals'); return; }
+          setSheet(null); navigation.replace('Medals');
+        }}
       />
     </KeyboardAvoidingView>
   );

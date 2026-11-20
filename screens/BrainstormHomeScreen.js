@@ -27,6 +27,7 @@ import {
   sessionsOnDay, startButtonState, summarize, weekDayKeys, weekSummary,
 } from '../writingLogic';
 import { addOfflineSession, loadAll, saveDailyGoal, saveGoals, syncMedals, useToday } from '../writingStore';
+import { monthKeyOf, monthTiersCrossed, monthWords } from '../monthMedals';
 import PromptHeader from '../components/PromptHeader';
 import TourTarget from '../components/TourTarget';
 import { stepOf, tourEvent, tourRunning, useRun } from '../tourRun';
@@ -55,12 +56,15 @@ export default function BrainstormHomeScreen({ navigation, route }) {
   const [newMedals, setNewMedals] = useState([]);
   const [offlineOpen, setOfflineOpen] = useState(false); // "Log offline writing"
 
-  const reload = useCallback(async () => {
+  // extra: medals to celebrate along with any new ones (an offline log's
+  // month tiers), set together so the whole line-up is ready at once.
+  const reload = useCallback(async (extra = []) => {
     const d = await loadAll();
     setData(d);
     const m = await syncMedals(d);
     setMedalState({ medals: m.medals, record: m.record });
-    if (m.newlyEarned.length) setNewMedals(m.newlyEarned);
+    const more = Array.isArray(extra) ? extra : [];
+    if (m.newlyEarned.length || more.length) setNewMedals([...more, ...m.newlyEarned]);
     return d;
   }, []);
 
@@ -126,10 +130,17 @@ export default function BrainstormHomeScreen({ navigation, route }) {
     return () => clearTimeout(id);
   }, [route?.params?.at]);
 
+  // An offline log can cross several of the month's tiers at once (say 5,000
+  // words): each one celebrates in turn, Bronze first, with the other medals.
   async function onSaveOffline(day, values) {
+    const mk = monthKeyOf(day);
+    const before = monthWords(sessions, mk);
+    const crossed = monthTiersCrossed(mk, before, before + (values.words || 0));
     await addOfflineSession(day, values);
     setOfflineOpen(false);
-    setTimeout(() => { reload().then(() => setPlayKey((n) => n + 1)); }, 300);
+    setTimeout(() => {
+      reload(crossed).then(() => setPlayKey((n) => n + 1));
+    }, 300);
   }
 
   function closePlan() {

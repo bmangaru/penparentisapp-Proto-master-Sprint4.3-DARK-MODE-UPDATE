@@ -194,9 +194,18 @@ export function almostThere(progressList) {
 export function diffMedals(progressList, record, nowIso = new Date().toISOString()) {
   const next = { ...(record || {}) };
   const newlyEarned = [];
+  let changed = false;
   for (const p of progressList) {
     const prev = next[p.id] || { tierIndex: -1, dates: [] };
+    // Writing deleted (say a mistaken offline log): the record steps back
+    // too, so earning that tier again later celebrates again.
+    if (p.tierIndex < prev.tierIndex) {
+      next[p.id] = { tierIndex: p.tierIndex, dates: prev.dates.slice(0, p.tierIndex + 1) };
+      changed = true;
+      continue;
+    }
     if (p.tierIndex > prev.tierIndex) {
+      changed = true;
       const dates = [...prev.dates];
       for (let i = prev.tierIndex + 1; i <= p.tierIndex; i += 1) {
         dates[i] = nowIso;
@@ -209,7 +218,7 @@ export function diffMedals(progressList, record, nowIso = new Date().toISOString
   }
   // Highest tier first, so the celebration shows the biggest one.
   newlyEarned.sort((a, b) => b.earnedTierIndex - a.earnedTierIndex);
-  return { record: next, newlyEarned };
+  return { record: next, newlyEarned, changed };
 }
 
 // The most recently earned medals, newest first (for the Brainstorm card).
