@@ -420,7 +420,7 @@ export function monthGrid(year, month) {
   return rows;
 }
 
-// The saved record for one offline log.
+// The saved record for one offline log. values.feeling (optional): how it felt.
 export function makeOfflineSession(day, values, now = new Date()) {
   const v = clampOffline(values);
   const iso = now.toISOString();
@@ -437,7 +437,7 @@ export function makeOfflineSession(day, values, now = new Date()) {
     finalWords: v.words,
     text: '',
     prompt: null,
-    feeling: null,
+    feeling: values.feeling || null,
   };
 }
 

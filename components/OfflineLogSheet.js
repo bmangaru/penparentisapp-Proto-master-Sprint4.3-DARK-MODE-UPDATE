@@ -6,6 +6,8 @@
 // chosen day as it stands, and fills as you change the numbers ("+30").
 // "Counts toward": a progress bar per medal (so far = your medal's colour, green = this log,
 // "✦ Unlocks Silver …" when it passes a tier). Tap a row to see what it tracks.
+// "How did it feel?" (optional): the same twelve faces as after a session, so
+// offline days show on the Feelings calendar too.
 // "Only from writing in Brainstorm": the four medals that read the words
 // themselves, so an offline log never moves them; tap one to see why.
 
@@ -19,6 +21,8 @@ import { TIP_TEXT, useTapHint } from './TapHint';
 import { isTourTarget, useRun } from '../tourRun';
 import Rings, { RING_LABEL } from './Rings';
 import Medal from './Medal';
+import Face from './Face';
+import { FEELINGS } from '../feelings';
 import { MedalBar, MedalSummary, TRACKS } from './MedalProgress';
 import { colors, radius, space, themed } from '../theme';
 import { ADDED_BAR, TIER_BAR, TIER_LABEL, medalStats, offlinePreview } from '../medals';
@@ -41,8 +45,9 @@ export default function OfflineLogSheet({ visible, onClose, onSave, sessions = [
   const [calOpen, setCalOpen] = useState(false);
   const [vals, setVals] = useState({ minutes: 0, words: 0, sessions: 1 });
   const [saving, setSaving] = useState(false);
+  const [feeling, setFeeling] = useState(null);
   useEffect(() => {
-    if (visible) { setDay(dayKey()); setCalOpen(false); setVals({ minutes: 0, words: 0, sessions: 1 }); setSaving(false); }
+    if (visible) { setDay(dayKey()); setCalOpen(false); setVals({ minutes: 0, words: 0, sessions: 1 }); setSaving(false); setFeeling(null); }
   }, [visible]);
 
   // Worked out once each time the sheet opens, not on every tap.
@@ -85,7 +90,7 @@ export default function OfflineLogSheet({ visible, onClose, onSave, sessions = [
   async function save() {
     if (empty || saving || !canLogDay(day, today)) return;
     setSaving(true);
-    await onSave(day, clampOffline(vals));
+    await onSave(day, { ...clampOffline(vals), feeling });
   }
 
   return (
@@ -145,6 +150,22 @@ export default function OfflineLogSheet({ visible, onClose, onSave, sessions = [
         ))}
       </View>
       {tip.on ? <Text style={TIP_TEXT}>{tip.line}</Text> : null}
+
+      <View style={s.feelHead}>
+        <Text style={[s.k, { marginTop: 0 }]}>HOW DID IT FEEL?</Text>
+        <Text style={s.feelPicked}>{feeling ? FEELINGS.find((f) => f.id === feeling)?.label : 'Optional'}</Text>
+      </View>
+      <View style={s.faces}>
+        {FEELINGS.map((f) => {
+          const on = feeling === f.id;
+          return (
+            <Pressable key={f.id} onPress={() => setFeeling(on ? null : f.id)} style={[s.face, on && s.faceOn]} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={f.label}>
+              <Face id={f.id} size={34} />
+              <Text style={[s.faceLabel, on && { fontWeight: '800' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{f.label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
 
       <MedalPreview preview={preview} day={day} isToday={isToday} />
 
@@ -299,6 +320,13 @@ function MedalPreview({ preview, day, isToday }) {
 }
 
 const s = themed(() => ({
+  // How did it feel? (two rows of six, as after a session)
+  feelHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 16, marginBottom: 6 },
+  feelPicked: { fontSize: 12, color: colors.muted },
+  faces: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 6, marginBottom: 6 },
+  face: { width: '16.66%', alignItems: 'center', gap: 3, paddingVertical: 5, borderRadius: 14, borderWidth: 2, borderColor: 'transparent' },
+  faceOn: { borderColor: colors.royal, backgroundColor: '#DCE4F7' },
+  faceLabel: { fontSize: 10, fontWeight: '600', color: colors.ink },
   k: { fontSize: 11, fontWeight: '800', letterSpacing: 0.8, color: colors.muted, marginBottom: 8 },
   chips: { flexDirection: 'row', gap: 8, marginBottom: 10 },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 999, paddingHorizontal: 14, minHeight: 36, justifyContent: 'center', borderWidth: 1.5, borderColor: colors.line, backgroundColor: '#FFFFFF' },
