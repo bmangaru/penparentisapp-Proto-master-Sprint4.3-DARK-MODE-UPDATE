@@ -11,7 +11,10 @@ import Medal, { TIER_STYLE } from '../components/Medal';
 import { colors, radius, space, themed } from '../theme';
 import { TIER_LABEL, TIERS, formatAmount, tierBarColor } from '../medals';
 import { syncMedals } from '../writingStore';
-import MedalPopup, { emailPenParentis, replayItem } from '../components/MedalPopup';
+import MedalPopup, { emailPenParentis } from '../components/MedalPopup';
+
+// A tier's celebration item (any earned tier, not only the current one).
+const tierItem = (m, t) => ({ ...m, earnedTier: t, earnedTierIndex: TIERS.indexOf(t), threshold: m.tiers[TIERS.indexOf(t)] });
 
 function shortDate(iso) {
   return iso ? new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '';
@@ -20,7 +23,7 @@ function shortDate(iso) {
 export default function MedalDetailScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
   const [data, setData] = useState(null);
-  const [again, setAgain] = useState(false); // the celebration, shown again
+  const [again, setAgain] = useState(null); // a tier whose celebration is shown again
 
   useFocusEffect(
     useCallback(() => {
@@ -52,7 +55,7 @@ export default function MedalDetailScreen({ navigation, route }) {
         <Text style={s.name}>{m.name}</Text>
         <Text style={s.desc}>{m.desc}</Text>
         {m.tier ? (
-          <Pressable style={s.again} onPress={() => setAgain(true)} accessibilityRole="button" accessibilityHint="Shows this medal's celebration again, with Share">
+          <Pressable style={s.again} onPress={() => setAgain(m.tier)} accessibilityRole="button" accessibilityHint="Shows this medal's celebration again, with Share">
             <Text style={s.againText}>✦  See the celebration again</Text>
           </Pressable>
         ) : null}
@@ -81,7 +84,15 @@ export default function MedalDetailScreen({ navigation, route }) {
           const earned = i <= m.tierIndex;
           const current = i === m.tierIndex;
           return (
-            <View key={t} style={[s.tierRow, current && s.tierRowCurrent, !earned && s.tierRowLocked]}>
+            // An earned tier: tap it to replay that tier's celebration.
+            <Pressable
+              key={t}
+              disabled={!earned}
+              onPress={() => setAgain(t)}
+              style={({ pressed }) => [s.tierRow, current && s.tierRowCurrent, !earned && s.tierRowLocked, pressed && { opacity: 0.8 }]}
+              accessibilityRole={earned ? 'button' : undefined}
+              accessibilityHint={earned ? `Replays the ${TIER_LABEL[t]} celebration` : undefined}
+            >
               <Medal medal={m} tier={earned ? t : null} size={38} />
               <View style={{ flex: 1 }}>
                 <Text style={s.tierTitle}>{TIER_LABEL[t]} · {amount(m.tiers[i])}</Text>
@@ -91,22 +102,24 @@ export default function MedalDetailScreen({ navigation, route }) {
                     : i === m.tierIndex + 1 ? `Not yet — ${m.pct}% there` : 'Not yet'}
                 </Text>
               </View>
+              {earned ? <Text style={s.replayTag}>↻ Replay</Text> : null}
               <Ionicons
                 name={earned ? 'checkmark' : 'lock-closed-outline'}
                 size={earned ? 22 : 18}
                 color={earned ? colors.royal : colors.muted}
                 accessibilityLabel={earned ? 'Earned' : 'Locked'}
               />
-            </View>
+            </Pressable>
           );
         })}
       </View>
-      {again ? <MedalPopup medals={[replayItem(m)]} replay onClose={() => setAgain(false)} /> : null}
+      {again ? <MedalPopup medals={[tierItem(m, again)]} replay onClose={() => setAgain(null)} /> : null}
     </Screen>
   );
 }
 
 const s = themed(() => ({
+  replayTag: { fontSize: 12, fontWeight: '800', color: colors.royal, marginRight: 6 },
   again: { marginTop: 10, minHeight: 40, paddingHorizontal: 16, borderRadius: 999, borderWidth: 1.5, borderColor: colors.royal, justifyContent: 'center' },
   againText: { color: colors.royal, fontSize: 14, fontWeight: '800' },
   back: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' },

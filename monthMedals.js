@@ -11,7 +11,7 @@
 // Pure functions, no React Native imports (unit-tested in Node).
 
 import { summarize } from './writingLogic';
-import { medalProgress, TIERS } from './medals';
+import { allMedalProgress, medalProgress, TIERS } from './medals';
 
 export const MONTH_TIERS = [500, 1000, 5000, 10000];
 export const FIRST_YEAR = 2026; // the year each list starts at its first name
@@ -271,4 +271,38 @@ export function celebrationOrder(list) {
   }
   groups.sort((a, b) => b.monthly - a.monthly);
   return groups.flatMap((g) => g.items.sort((a, b) => a.earnedTierIndex - b.earnedTierIndex));
+}
+
+// ---------- Before deleting ----------
+// What deleting some saved entries takes away, for the confirm sheet:
+//   { words, seconds, count, feelings, texts,
+//     medals: [{ id, name, from, to, monthly }] }  (medals that drop a tier)
+// removeIds: the session ids going. extra: as for allMedalProgress (tour).
+export function deletionImpact(sessions, dailyGoals, goals, removeIds, extra = {}) {
+  const gone = new Set(removeIds);
+  const removed = sessions.filter((s) => gone.has(s.id));
+  const kept = sessions.filter((s) => !gone.has(s.id));
+  const sum = summarize(removed);
+  const medals = [];
+  const before = allMedalProgress(sessions, dailyGoals, goals, extra);
+  const after = allMedalProgress(kept, dailyGoals, goals, extra);
+  // This month's (or that month's) medal first.
+  const months = [...new Set(removed.map((s) => monthKeyOf(s.day)))];
+  for (const mk of months) {
+    const b = monthProgress(sessions, mk);
+    const a = monthProgress(kept, mk);
+    if (a.tierIndex < b.tierIndex) medals.push({ id: b.id, name: `${b.name} (${b.when})`, from: b.tier, to: a.tier, monthly: true });
+  }
+  for (const b of before) {
+    const a = after.find((x) => x.id === b.id);
+    if (a && a.tierIndex < b.tierIndex) medals.push({ id: b.id, name: b.name, from: b.tier, to: a.tier, monthly: false });
+  }
+  return {
+    words: sum.words,
+    seconds: sum.seconds,
+    count: sum.count,
+    feelings: removed.filter((s) => s.feeling).length,
+    texts: removed.filter((s) => (s.text || '').trim()).length,
+    medals,
+  };
 }

@@ -8,7 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Screen, Button } from '../components/ui';
-import { colors, gradients, radius, space, themed } from '../theme';
+import { colors, dk, gradients, radius, space, themed } from '../theme';
 import Face from '../components/Face';
 import { dayKey, daySummary, describeDailyGoal, isRestGoal, parseDayKey, pieceSegments, timeText } from '../writingLogic';
 import { LEVEL_LABEL, normalizeLevel } from '../prompts';
@@ -16,6 +16,9 @@ import { LEVEL_STYLE } from '../components/usePromptLevel';
 import RingStats from '../components/RingStats';
 import { feelingLabel } from '../feelings';
 import { deleteDay, deleteSession, loadAll, shareDays } from '../writingStore';
+import { Ionicons } from '@expo/vector-icons';
+import ConfirmDeleteSheet from '../components/ConfirmDeleteSheet';
+import { deletionImpact } from '../monthMedals';
 
 function timeOf(iso) {
   return iso ? new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '';
@@ -40,28 +43,41 @@ export default function DayScreen({ navigation, route }) {
   const [day, setDay] = useState(null);
   // Bumped each time the page opens, so the rings fill again.
   const [playKey, setPlayKey] = useState(null);
+  const [all, setAll] = useState(null); // everything saved, to work out what a delete takes away
+  const [confirm, setConfirm] = useState(null); // { kind, title, ids, impact }
 
   const reload = useCallback(() => loadAll().then(({ goals, sessions, dailyGoals }) => {
+    setAll({ goals, sessions, dailyGoals });
     setDay(daySummary(sessions, dailyGoals, key, goals));
     setPlayKey((n) => (n || 0) + 1);
   }), [key]);
   useFocusEffect(useCallback(() => { reload(); }, [reload]));
 
+  // Before anything is deleted: a sheet with what goes (writing, feelings)
+  // and which medals drop a tier. Nothing happens until its red button.
+  function ask(kind, title, ids) {
+    if (!all) return;
+    setConfirm({ kind, title, ids, impact: deletionImpact(all.sessions, all.dailyGoals, all.goals, ids) });
+  }
+  async function doDelete() {
+    const c = confirm;
+    setConfirm(null);
+    if (!c) return;
+    if (c.kind === 'day') { await deleteDay(key); navigation.goBack(); return; }
+    for (const id of c.ids) await deleteSession(id);
+    reload();
+  }
+
   // An offline log added by mistake.
   function removeOffline(p) {
-    Alert.alert('Remove this entry?', `${p.words.toLocaleString()} words · ${timeText(p.seconds)} written elsewhere will be removed from this day.`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: async () => { await deleteSession(p.sessionIds[0]); reload(); } },
-    ]);
+    ask('entry', 'Remove this entry?', p.sessionIds);
   }
 
   const fullDate = parseDayKey(key).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
 
   function confirmDelete() {
-    Alert.alert(`Delete ${fullDate}?`, "This day's writing and stats will be removed from this phone.", [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: async () => { await deleteDay(key); navigation.goBack(); } },
-    ]);
+    if (!all) return;
+    ask('day', `Delete ${fullDate}?`, all.sessions.filter((x) => x.day === key).map((x) => x.id));
   }
 
   const goalLine = day
@@ -106,10 +122,13 @@ export default function DayScreen({ navigation, route }) {
             <Text style={s.offlineNums}>
               {p.words.toLocaleString()} words · {timeText(p.seconds)} · {p.sessionCount} session{p.sessionCount === 1 ? '' : 's'}
             </Text>
-            <Text style={s.offlineMeta}>
-              Logged {timeOf(p.lastAt)} ·{' '}
-              <Text onPress={() => removeOffline(p)} style={s.offlineRemove} accessibilityRole="button">Remove</Text>
-            </Text>
+            <View style={s.offlineFoot}>
+              <Text style={s.offlineMeta}>Logged {timeOf(p.lastAt)}</Text>
+              <Pressable onPress={() => removeOffline(p)} hitSlop={6} style={s.removeBtn} accessibilityRole="button" accessibilityLabel="Remove this entry">
+                <Ionicons name="close-circle-outline" size={16} color={dk('#C62828', '#FF8A80')} />
+                <Text style={s.offlineRemove}>Remove</Text>
+              </Pressable>
+            </View>
           </View>
         ) : (
           <View key={p.sessionIds[0]} style={s.piece}>
@@ -167,9 +186,22 @@ export default function DayScreen({ navigation, route }) {
           <Button label="Keep writing today" variant="outline" onPress={() => navigation.navigate('BrainstormWriter')} />
         )}
         {day && day.count > 0 && (
-          <Pressable onPress={confirmDelete}><Text style={s.delete}>Delete this day</Text></Pressable>
+          <Pressable onPress={confirmDelete} style={s.deleteBtn} accessibilityRole="button">
+            <Ionicons name="trash-outline" size={17} color={dk('#C62828', '#FF8A80')} />
+            <Text style={s.delete}>Delete this day</Text>
+          </Pressable>
         )}
       </View>
+
+      <ConfirmDeleteSheet
+        visible={!!confirm}
+        kind={confirm?.kind}
+        title={confirm?.title}
+        impact={confirm?.impact}
+        onConfirm={doDelete}
+        onClose={() => setConfirm(null)}
+        onSendFirst={day && day.pieces.length ? () => shareDays(day) : null}
+      />
     </Screen>
   );
 }
@@ -205,8 +237,11 @@ const s = themed(() => ({
   offlineTag: { fontSize: 9.5, fontWeight: '800', letterSpacing: 0.5, color: colors.royalDeep, backgroundColor: '#E6ECFA', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 2, overflow: 'hidden' },
   offlineNums: { fontSize: 13.5, color: colors.body },
   offlineMeta: { fontSize: 12, color: colors.muted },
-  offlineRemove: { color: '#B3261E', fontWeight: '700' },
+  offlineRemove: { color: dk('#C62828', '#FF8A80'), fontWeight: '800', fontSize: 13.5 },
+  offlineFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
+  removeBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 32, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(198,40,40,0.45)' },
+  deleteBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, alignSelf: 'center', minHeight: 44, paddingHorizontal: 18, borderRadius: 999, borderWidth: 1.5, borderColor: 'rgba(198,40,40,0.5)', marginTop: 6 },
   pieceText: { fontSize: 16, lineHeight: 25, color: colors.ink },
   note: { fontSize: 12.5, lineHeight: 18, color: colors.muted },
-  delete: { color: '#B3261E', fontSize: 13, fontWeight: '700', textAlign: 'center', paddingVertical: 14 },
+  delete: { color: dk('#C62828', '#FF8A80'), fontSize: 14.5, fontWeight: '800' },
 }));

@@ -19,7 +19,7 @@ import { loadAll, syncMedals, useToday } from '../writingStore';
 import { MonthMedalCard } from '../components/MonthMedal';
 import { medalYears, monthDays, monthKeyOf, monthProgress, yearMedals, yearSummary } from '../monthMedals';
 import { parseDayKey } from '../writingLogic';
-import MedalPopup, { replayItem } from '../components/MedalPopup';
+import MedalPopup from '../components/MedalPopup';
 
 export default function MedalsScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -140,7 +140,7 @@ export default function MedalsScreen({ navigation }) {
 // A tapped month: its name, tier, words, and the day each tier was reached.
 function MonthNote({ sessions, mk }) {
   const p = monthProgress(sessions, mk);
-  const [again, setAgain] = useState(false); // its celebration, shown again
+  const [again, setAgain] = useState(null); // a tier whose celebration is shown again
   const { reached, days } = monthDays(sessions, mk);
   const fmt = (k) => parseDayKey(k).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   return (
@@ -152,15 +152,22 @@ function MonthNote({ sessions, mk }) {
           {p.tier ? TIER_LABEL[p.tier] : 'Not earned'} · {p.value.toLocaleString()} words · {Object.keys(days).length} days of writing
         </Text>
         {Object.keys(reached).length ? (
-          <Text style={s.noteText}>{TIERS.filter((t) => reached[t]).map((t) => `${TIER_LABEL[t]} · ${fmt(reached[t])}`).join('   ')}</Text>
+          // Each tier reached: tap it to replay that tier's celebration.
+          <View style={s.tierChips}>
+            {TIERS.filter((t) => reached[t]).map((t) => (
+              <Pressable key={t} onPress={() => setAgain(t)} hitSlop={4} style={s.tierChip} accessibilityRole="button" accessibilityHint={`Replays the ${TIER_LABEL[t]} celebration`}>
+                <Text style={s.tierChipText}>↻ {TIER_LABEL[t]} · {fmt(reached[t])}</Text>
+              </Pressable>
+            ))}
+          </View>
         ) : null}
         {p.tier ? (
-          <Pressable onPress={() => setAgain(true)} hitSlop={6} accessibilityRole="button" accessibilityHint="Shows this month's medal celebration again, with Share">
+          <Pressable onPress={() => setAgain(p.tier)} hitSlop={6} accessibilityRole="button" accessibilityHint="Shows this month's medal celebration again, with Share">
             <Text style={s.noteLink}>✦ See the celebration again</Text>
           </Pressable>
         ) : null}
       </View>
-      {again ? <MedalPopup medals={[replayItem(p)]} replay onClose={() => setAgain(false)} /> : null}
+      {again ? <MedalPopup medals={[{ ...p, earnedTier: again, earnedTierIndex: TIERS.indexOf(again), threshold: p.tiers[TIERS.indexOf(again)] }]} replay onClose={() => setAgain(null)} /> : null}
     </View>
   );
 }
@@ -187,6 +194,9 @@ const s = themed(() => ({
   note: { flexDirection: 'row', gap: 12, alignItems: 'center', backgroundColor: '#EEF2FB', margin: 8, marginTop: 0, borderRadius: 12, padding: 10 },
   noteTitle: { fontSize: 14, fontWeight: '800', color: colors.ink },
   noteText: { fontSize: 12, color: colors.body },
+  tierChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
+  tierChip: { borderRadius: 999, borderWidth: 1, borderColor: colors.line, paddingHorizontal: 9, paddingVertical: 4 },
+  tierChipText: { fontSize: 11.5, fontWeight: '700', color: colors.royal },
   noteLink: { marginTop: 4, fontSize: 12.5, fontWeight: '800', color: colors.royal },
   header: { paddingHorizontal: space.lg, paddingBottom: space.lg },
   back: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' },

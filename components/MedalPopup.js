@@ -82,6 +82,7 @@ export default function MedalPopup({ medals, onClose, onSeeMedals, replay = fals
   const list = useMemo(() => celebrationOrder(medals || []), [medals]);
   const [i, setI] = useState(0);
   const [calm, setCalm] = useState(false);
+  const [again, setAgain] = useState(0); // ↻ Replay: play this page from the start
   const insets = useSafeAreaInsets();
   useEffect(() => { setI(0); }, [medals]);
   useEffect(() => { AccessibilityInfo.isReduceMotionEnabled?.().then((v) => setCalm(!!v)).catch(() => {}); }, []);
@@ -97,7 +98,7 @@ export default function MedalPopup({ medals, onClose, onSeeMedals, replay = fals
   return (
     <Modal visible animationType="fade" presentationStyle="fullScreen" onRequestClose={onClose}>
       <LinearGradient colors={dk(['#FFFFFF', '#EEF2FF'], ['#1B3FA0', '#0C2265'])} style={{ flex: 1 }}>
-        <Page key={`${m.id}-${tier}-${i}`} m={m} tier={tier} fx={fx} calm={calm} insets={insets}
+        <Page key={`${m.id}-${tier}-${i}-${again}`} m={m} tier={tier} fx={fx} calm={calm} insets={insets} onReplay={() => setAgain((n) => n + 1)}
           counter={list.length > 1 ? `${i + 1} of ${list.length}` : null}>
           {diamond ? (
             <>
@@ -129,7 +130,7 @@ export default function MedalPopup({ medals, onClose, onSeeMedals, replay = fals
 }
 
 // One medal's page. Remounts per medal, so each one plays from the start.
-function Page({ m, tier, fx, calm, insets, counter, children }) {
+function Page({ m, tier, fx, calm, insets, counter, onReplay, children }) {
   const pop = useRef(new Animated.Value(calm ? 1 : 0)).current;
   const glow = useRef(new Animated.Value(calm ? 1 : 0)).current;
   const spin = useRef(new Animated.Value(0)).current;
@@ -173,6 +174,9 @@ function Page({ m, tier, fx, calm, insets, counter, children }) {
     <View style={{ flex: 1, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 16, paddingHorizontal: 24 }}>
       {fx.confetti && !calm ? <Confetti colors={fx.colors} count={fx.confetti} rain={fx.rain} /> : null}
       <View style={s.topRow}>
+        <Pressable onPress={onReplay} hitSlop={10} style={s.replay} accessibilityRole="button" accessibilityLabel="Replay the animation">
+          <Text style={s.replayText}>↻  Replay</Text>
+        </Pressable>
         <Text style={s.counter}>{counter || ''}</Text>
       </View>
 
@@ -287,7 +291,9 @@ function Confetti({ colors: palette, count, rain }) {
 }
 
 const s = themed(() => ({
-  topRow: { height: 24, alignItems: 'flex-end' },
+  topRow: { minHeight: 32, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  replay: { paddingVertical: 4, paddingHorizontal: 12, borderRadius: 999, backgroundColor: dk('rgba(27,63,160,0.08)', 'rgba(255,255,255,0.12)') },
+  replayText: { fontSize: 13, fontWeight: '800', color: dk('#1B3FA0', '#E6ECFF') },
   counter: { fontSize: 13, fontWeight: '800', color: dk('#5A6484', 'rgba(255,255,255,0.75)') },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   kicker: { fontSize: 13, fontWeight: '800', letterSpacing: 1.6, color: dk('#8A5E12', '#F2C14E') },
@@ -298,7 +304,8 @@ const s = themed(() => ({
   msg: { marginTop: 8, fontSize: 15, lineHeight: 21, textAlign: 'center', maxWidth: 320, color: dk('#3A4466', 'rgba(255,255,255,0.88)') },
   btns: { gap: 10 },
   btn: { minHeight: 50, borderRadius: 999, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18 },
-  btnMain: { backgroundColor: dk('#1B3FA0', '#FFFFFF') },
+  // (not plain #FFFFFF: dark mode would turn that into the dark card colour)
+  btnMain: { backgroundColor: dk('#1B3FA0', '#F4F6FF') },
   btnMainText: { color: dk('#FFFFFF', '#1B3FA0') },
   btnDiamond: { backgroundColor: '#CFC2FF' },
   btnOut: { borderWidth: 1.5, borderColor: dk('rgba(27,63,160,0.35)', 'rgba(255,255,255,0.45)') },
