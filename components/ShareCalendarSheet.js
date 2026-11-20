@@ -202,7 +202,7 @@ export default function ShareCalendarSheet({ visible, onClose, mode = 'rings', s
                       <Text style={[s.mon, { marginTop: 0, marginBottom: 0 }, !one && { fontSize: 9.5 }]} numberOfLines={1}>
                         {new Date(m.year, m.month, 1).toLocaleDateString('en-US', { month: one ? 'long' : 'short' }).toUpperCase()}
                       </Text>
-                      {p && p.tier ? <MedalPin tier={p.tier} height={one ? 22 : 16} /> : null}
+                      {p && p.tier ? <Medal medal={p} tier={p.tier} size={one ? 34 : 24} /> : null}
                       {one && p ? <Text style={s.inkName} numberOfLines={1}>{p.name} · {p.tier ? TIER_LABEL[p.tier] : 'on the way'} · {p.value.toLocaleString()} words</Text> : null}
                       {!one && p && p.value > 0 ? <Text style={s.inkTotal} numberOfLines={1}>{p.value.toLocaleString()} words</Text> : null}
                     </View>

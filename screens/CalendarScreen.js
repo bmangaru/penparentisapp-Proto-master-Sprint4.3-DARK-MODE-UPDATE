@@ -41,7 +41,7 @@ const VIEW_OF = ['rings', 'feelings', 'medals'];
 import { TIER_LABEL } from '../medals';
 import { InkDrop, WordBadge, MedalPin } from '../components/InkDrop';
 import { monthDays, monthKeyOf, monthProgress } from '../monthMedals';
-import { feelingById, feelingLabel } from '../feelings';
+import { FEELINGS, feelingById, feelingLabel } from '../feelings';
 import { loadAll, useDataChange, useToday } from '../writingStore';
 
 const ROW_H = 64;
@@ -292,17 +292,41 @@ export default function CalendarScreen({ navigation, route }) {
             ))}
           </View>
           {view === 'rings' ? (
-            <View style={s.legend}>
-              <Legend color={RING_COLORS.light.minutes} label="Minutes" />
-              <Legend color={RING_COLORS.light.words} label="Words" />
-              <Legend color={RING_COLORS.light.sessions} label="Sessions" />
-              <View style={s.legendItem}>
-                <Ionicons name="star" size={12} color={STAR} />
-                <Text style={s.legendText}>Event</Text>
+            // Key as a small table: each ring (drawn at its place, outer → inner) and the event star.
+            <View style={s.medalLegend}>
+              <View style={s.medalTable}>
+                {[
+                  ['minutes', 'Minutes', 'Outer ring · time writing', 18],
+                  ['words', 'Words', 'Middle ring · words written', 13],
+                  ['sessions', 'Sessions', 'Inner ring · times you wrote', 8],
+                ].map(([k, name, what, d], i) => (
+                  <View key={k} style={[s.medalRow, i > 0 && s.medalRowLine]}>
+                    <View style={s.keyIcon}><View style={{ width: d, height: d, borderRadius: d / 2, borderWidth: 3, borderColor: RING_COLORS.light[k] }} /></View>
+                    <Text style={s.medalRowName}>{name}</Text>
+                    <Text style={s.medalRowWords}>{what}</Text>
+                  </View>
+                ))}
+                <View style={[s.medalRow, s.medalRowLine]}>
+                  <View style={s.keyIcon}><Ionicons name="star" size={15} color={STAR} /></View>
+                  <Text style={s.medalRowName}>Event</Text>
+                  <Text style={s.medalRowWords}>A salon or event that day</Text>
+                </View>
               </View>
+              <Text style={s.legendText}>A ring closes when you reach that day’s goal. Close all three for a full day.</Text>
             </View>
           ) : view === 'feelings' ? (
-            <Text style={[s.legendText, s.legend]}>Your latest feeling is in front. Tap a day to see them all.</Text>
+            // Key: all twelve faces, six to a row, as in the feelings picker.
+            <View style={s.medalLegend}>
+              <View style={[s.medalTable, s.faceKey]}>
+                {FEELINGS.map((f) => (
+                  <View key={f.id} style={s.faceKeyItem}>
+                    <Face id={f.id} size={26} />
+                    <Text style={s.faceKeyLabel} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{f.label}</Text>
+                  </View>
+                ))}
+              </View>
+              <Text style={s.legendText}>Your latest feeling is in front. Tap a day to see them all.</Text>
+            </View>
           ) : (
             // Key: the ink drops, then the four medals with the words each needs.
             <View style={s.medalLegend}>
@@ -551,6 +575,10 @@ const s = themed(() => ({
   wordBadge: { right: -14, bottom: -5 },
   pin: { position: 'absolute', top: -20, right: -12 },
   cellWon: { backgroundColor: '#FFF6DE' },
+  keyIcon: { width: 18, alignItems: 'center', justifyContent: 'center' },
+  faceKey: { flexDirection: 'row', flexWrap: 'wrap', paddingVertical: 8, rowGap: 8 },
+  faceKeyItem: { width: '16.66%', alignItems: 'center', gap: 2 },
+  faceKeyLabel: { fontSize: 9.5, fontWeight: '600', color: colors.body, maxWidth: '100%' },
   medalLegend: { gap: 8, marginTop: 6, marginBottom: 10 },
   medalTable: { borderRadius: 10, backgroundColor: '#F4F5F9', paddingHorizontal: 10, paddingVertical: 2 },
   medalRow: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 26 },
