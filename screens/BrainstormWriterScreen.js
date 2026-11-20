@@ -460,9 +460,9 @@ export default function BrainstormWriterScreen({ navigation, route }) {
     // "Just write", shown or hidden), Save & check in doesn't save and leave:
     // with the step's goal reached it moves the tour on, like "I'm done
     // writing"; otherwise it says what to do first.
-    const tourNow = tourRun && tourRun.phase === 'step' ? stepOf(tourRun) : null;
-    if (tourNow && String(tourNow.target || '').startsWith('writer.') && tourNow.target !== 'writer.finish') {
-      if (tourRun.taskDone && tourNow.manual) {
+    const stepAtSave = tourRun && tourRun.phase === 'step' ? stepOf(tourRun) : null;
+    if (stepAtSave && String(stepAtSave.target || '').startsWith('writer.') && stepAtSave.target !== 'writer.finish') {
+      if (tourRun.taskDone && stepAtSave.manual) {
         if (tourRun.min) minimizeTour(false);
         nextStep();
       } else {
