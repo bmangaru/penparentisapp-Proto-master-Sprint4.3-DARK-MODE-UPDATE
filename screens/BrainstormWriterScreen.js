@@ -34,7 +34,7 @@ import Medal from '../components/Medal';
 import { MedalBar } from '../components/MedalProgress';
 import { colors, radius, space, themed, dk, isDark } from '../theme';
 import {
-  anchorAt, appRatingFor, cleanAnswers, countWords, createWordCounter, editRange, pruneAnswers, shiftAnswers, dayKey, dailyPct, goalForDay, looksLikePaste, sessionsOnDay, summarize, textToContinue,
+  anchorAt, appRatingFor, cleanAnswers, countWords, createWordCounter, editRange, pruneAnswers, shiftAnswers, dayKey, dailyPct, goalForDay, sessionsOnDay, summarize, textToContinue,
 } from '../writingLogic';
 import { loadAll, saveSession, shareWriting, syncMedals } from '../writingStore';
 import { MEDALS, TIER_LABEL, liveMedalStats, medalStats, nextMedals, reachNudge, reachTitle, summaryRows, textStats } from '../medals';
@@ -256,15 +256,11 @@ export default function BrainstormWriterScreen({ navigation, route }) {
 
   function onChangeText(t) {
     const prev = textRef.current;
-    if (looksLikePaste(prev, t)) {
-      // Let the native input take the change for one frame, then put the old
-      // text back — setting the same value twice in a row wouldn't re-sync it.
-      setText(t);
-      requestAnimationFrame(() => setText(prev));
-      setBlockedPastes((n) => n + 1);
-      flash("Pasting is off in the typer — type it in and it'll count.");
-      return;
-    }
+    // Never take writing away. A big chunk arriving at once is dictation (the
+    // keyboard's mic drops in whole phrases and corrects them as you speak):
+    // the Copy/Paste menu is hidden on this page (contextMenuHidden), so it
+    // can't be a paste. It stays, and its words count like typed ones.
+    // (Earlier versions put the old text back here, which wiped dictation.)
     textRef.current = t;
     setText(t);
     lastTypedAt.current = secondsRef.current;

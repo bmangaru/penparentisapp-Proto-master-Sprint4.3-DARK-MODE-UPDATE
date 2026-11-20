@@ -27,6 +27,7 @@ export default function SessionDoneSheet({
   // "See all" opens every medal right here, so How do you feel? and Done
   // are never skipped. It starts folded each time.
   const [all, setAll] = useState(false);
+  const [tapped, setTapped] = useState({}); // tap a face: it plays its move right away
   useEffect(() => { if (visible) setAll(false); }, [visible]);
   const rows = all ? allRows : nextRows;
 
@@ -73,19 +74,19 @@ export default function SessionDoneSheet({
         <Text style={s.feelPicked}>{feeling ? feelingLabel(feeling) : 'Optional'}</Text>
       </View>
       <View style={s.faces}>
-        {FEELINGS.map((f) => {
+        {FEELINGS.map((f, i) => {
           const on = feeling === f.id;
           return (
             <Pressable
               key={f.id}
-              onPress={() => onPickFeeling(on ? null : f.id)}
+              onPress={() => { setTapped((n) => ({ ...n, [f.id]: (n[f.id] || 0) + 1 })); onPickFeeling(on ? null : f.id); }}
               style={[s.face, on && s.faceOn]}
               accessibilityRole="button"
               accessibilityState={{ selected: on }}
               accessibilityLabel={f.label}
             >
-              <Face id={f.id} size={42} />
-              <Text style={[s.faceLabel, on && s.faceLabelOn]} numberOfLines={1}>{f.label}</Text>
+              <Face id={f.id} size={40} animate offset={i} playKey={tapped[f.id] || 0} />
+              <Text style={[s.faceLabel, on && s.faceLabelOn]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{f.label}</Text>
             </Pressable>
           );
         })}
@@ -135,7 +136,7 @@ const s = themed(() => ({
   feelPicked: { fontSize: 12, color: '#4F5878' },
   faces: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 8 },
   face: {
-    width: '20%', alignItems: 'center', gap: 3, paddingVertical: 6,
+    width: '16.66%', alignItems: 'center', gap: 3, paddingVertical: 6, // two rows of six
     borderRadius: 14, borderWidth: 2, borderColor: 'transparent',
   },
   faceOn: { borderColor: colors.royal, backgroundColor: '#DCE4F7' },

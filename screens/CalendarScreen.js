@@ -30,8 +30,10 @@ import EventCountdown, { nextUpcoming } from '../components/EventCountdown';
 import { colors, gradients, lift, radius, space, themed } from '../theme';
 import { eventWhen, eventsByDay, loadEvents } from '../eventsService';
 import {
-  DEFAULT_GOALS, calendarDay, calendarWeeks, describeDailyGoal, parseDayKey,
+  DEFAULT_GOALS, calendarDay, calendarWeeks, dayFeelings, describeDailyGoal, monthFeelings, parseDayKey,
 } from '../writingLogic';
+import Face from '../components/Face';
+import { feelingById, feelingLabel } from '../feelings';
 import { loadAll, useDataChange, useToday } from '../writingStore';
 
 const ROW_H = 64;
@@ -45,6 +47,7 @@ export default function CalendarScreen({ navigation, route }) {
   const today = useToday();
   const [data, setData] = useState({ goals: DEFAULT_GOALS, dailyGoals: {}, sessions: [] });
   const [events, setEvents] = useState([]); // the gold ★ on event days, and the countdown card
+  const [view, setView] = useState('rings'); // the calendar shows 'rings' or 'feelings'
   const [podcast, setPodcast] = useState(null); // newest episode, for the new-episode switch
   const notify = useNotifySettings();
   const [notifyNote, setNotifyNote] = useState(null); // 'denied' | null
@@ -92,6 +95,16 @@ export default function CalendarScreen({ navigation, route }) {
     for (const w of weeks) for (const k of w) map[k] = calendarDay(data.sessions, data.dailyGoals, data.goals, k, today);
     return map;
   }, [weeks, data, today]);
+
+  // Feelings view: every feeling picked on each day shown (oldest first), and
+  // this month's mix for the summary under the calendar.
+  const feelingsByDay = useMemo(() => {
+    const map = {};
+    if (view === 'feelings') for (const w of weeks) for (const k of w) map[k] = dayFeelings(data.sessions, k);
+    return map;
+  }, [view, weeks, data]);
+  const month = today.slice(0, 7);
+  const mix = useMemo(() => monthFeelings(data.sessions, month), [data, month]);
 
   const sel = days[selected] || calendarDay(data.sessions, data.dailyGoals, data.goals, selected, today);
   const selEvents = byDay[selected] || [];
@@ -208,15 +221,27 @@ export default function CalendarScreen({ navigation, route }) {
               </Pressable>
             </TourTarget>
           </View>
-          <View style={s.legend}>
-            <Legend color={RING_COLORS.light.minutes} label="Minutes" />
-            <Legend color={RING_COLORS.light.words} label="Words" />
-            <Legend color={RING_COLORS.light.sessions} label="Sessions" />
-            <View style={s.legendItem}>
-              <Ionicons name="star" size={12} color={STAR} />
-              <Text style={s.legendText}>Event</Text>
-            </View>
+          {/* Rings (progress) or Feelings (the faces you picked) */}
+          <View style={s.seg} accessibilityRole="tablist">
+            {[['rings', 'Rings'], ['feelings', 'Feelings']].map(([v, label]) => (
+              <Pressable key={v} onPress={() => setView(v)} style={[s.segBtn, view === v && s.segOn]} accessibilityRole="tab" accessibilityState={{ selected: view === v }}>
+                <Text style={[s.segText, view === v && s.segTextOn]}>{label}</Text>
+              </Pressable>
+            ))}
           </View>
+          {view === 'rings' ? (
+            <View style={s.legend}>
+              <Legend color={RING_COLORS.light.minutes} label="Minutes" />
+              <Legend color={RING_COLORS.light.words} label="Words" />
+              <Legend color={RING_COLORS.light.sessions} label="Sessions" />
+              <View style={s.legendItem}>
+                <Ionicons name="star" size={12} color={STAR} />
+                <Text style={s.legendText}>Event</Text>
+              </View>
+            </View>
+          ) : (
+            <Text style={[s.legendText, s.legend]}>Your latest feeling is in front. Tap a day to see them all.</Text>
+          )}
           <View style={s.weekHead}>
             {WEEKDAYS.map((d, i) => <Text key={i} style={s.weekHeadText}>{d}</Text>)}
           </View>
@@ -244,6 +269,7 @@ export default function CalendarScreen({ navigation, route }) {
                   <DayCell
                     key={k}
                     day={days[k]}
+                    feelings={view === 'feelings' ? feelingsByDay[k] || [] : null}
                     selected={k === selected}
                     hasEvent={!!byDay[k]}
                     onPress={() => onPressDay(days[k])}
@@ -260,6 +286,9 @@ export default function CalendarScreen({ navigation, route }) {
           </View>
           <Text style={s.hint}>Tap a past day to read what you wrote.</Text>
         </TourTarget>
+
+        {/* ---------- This month's feelings (Feelings view) ---------- */}
+        {view === 'feelings' ? <MonthFeelings mix={mix} month={month} /> : null}
 
         {/* ---------- Previous salons ---------- */}
         <TourTarget id="cal.past" style={{ gap: 8 }}>
@@ -295,7 +324,58 @@ export default function CalendarScreen({ navigation, route }) {
   );
 }
 
-function DayCell({ day, selected, hasEvent, onPress }) {
+// The faces for one day: the latest in front, the one before peeking out
+// behind it, and "+1"… for any more.
+function DayFaces({ feelings, wrote, animate }) {
+  if (!feelings.length) return wrote ? <View style={s.noFeel} /> : <View style={{ width: 30, height: 30 }} />;
+  const last = feelings[feelings.length - 1].feeling;
+  if (feelings.length === 1) return <View style={s.faceOne}><Face id={last} size={30} animate={animate} /></View>;
+  const prev = feelings[feelings.length - 2].feeling;
+  const more = feelings.length - 2;
+  return (
+    <View style={s.faceStack}>
+      <View style={s.faceBack}><Face id={prev} size={22} /></View>
+      <View style={s.faceFront}><Face id={last} size={28} animate={animate} /></View>
+      {more > 0 ? <View style={s.moreBadge}><Text style={s.moreText}>+{more}</Text></View> : null}
+    </View>
+  );
+}
+
+function MonthFeelings({ mix, month }) {
+  const name = parseDayKey(`${month}-01`).toLocaleDateString(undefined, { month: 'long' });
+  return (
+    <View style={[s.card, lift, { gap: 10 }]}>
+      <Text style={s.h}>How you’ve felt in {name}</Text>
+      {mix.total === 0 ? (
+        <Text style={s.body}>No feelings picked yet this month. After you save your writing, tap how you feel and it shows up here.</Text>
+      ) : (
+        <>
+          <View style={s.mixBar} accessibilityLabel={mix.list.map((m) => `${feelingLabel(m.id)} ${m.n}`).join(', ')}>
+            {mix.list.map((m) => (
+              <View key={m.id} style={{ flex: m.n, backgroundColor: feelingById(m.id)?.color || '#DDD' }} />
+            ))}
+          </View>
+          <View style={s.mixRow}>
+            {mix.list.map((m) => (
+              <View key={m.id} style={s.mixItem}>
+                <Face id={m.id} size={18} />
+                <Text style={s.legendText}>{feelingLabel(m.id)} {m.n}</Text>
+              </View>
+            ))}
+          </View>
+          <View style={s.insight}>
+            <Text style={s.body}>
+              Mostly <Text style={s.bold}>{feelingLabel(mix.top)}</Text> this month.
+              {mix.pattern ? <Text> On days you wrote <Text style={s.bold}>{mix.pattern.minutes}+ minutes</Text>, you picked Happy or Ecstatic <Text style={s.bold}>{mix.pattern.good} of {mix.pattern.of}</Text> times.</Text> : null}
+            </Text>
+          </View>
+        </>
+      )}
+    </View>
+  );
+}
+
+function DayCell({ day, selected, hasEvent, onPress, feelings }) {
   const date = parseDayKey(day.key);
   const n = date.getDate();
   const monthTag = n === 1 ? date.toLocaleDateString(undefined, { month: 'short' }) : null;
@@ -304,16 +384,20 @@ function DayCell({ day, selected, hasEvent, onPress }) {
       onPress={onPress}
       style={[s.cell, selected && s.cellSelected, day.isToday && s.cellToday]}
       accessibilityRole="button"
-      accessibilityLabel={`${date.toDateString()}${hasEvent ? ', event' : ''}${day.count ? `, ${day.words} words` : ''}`}
+      accessibilityLabel={`${date.toDateString()}${hasEvent ? ', event' : ''}${day.count ? `, ${day.words} words` : ''}${feelings && feelings.length ? `, felt ${feelings.map((f) => feelingLabel(f.feeling)).join(' then ')}` : ''}`}
     >
       <Text style={[s.cellNum, day.isToday && s.cellNumToday, day.future && { color: colors.muted }]}>
         {monthTag ? <Text style={s.monthTag}>{monthTag} </Text> : null}{n}
       </Text>
       <View>
-        <Rings
-          minutes={day.rings.minutes} words={day.rings.words} sessions={day.rings.sessions}
-          faded={day.future} size={34}
-        />
+        {feelings ? (
+          <DayFaces feelings={feelings} wrote={day.count > 0} animate={day.isToday} />
+        ) : (
+          <Rings
+            minutes={day.rings.minutes} words={day.rings.words} sessions={day.rings.sessions}
+            faded={day.future} size={34}
+          />
+        )}
         {hasEvent && (
           <View style={s.star} pointerEvents="none">
             <Ionicons name="star" size={22} color={STAR} style={s.starIcon} />
@@ -383,4 +467,27 @@ const s = themed(() => ({
   },
   backPillText: { color: '#FFFFFF', fontSize: 12.5, fontWeight: '700' },
   hint: { fontSize: 11.5, color: colors.muted, textAlign: 'center', marginTop: 8 },
+
+  // Rings / Feelings switch
+  seg: { flexDirection: 'row', alignSelf: 'flex-start', backgroundColor: '#EEF0F5', borderRadius: 999, padding: 3, marginTop: 10 },
+  segBtn: { paddingHorizontal: 14, minHeight: 30, justifyContent: 'center', borderRadius: 999 },
+  segOn: { backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 3, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
+  segText: { fontSize: 12.5, fontWeight: '700', color: '#5A6484' },
+  segTextOn: { color: '#1B3FA0' },
+
+  // Faces in a day cell
+  noFeel: { width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, borderStyle: 'dashed', borderColor: '#D6D3C8', margin: 3 },
+  faceOne: { width: 34, height: 30, alignItems: 'center', justifyContent: 'center' },
+  faceStack: { width: 38, height: 30 },
+  faceBack: { position: 'absolute', left: 0, top: 4 },
+  faceFront: { position: 'absolute', left: 11, top: 0 },
+  moreBadge: { position: 'absolute', right: -4, bottom: -2, minWidth: 16, height: 16, borderRadius: 8, paddingHorizontal: 3, backgroundColor: '#1B3FA0', borderWidth: 1.5, borderColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
+  moreText: { color: '#FFFFFF', fontSize: 9.5, fontWeight: '800' },
+
+  // This month's feelings
+  mixBar: { flexDirection: 'row', height: 12, borderRadius: 999, overflow: 'hidden' },
+  mixRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  mixItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  insight: { backgroundColor: '#F7F3E8', borderRadius: 12, padding: 10 },
+  bold: { fontWeight: '800', color: colors.ink },
 }));

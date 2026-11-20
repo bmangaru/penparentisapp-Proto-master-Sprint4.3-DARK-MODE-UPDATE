@@ -140,9 +140,9 @@ export default function DayScreen({ navigation, route }) {
             {p.feelings.length > 0 && (
               <View style={s.feelRow}>
                 <Text style={s.feelLabel}>How you felt:</Text>
-                {p.feelings.map((f) => (
+                {p.feelings.map((f, i) => (
                   <View key={f.at} style={s.feelChip}>
-                    <Face id={f.feeling} size={18} />
+                    <Face id={f.feeling} size={20} animate offset={i} />
                     <Text style={s.feelChipText}>{timeOf(f.at)} · {feelingLabel(f.feeling)}</Text>
                   </View>
                 ))}

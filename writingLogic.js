@@ -1194,3 +1194,38 @@ export function shareStats(sessions, dailyGoals, goals, months, today = dayKey()
   }
   return { closedDays: closed, words: summarize(inRange).words, bestStreak: best, daysWritten: days.length };
 }
+
+// ---------------------------------------------------------------------------
+// Feelings on the calendar. Every feeling you picked counts (several sessions
+// can mean several feelings in one day), oldest first.
+// ---------------------------------------------------------------------------
+
+export function dayFeelings(sessions, key) {
+  return sessionsOnDay(sessions, key)
+    .filter((s) => s.feeling)
+    .map((s) => ({ at: s.endedAt || s.startedAt, feeling: s.feeling }))
+    .sort((a, b) => String(a.at).localeCompare(String(b.at)));
+}
+
+// A month's feelings ("2026-11"): every one picked, as [{ id, n }] most first,
+// plus one plain pattern when there's enough to say something true.
+export function monthFeelings(sessions, month) {
+  const counts = {};
+  const byDay = {};
+  for (const s of sessions) {
+    if (!s.day || !s.day.startsWith(month)) continue;
+    const d = byDay[s.day] || (byDay[s.day] = { seconds: 0, feelings: [] });
+    d.seconds += s.seconds || 0;
+    if (s.feeling) { counts[s.feeling] = (counts[s.feeling] || 0) + 1; d.feelings.push(s.feeling); }
+  }
+  const list = Object.entries(counts).map(([id, n]) => ({ id, n })).sort((a, b) => b.n - a.n);
+  const total = list.reduce((a, b) => a + b.n, 0);
+  // "On days you wrote 15+ minutes, you picked Happy or Ecstatic 4 of 5 times."
+  let pattern = null;
+  const long = Object.values(byDay).filter((d) => d.seconds >= 15 * 60 && d.feelings.length);
+  if (long.length >= 3) {
+    const good = long.filter((d) => d.feelings.some((f) => f === 'happy' || f === 'ecstatic')).length;
+    if (good * 2 > long.length) pattern = { minutes: 15, good, of: long.length };
+  }
+  return { list, total, top: list[0]?.id || null, pattern };
+}
