@@ -1,14 +1,17 @@
 {
   "expo": {
-    "name": "penparentisapp",
+    "name": "Pen Parentis",
     "slug": "penparentis",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.ronycodedevsteam.penparentis",
+      "bundleIdentifier": "com.brianmangaru.penparentis",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -20,26 +23,18 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "package": "com.ronycodedevsteam.penparentis"
+      "package": "com.brianmangaru.penparentis"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "extra": {
-      "eas": {
-        "projectId": "b166120f-0481-42c8-9aa7-6f1d33c13f83"
-      }
-    },
-    "owner": "ronycodedevs-team",
     "plugins": [
       [
         "expo-calendar",
         {
           "calendarPermission": "Pen Parentis adds the events you choose to your calendar, with a reminder."
         }
-      ],
-      "expo-web-browser",
-      "expo-sharing"
+      ]
     ]
   }
 }
