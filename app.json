@@ -23,7 +23,13 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "package": "com.brianmangaru.penparentis"
+      "package": "com.brianmangaru.penparentis",
+      "permissions": [
+        "android.permission.READ_CALENDAR",
+        "android.permission.WRITE_CALENDAR",
+        "android.permission.READ_CALENDAR",
+        "android.permission.WRITE_CALENDAR"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -34,7 +40,19 @@
         {
           "calendarPermission": "Pen Parentis adds the events you choose to your calendar, with a reminder."
         }
-      ]
-    ]
+      ],
+      "expo-sharing",
+      "expo-status-bar",
+      "expo-web-browser"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "ace71358-e9b8-4b76-a1d0-2591c3ed6f45"
+      }
+    },
+    "owner": "bsmangaru",
+    "updates": {
+      "url": "https://u.expo.dev/ace71358-e9b8-4b76-a1d0-2591c3ed6f45"
+    }
   }
 }
