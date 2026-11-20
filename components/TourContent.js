@@ -20,7 +20,11 @@
 //   "tap here" rings), noRing, inline (the tip sits inside the page instead
 //   of over it: true = the writing page; 'bs.today' etc. = the
 //   <TourInline at="bs.today" /> placed at the top of that spot),
-//   offNote (a 🔒 line in the tips box: this button is off during the tour).
+//   offNote (a 🔒 line in the tips box: this button is off during the tour),
+//   box ('id': on an in-page step, the pulsing gold box goes around just that
+//   spot instead of the whole part below the tip), noArrow (no "it's up
+//   here" arrow when you scroll away), goal ('text' or (run) => 'text': what
+//   the slim "Tour hidden" strip shows, with a ✓ once it's done).
 // Every chapter now runs on the app. (TourModal.js can still show chapters
 // made of `cards` — a picture, a title and a few sentences — if one is added.)
 
@@ -72,7 +76,7 @@ export const CHAPTERS = [
         on: (ev) => ev === 'appearance',
       },
       {
-        target: 'settings.tour', wait: true, info: true, look: true,
+        target: 'settings.tour', wait: true, info: true, look: true, offNote: offInTour('Chapters and Start over', true),
         title: 'This tour lives here', text: 'Come back any time to go over a chapter again, or start the tour over.',
       },
       {
@@ -115,7 +119,7 @@ export const CHAPTERS = [
         text: 'Visit penparentis.org, or follow Pen Parentis on Facebook, Instagram, LinkedIn, X and Bluesky. Each button shows the account it opens.',
       },
       {
-        target: 'home.supporters', inline: 'home.supporters', tab: 'Home', info: true, look: true, section: 'Our supporters', offNote: offInTour('Get Karma'),
+        target: 'home.supporters', inline: 'home.supporters', box: 'home.karma', tab: 'Home', info: true, look: true, section: 'Our supporters', offNote: offInTour('Get Karma'),
         text: 'Get Karma keeps the salons free. The names scrolling here are the organizations and people who keep Pen Parentis going. Thank you!',
       },
     ],
@@ -171,7 +175,7 @@ export const CHAPTERS = [
       {
         target: 'writer.page', inline: true, wait: true, section: 'Your first words', freshLine: true,
         title: 'Just write', text: 'Your page for today: anything you wrote earlier today is here, and you carry on from a new line. Anything on your mind: a line, a memory, an idea. Watch the rings above fill as you type. Want more room? Tap Hide up top to tuck the tour away; it shows a ✓ when you’re done, and you carry on from there.',
-        task: 'Write at least 5 words.', doneText: 'Keep writing as long as you like. When you’re done, tap I’m done writing.', manual: true, nextLabel: 'I’m done writing ›',
+        task: 'Write at least 5 words.', goal: (r) => (r.taskDone ? '5 of 5 words' : r.progress || '0 of 5 words'), doneText: 'Keep writing as long as you like. When you’re done, tap I’m done writing.', manual: true, nextLabel: 'I’m done writing ›',
         on: (ev, v, d) => {
           if (ev !== 'words') return null;
           const base = d.base ?? v - 1; // words already written today, before this step
@@ -231,7 +235,7 @@ export const CHAPTERS = [
       {
         target: 'writer.finish', inline: true, section: 'Save & check in', marks: ['writer.finish'], markRound: 14, wait: true,
         text: 'Keep writing as long as you like. Need more room? Tap Hide up here to tuck the tour away; when you’re done, tap Save & check in and the tour comes back.',
-        task: 'Tap Save & check in.', hold: 600, on: (ev) => ev === 'session-saved',
+        task: 'Tap Save & check in.', goal: 'Save & check in when you’re ready', hold: 600, on: (ev) => ev === 'session-saved',
       },
       {
         target: 'done.summary', wait: true, lock: true, info: true, look: true, round: 16, section: 'Your summary', jump: false,

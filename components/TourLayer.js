@@ -51,6 +51,10 @@ export default function TourLayer({ host = 'root' }) {
   // Tips inside the page: the part of the spot that isn't the tip (what the
   // tip is about), outlined in pulsing gold when there are no marks.
   const [boxRect, setBoxRect] = useState(null);
+  // The step's page isn't the one showing (you tapped another tab): a card
+  // saying where the tour is, with "Take me back".
+  const [away, setAway] = useState(false);
+  const awaySince = useRef(0);
   const pulse = useRef(new Animated.Value(1)).current;
   const scrolledFor = useRef(null);
   const hiddenSince = useRef(0); // when the spot's page got covered
@@ -95,6 +99,8 @@ export default function TourLayer({ host = 'root' }) {
     setRingRects(null);
     setMarkRects(null);
     setBoxRect(null);
+    setAway(false);
+    awaySince.current = 0;
     if (!step?.target) return undefined;
     const since = Date.now();
     const tick = () => {
@@ -115,6 +121,13 @@ export default function TourLayer({ host = 'root' }) {
         setRect(null);
         scrolledFor.current = null; // back on its page → scroll to the spot again
         const r = getRun();
+        // In-page steps leave you free to look around: no pulling you back,
+        // just the "you're still in the tour" card after a moment.
+        if (typeof step.inline === 'string') {
+          if (!awaySince.current) awaySince.current = Date.now();
+          else if (Date.now() - awaySince.current > 700) setAway(true);
+          return;
+        }
         if (host === 'root' && r && !r.min && !r.taskDone) {
           const now = Date.now();
           if (!hiddenSince.current) hiddenSince.current = now;
@@ -127,6 +140,8 @@ export default function TourLayer({ host = 'root' }) {
         return;
       }
       hiddenSince.current = 0;
+      awaySince.current = 0;
+      setAway(false);
       setMissing(false);
       if (host === 'root') getTarget('tabbar')?.ref.current?.measureInWindow?.((bx, by, bw, bh) => { if (bh) barTop.current = by; });
       const node = t.ref.current;
@@ -145,7 +160,9 @@ export default function TourLayer({ host = 'root' }) {
         if (typeof step.inline === 'string') {
           const box = (b) => setBoxRect((p) => (p && p.x === b.x && p.y === b.y && p.w === b.w && p.h === b.h ? p : b));
           const tip = getTarget(`inline:${step.inline}`)?.ref.current;
-          if (!tip?.measureInWindow) box({ x, y, w, h });
+          const only = step.box ? getTarget(step.box)?.ref.current : null; // just this part
+          if (only?.measureInWindow) only.measureInWindow((bx, by, bw, bh) => { if (bw || bh) box({ x: bx, y: by, w: bw, h: bh }); });
+          else if (!tip?.measureInWindow) box({ x, y, w, h });
           else {
             tip.measureInWindow((tx, ty, tw, th) => {
               // (A tip outside the spot, e.g. Home's under the header: the whole spot.)
@@ -292,7 +309,7 @@ export default function TourLayer({ host = 'root' }) {
   }, []);
 
   // The marks breathe, so they read as "tap me".
-  const marking = !!(markRects && markRects.length) || !!(boxRect && step?.inline && !step.noBox);
+  const marking = !!(markRects && markRects.length) || !!(boxRect && step?.inline && !step.noBox) || away;
   useEffect(() => {
     if (!marking) return undefined;
     const loop = Animated.loop(Animated.sequence([
@@ -314,8 +331,19 @@ export default function TourLayer({ host = 'root' }) {
   if (run.min && run.phase === 'step') {
     if (topHost() !== host) return null;
     // On the writing page it's a slim strip inside the page (TourInline), so
-    // it never covers ×, Prompt, Aa or Pause.
-    if (step?.inline) return null;
+    // it never covers ×, Prompt, Aa or Pause. A step you're still doing keeps
+    // its pulsing "tap here" (e.g. Save & check in), as a reminder.
+    if (step?.inline) {
+      if (!step.task || run.taskDone || !markRects || !markRects.length) return null;
+      const bottom = Math.min(barTop.current || H, kb ? H - kb : H);
+      return (
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          {markRects.filter((m) => { const cy = m.y + m.h / 2; return cy > insets.top && cy < bottom; }).map((m, i) => (
+            <Animated.View key={`h${i}`} style={[c.abs, c.mark, { left: m.x - 5, top: m.y - 5, width: m.w + 10, height: m.h + 10, borderRadius: step.markRound ?? 999, opacity: pulse }]} />
+          ))}
+        </View>
+      );
+    }
     return (
       <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
         <View style={[c.paused, { top: insets.top + 2 }]}>
@@ -340,6 +368,17 @@ export default function TourLayer({ host = 'root' }) {
   }
 
   if (!step) return null;
+
+  // You went to another tab mid-step: say where the tour is.
+  if (away && host === 'root') {
+    return (
+      <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+        <View style={[c.paused, { top: insets.top + 2 }]}>
+          <AwayCard run={run} step={step} />
+        </View>
+      </View>
+    );
+  }
 
   // "Scroll down to …": no dimming, so you can scroll; the bubble waits at the top.
   if (step.reveal) {
@@ -382,9 +421,21 @@ export default function TourLayer({ host = 'root' }) {
     }
     const showBox = vis && !marks.length && !step.noBox;
     const block = vis && step.look;
-    if (!marks.length && !showBox && !block) return null;
+    // Scrolled right away from it (tip and all): the arrow back, as on the
+    // other steps. Only once it's completely gone, so a tall spot like the
+    // calendar never gets an arrow over it.
+    const off = step.noArrow ? null : rect.y + rect.h < insets.top + 4 ? 'up' : rect.y > bottom - 4 ? 'down' : null;
+    if (!marks.length && !showBox && !block && !off) return null;
     return (
       <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+        {off ? (
+          <Animated.View style={[c.abs, c.edgeWrap, { top: off === 'up' ? insets.top + 8 : bottom - 50 }, { transform: [{ translateY: bob.interpolate({ inputRange: [0, 1], outputRange: [0, off === 'up' ? -6 : 6] }) }] }]}>
+            <Pressable onPress={findSpot} style={c.edge} accessibilityRole="button" accessibilityLabel={off === 'up' ? 'The tour is above. Scroll back to it' : 'The tour is below. Scroll back to it'}>
+              <Ionicons name={off === 'up' ? 'arrow-up' : 'arrow-down'} size={16} color="#0A1633" />
+              <Text style={c.edgeText}>{`${sectionOf(run)?.num || 'The tour'} is ${off === 'up' ? 'up' : 'down'} here`}</Text>
+            </Pressable>
+          </Animated.View>
+        ) : null}
         {block ? <View {...dragProps} style={[c.abs, { left: vis.x, top: vis.y, width: vis.w, height: vis.h }]} /> : null}
         {showBox ? (
           <Animated.View pointerEvents="none" style={[c.abs, c.mark, { left: vis.x - 5, top: vis.y - 5, width: vis.w + 10, height: vis.h + 10, borderRadius: step.boxRound ?? 24, opacity: pulse }]} />
@@ -608,6 +659,35 @@ export function Bubble({ run, step, lost, inline, off, onFind }) {
 }
 
 // The "Tour paused" card (the tour is hidden while you use the app).
+// You tapped another tab during a step: where the tour is, and the way back.
+const TAB_NAMES = { Home: 'Home', Calendar: 'Calendar', Brainstorm: 'Brainstorm', Eventbrite: 'Eventbrite', Community: 'Community' };
+function AwayCard({ run, step }) {
+  const sec = sectionOf(run);
+  const where = sec ? `${sec.num} · ${sec.title}` : 'This part of the tour';
+  const page = TAB_NAMES[step.tab] || 'its page';
+  return (
+    <View style={{ gap: 8 }} accessibilityLiveRegion="polite">
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Ionicons name="compass" size={20} color="#0A1633" />
+        <View style={{ flex: 1 }}>
+          <Text style={c.pausedTitle}>You’re still in the tour</Text>
+          <Text style={c.pausedSub} numberOfLines={2}>{where} is on {page}.</Text>
+        </View>
+      </View>
+      <View style={c.pausedRow}>
+        <Pressable onPress={() => revealTarget(step.target)} style={({ pressed }) => [c.pausedBtn, c.pausedGo, pressed && { opacity: 0.85 }]} accessibilityRole="button">
+          <Ionicons name="arrow-back" size={14} color="#FFFFFF" />
+          <Text style={[c.pausedBtnText, { color: '#FFFFFF' }]}>Back to {page}</Text>
+        </Pressable>
+        <Pressable onPress={() => minimizeTour()} style={({ pressed }) => [c.pausedBtn, pressed && { opacity: 0.85 }]} accessibilityRole="button" accessibilityLabel="Hide the tour for now">
+          <Ionicons name="eye-off-outline" size={15} color="#0A1633" />
+          <Text style={c.pausedBtnText}>Hide tour</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
 function PausedCard({ run, slim }) {
   const [ending, setEnding] = useState(false);
   const sec = sectionOf(run);
@@ -642,8 +722,26 @@ function PausedCard({ run, slim }) {
   }
   // Slim (the writing page): one row, so your words keep the room.
   // When the step's task got done while hidden, it shows a ✓ instead.
+  // With a goal (step.goal), it shows it with a box that ticks when done:
+  // "TOUR HIDDEN / ☐ Goal: 3 of 5 words".
   if (slim) {
     const ok = !!run.taskDone;
+    const st = stepOf(run);
+    let goal = st?.goal;
+    try { goal = typeof goal === 'function' ? goal(run) : goal; } catch { goal = null; }
+    if (goal) {
+      return (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Ionicons name={ok ? 'checkbox' : 'square-outline'} size={20} color={ok ? '#2E7D4F' : '#0A1633'} />
+          <View style={{ flex: 1 }}>
+            <Text style={[c.pausedSub, { fontSize: 10.5, fontWeight: '800', letterSpacing: 0.8 }]} numberOfLines={1}>{ok ? 'GOAL REACHED ✓' : 'TOUR HIDDEN · GOAL'}</Text>
+            <Text style={[c.pausedTitle, { fontSize: 13.5 }, ok && { color: '#2E7D4F' }]} numberOfLines={1}>{goal}</Text>
+          </View>
+          {cont()}
+          {exit}
+        </View>
+      );
+    }
     return (
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Ionicons name={ok ? 'checkmark-circle' : 'pause-circle'} size={17} color={ok ? '#2E7D4F' : '#0A1633'} />

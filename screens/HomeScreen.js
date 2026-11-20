@@ -102,6 +102,7 @@ export default function HomeScreen() {
       <TourTarget id="home.supporters">
       <TourInline at="home.supporters" />
       <View style={[s.pad, { paddingTop: 9 }]}>
+        <TourTarget id="home.karma">
         <Pressable onPress={() => openLink(LINKS.donate)}>
           <LinearGradient
             colors={[colors.karmaLight, colors.karma]}
@@ -116,6 +117,7 @@ export default function HomeScreen() {
             <View style={s.give}><Text style={s.giveText}>Give</Text></View>
           </LinearGradient>
         </Pressable>
+        </TourTarget>
 
         <Text style={s.thanks}>THANK YOU TO ALL OF OUR SUPPORTERS</Text>
       </View>

@@ -61,7 +61,8 @@ export function AppearancePicker({ onPick }) {
 export default function SettingsSheet({ visible, onClose }) {
   // The tour opens over everything, so close Settings first.
   // Not while the tour is running (it would restart it from under you).
-  const touring = !!useRun();
+  const run = useRun();
+  const touring = !!run;
   const go = (restart) => {
     if (touring) return;
     onClose();
@@ -88,7 +89,8 @@ export default function SettingsSheet({ visible, onClose }) {
           <Text style={s.tourText}>Start over</Text>
         </Pressable>
       </View>
-      {touring ? <Text style={s.note}>You're in the tour now, so these are off until it's done.</Text> : null}
+      {/* (On the tour's own step, the tips box says this instead.) */}
+      {touring && !isTourTarget('settings.tour', run) ? <Text style={s.note}>You're in the tour now, so these are off until it's done.</Text> : null}
       </TourTarget>
     </Sheet>
   );
