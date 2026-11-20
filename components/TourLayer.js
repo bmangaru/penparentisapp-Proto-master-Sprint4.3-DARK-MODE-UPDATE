@@ -973,7 +973,11 @@ function DoneCard({ ch, earned }) {
   const n = ids.filter((id) => done[id]).length;
   const nextTier = TIERS.find(([k]) => n < k);
   const next = chapters[ch + 1];
+  // The last chapter, with every chapter done: on to the thank-you and the
+  // credits (every time, not only the first time you finish).
+  const theEnd = !next && n >= ids.length;
   function goNext() {
+    if (theEnd) { stopTour(); setTimeout(() => openTour('__end'), 250); return; }
     if (!next) { stopTour(); openTour('__list'); return; }
     if (next.steps) startChapter(ch + 1);
     else { stopTour(); openTour(next.id); }
@@ -1005,8 +1009,8 @@ function DoneCard({ ch, earned }) {
           <Text style={[c.cardBtnText, { color: colors.royal }]}>↺ Redo chapter</Text>
         </Pressable>
         <Pressable onPress={goNext} style={[c.cardBtn, c.cardBtnFill]} accessibilityRole="button">
-          {next ? <Text style={c.nextKick}>NEXT</Text> : null}
-          <Text style={[c.cardBtnText, { color: '#FFFFFF' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{next ? `${next.short || next.title} ›` : 'All chapters ›'}</Text>
+          {next ? <Text style={c.nextKick}>NEXT</Text> : theEnd ? <Text style={c.nextKick}>THE END</Text> : null}
+          <Text style={[c.cardBtnText, { color: '#FFFFFF' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{next ? `${next.short || next.title} ›` : theEnd ? 'Thank you & credits ›' : 'All chapters ›'}</Text>
         </Pressable>
       </View>
       <View style={c.cardLinks}>
