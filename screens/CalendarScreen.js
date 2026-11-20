@@ -2,9 +2,11 @@
 //   • top card: the selected day (its three rings, and any Pen Parentis event
 //     that day; "Open ›" shows it on the Eventbrite tab), taking turns with the
 //     countdown to the next event every 6 s (swipe, or tap the dots)
-//   • a calendar of four weeks at a time (no scrolling) that opens on this
-//     week; ‹ Earlier / Later › page through it, and "This week" comes back.
-//     It runs across months, back to the week you first wrote. Each day shows its rings (minutes, words,
+//   • a calendar of four weeks at a time (no scrolling): two weeks back, the
+//     current week (third row) and next week. ‹ Earlier / Later › page
+//     through it, and "Current week" comes back. Earlier goes back to the
+//     week you first wrote; Later goes as far as the last upcoming event, and
+//     a "★ Next event in N days" note shows when it's out of view. Each day shows its rings (minutes, words,
 //     sessions); a big gold star marks event days.
 // Tapping a past day you wrote on opens what you wrote that day.
 //   • Previous salons: past salons on YouTube, the podcast on Spotify, and the
@@ -31,7 +33,7 @@ import EventCountdown, { nextUpcoming } from '../components/EventCountdown';
 import { colors, gradients, lift, radius, space, themed } from '../theme';
 import { eventWhen, eventsByDay, loadEvents } from '../eventsService';
 import {
-  DEFAULT_GOALS, calendarDay, calendarWeeks, dayFeelings, describeDailyGoal, monthFeelings, parseDayKey,
+  DEFAULT_GOALS, calendarDay, calendarWeeks, dayFeelings, describeDailyGoal, monthFeelings, parseDayKey, startOfWeek,
 } from '../writingLogic';
 import Face from '../components/Face';
 import { FeelingsCard, MonthMedalCardTop } from '../components/TopCards';
@@ -93,8 +95,8 @@ export default function CalendarScreen({ navigation, route }) {
     return () => clearTimeout(id);
   }, [route?.params?.at]);
   const scrollRef = useRef(null);
-  // Which four weeks show: 0 = this week and the three after it; -1 = the
-  // four weeks before that, and so on.
+  // Which four weeks show: 0 = two weeks back, the current week and next
+  // week; -1 = the four weeks before that; +1 = the four after, and so on.
   const [page, setPage] = useState(0);
 
   const reloadData = useCallback(() => { loadAll().then(setData); }, []);
@@ -114,12 +116,30 @@ export default function CalendarScreen({ navigation, route }) {
   const byDay = useMemo(() => eventsByDay(events), [events]);
   const weeks = useMemo(() => {
     const d = parseDayKey(today);
-    d.setDate(d.getDate() + page * PAGE_WEEKS * 7);
+    d.setDate(d.getDate() + (page * PAGE_WEEKS - 2) * 7);
     return calendarWeeks(d, 0, PAGE_WEEKS - 1);
   }, [today, page]);
+  // The page a day falls on.
+  const pageOf = (k) => {
+    const wk = Math.round((startOfWeek(parseDayKey(k)) - startOfWeek(parseDayKey(today))) / (7 * 864e5));
+    return Math.floor((wk + 2) / PAGE_WEEKS);
+  };
   // How far back you can go: to the week you first wrote (never past today).
   const firstDay = useMemo(() => data.sessions.reduce((a, x) => (x.day && x.day < a ? x.day : a), today), [data, today]);
   const canEarlier = weeks[0][0] > firstDay;
+  // Upcoming events: Later goes as far as the last one, and when the next
+  // one isn't on screen a note says how far away it is.
+  const upcoming = useMemo(() => Object.keys(byDay).filter((k) => k > today).sort(), [byDay, today]);
+  const maxPage = upcoming.length ? Math.max(0, pageOf(upcoming[upcoming.length - 1])) : 0;
+  const canLater = page < maxPage;
+  const nextEvent = upcoming[0] || null;
+  const nextOnScreen = !!nextEvent && nextEvent >= weeks[0][0] && nextEvent <= weeks[weeks.length - 1][6];
+  const nextIn = nextEvent ? Math.round((parseDayKey(nextEvent) - parseDayKey(today)) / 864e5) : 0;
+  function showNextEvent() {
+    if (!nextEvent) return;
+    if (view !== 'rings') setView('rings'); // stars show on the Rings calendar
+    setPage(pageOf(nextEvent));
+  }
   const rangeLabel = useMemo(() => {
     const f = (k) => parseDayKey(k).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     return `${f(weeks[0][0])} – ${f(weeks[weeks.length - 1][6])}`;
@@ -340,15 +360,25 @@ export default function CalendarScreen({ navigation, route }) {
               <Text style={s.pageLabel} numberOfLines={1}>{rangeLabel}</Text>
             ) : (
               <Pressable onPress={() => setPage(0)} hitSlop={6} style={({ pressed }) => [s.thisWeek, pressed && { opacity: 0.85 }]} accessibilityRole="button" accessibilityHint={`Showing ${rangeLabel}`}>
-                <Text style={s.thisWeekText}>This week</Text>
+                <Text style={s.thisWeekText}>Current week</Text>
               </Pressable>
             )}
-            <Pressable onPress={() => setPage((p) => p + 1)} disabled={page >= 0} hitSlop={6} style={({ pressed }) => [s.pageBtn, page >= 0 && s.pageOff, pressed && { opacity: 0.7 }]} accessibilityRole="button" accessibilityLabel="Later weeks" accessibilityState={{ disabled: page >= 0 }}>
+            <Pressable onPress={() => setPage((p) => p + 1)} disabled={!canLater} hitSlop={6} style={({ pressed }) => [s.pageBtn, !canLater && s.pageOff, pressed && { opacity: 0.7 }]} accessibilityRole="button" accessibilityLabel="Later weeks" accessibilityState={{ disabled: !canLater }}>
               <Text style={s.pageText}>Later</Text>
               <Ionicons name="chevron-forward" size={15} color={colors.royal} />
             </Pressable>
           </View>
           {page !== 0 ? <Text style={[s.hint, { marginTop: 4 }]}>{rangeLabel}</Text> : null}
+          {/* Heads-up when the next event is off screen (or on another calendar). */}
+          {nextEvent && (!nextOnScreen || view !== 'rings') ? (
+            <Pressable onPress={showNextEvent} hitSlop={4} style={({ pressed }) => [s.nextEvent, pressed && { opacity: 0.8 }]} accessibilityRole="button" accessibilityHint="Shows it on the Rings calendar">
+              <Ionicons name="star" size={14} color={STAR} />
+              <Text style={s.nextEventText}>
+                Next event {nextIn === 1 ? 'tomorrow' : `in ${nextIn} days`} · {parseDayKey(nextEvent).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+              </Text>
+              <Text style={s.nextEventLink}>Show ›</Text>
+            </Pressable>
+          ) : null}
           <Text style={s.hint}>Tap a past day to read what you wrote.</Text>
         </TourTarget>
 
@@ -489,6 +519,9 @@ const s = themed(() => ({
   pageOff: { opacity: 0.35 },
   pageText: { fontSize: 12.5, fontWeight: '800', color: colors.royal },
   pageLabel: { flex: 1, textAlign: 'center', fontSize: 12.5, fontWeight: '700', color: colors.muted },
+  nextEvent: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8, paddingHorizontal: 12, minHeight: 36, borderRadius: 12, backgroundColor: '#FFF6DE', borderWidth: 1, borderColor: '#F1DFA6' },
+  nextEventText: { flex: 1, fontSize: 12.5, fontWeight: '700', color: '#5A3E00' },
+  nextEventLink: { fontSize: 12.5, fontWeight: '800', color: colors.royal },
   thisWeek: { backgroundColor: colors.royal, borderRadius: 999, paddingHorizontal: 14, minHeight: 34, justifyContent: 'center' },
   thisWeekText: { color: '#FFFFFF', fontSize: 12.5, fontWeight: '800' },
   week: { flexDirection: 'row', height: ROW_H },
