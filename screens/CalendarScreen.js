@@ -30,7 +30,7 @@ import TourTarget from '../components/TourTarget';
 import { isTourTarget, stepOf, tourEvent, tourRunning, useRun } from '../tourRun';
 import ShareCalendarSheet from '../components/ShareCalendarSheet';
 import EventCountdown, { nextUpcoming } from '../components/EventCountdown';
-import { colors, gradients, lift, radius, space, themed } from '../theme';
+import { colors, dk, gradients, lift, radius, space, themed } from '../theme';
 import { eventWhen, eventsByDay, loadEvents } from '../eventsService';
 import {
   DEFAULT_GOALS, calendarDay, calendarWeeks, dayFeelings, describeDailyGoal, monthFeelings, parseDayKey, startOfWeek,
@@ -515,8 +515,8 @@ const s = themed(() => ({
   pageOff: { opacity: 0.35 },
   pageText: { fontSize: 12.5, fontWeight: '800', color: colors.royal },
   pageLabel: { flex: 1, textAlign: 'center', fontSize: 12.5, fontWeight: '700', color: colors.muted },
-  nextEvent: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8, paddingHorizontal: 12, minHeight: 36, borderRadius: 12, backgroundColor: '#FFF6DE', borderWidth: 1, borderColor: '#F1DFA6' },
-  nextEventText: { flex: 1, fontSize: 12.5, fontWeight: '700', color: '#5A3E00' },
+  nextEvent: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8, paddingHorizontal: 12, minHeight: 36, borderRadius: 12, backgroundColor: dk('#FFF6DE', '#2E2817'), borderWidth: 1, borderColor: dk('#F1DFA6', '#6B5622') },
+  nextEventText: { flex: 1, fontSize: 12.5, fontWeight: '700', color: dk('#5A3E00', '#F2D58A') },
   nextEventLink: { fontSize: 12.5, fontWeight: '800', color: colors.royal },
   thisWeek: { backgroundColor: colors.royal, borderRadius: 999, paddingHorizontal: 14, minHeight: 34, justifyContent: 'center' },
   thisWeekText: { color: '#FFFFFF', fontSize: 12.5, fontWeight: '800' },
@@ -536,11 +536,12 @@ const s = themed(() => ({
   hint: { fontSize: 11.5, color: colors.muted, textAlign: 'center', marginTop: 8 },
 
   // Rings / Feelings switch
-  seg: { flexDirection: 'row', alignSelf: 'flex-start', backgroundColor: '#EEF0F5', borderRadius: 999, padding: 3, marginTop: 10 },
+  // Rings / Feelings / Medals switch (in dark mode: the picked one is solid blue)
+  seg: { flexDirection: 'row', alignSelf: 'flex-start', backgroundColor: dk('#EEF0F5', 'rgba(255,255,255,0.08)'), borderRadius: 999, padding: 3, marginTop: 10 },
   segBtn: { paddingHorizontal: 14, minHeight: 30, justifyContent: 'center', borderRadius: 999 },
-  segOn: { backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 3, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
-  segText: { fontSize: 12.5, fontWeight: '700', color: '#5A6484' },
-  segTextOn: { color: '#1B3FA0' },
+  segOn: { backgroundColor: dk('#FFFFFF', '#3352C4'), shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 3, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
+  segText: { fontSize: 12.5, fontWeight: '700', color: dk('#5A6484', '#A3AECB') },
+  segTextOn: { color: dk('#1B3FA0', '#FFFFFF') },
 
   // Faces in a day cell
   noFeel: { width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, borderStyle: 'dashed', borderColor: '#D6D3C8', margin: 3 },
@@ -570,7 +571,8 @@ const s = themed(() => ({
   faceKeyItem: { width: '16.66%', alignItems: 'center', gap: 2 },
   faceKeyLabel: { fontSize: 9.5, fontWeight: '600', color: colors.body, maxWidth: '100%' },
   medalLegend: { gap: 8, marginTop: 6, marginBottom: 10 },
-  medalTable: { borderRadius: 10, backgroundColor: '#F4F5F9', paddingHorizontal: 10, paddingVertical: 2 },
+  // The keys' tables (Rings, Feelings faces, Ink medals)
+  medalTable: { borderRadius: 10, backgroundColor: dk('#F4F5F9', 'rgba(255,255,255,0.06)'), paddingHorizontal: 10, paddingVertical: 2 },
   medalRow: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 26 },
   medalRowLine: { borderTopWidth: 1, borderTopColor: colors.line },
   medalRowName: { flex: 1, fontSize: 12.5, fontWeight: '700', color: colors.ink },
