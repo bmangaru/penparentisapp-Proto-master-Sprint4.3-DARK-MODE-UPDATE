@@ -25,7 +25,8 @@ import Face from './Face';
 import { FEELINGS } from '../feelings';
 import { MedalBar, MedalSummary, TRACKS } from './MedalProgress';
 import { colors, radius, space, themed } from '../theme';
-import { ADDED_BAR, TIER_BAR, TIER_LABEL, medalStats, offlinePreview } from '../medals';
+import { ADDED_BAR, TIER_BAR, TIER_LABEL, medalStats, offlinePreview, summaryRow } from '../medals';
+import { monthKeyOf, monthProgress, monthWords } from '../monthMedals';
 import { OFFLINE_LIMITS, calendarDay, canLogDay, clampOffline, dayKey, formatDuration, monthGrid, parseDayKey, stepOffline, timeClock } from '../writingLogic';
 
 const FIELDS = [
@@ -52,6 +53,15 @@ export default function OfflineLogSheet({ visible, onClose, onSave, sessions = [
 
   // Worked out once each time the sheet opens, not on every tap.
   const stats = useMemo(() => (visible ? medalStats(sessions, dailyGoals, goals) : null), [visible, sessions, dailyGoals, goals]);
+  // That day's month medal comes first in "Counts toward": its words count
+  // just like the ones you type (and a tier reached celebrates after saving).
+  const monthRow = useMemo(() => {
+    const mk = monthKeyOf(day);
+    const before = monthWords(sessions, mk);
+    const w = Math.max(0, Number(vals.words) || 0);
+    return summaryRow(monthProgress([], mk, before), monthProgress([], mk, before + w),
+      w === 0 && Number(vals.minutes) > 0 ? 'Only words count toward the month’s medal' : null);
+  }, [sessions, day, vals.words, vals.minutes]);
   const preview = useMemo(
     () => (stats ? offlinePreview(sessions, dailyGoals, goals, stats, day, vals) : null),
     [stats, sessions, dailyGoals, goals, day, vals],
@@ -288,7 +298,7 @@ function MedalPreview({ preview, day, isToday }) {
         <Text style={s.legendText}>So far, in your medal's colour</Text>
         <View style={[s.legendSwatch, { backgroundColor: ADDED_BAR, marginLeft: 12 }]} /><Text style={s.legendText}>This log</Text>
       </View>
-      <MedalSummary rows={preview.medals} pending open={open} onToggle={toggle} />
+      <MedalSummary rows={[monthRow, ...preview.medals]} pending open={open} onToggle={toggle} />
 
       <View style={s.sep} />
       <Text style={s.countsHead}>✕  ONLY FROM WRITING IN BRAINSTORM</Text>
