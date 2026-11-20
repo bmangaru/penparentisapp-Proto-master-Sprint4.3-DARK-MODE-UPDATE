@@ -33,7 +33,11 @@ import {
   DEFAULT_GOALS, calendarDay, calendarWeeks, dayFeelings, describeDailyGoal, monthFeelings, parseDayKey,
 } from '../writingLogic';
 import Face from '../components/Face';
-import { MonthMedalCard } from '../components/MonthMedal';
+import { FeelingsCard, MonthMedalCardTop } from '../components/TopCards';
+
+// The top cards, in order, and the calendar view each one goes with.
+const PAGE = { rings: 0, feelings: 1, medals: 2 };
+const VIEW_OF = ['rings', 'feelings', 'medals'];
 import { TIER_BAR } from '../medals';
 import { monthDays, monthKeyOf, monthProgress } from '../monthMedals';
 import { feelingById, feelingLabel } from '../feelings';
@@ -55,8 +59,11 @@ export default function CalendarScreen({ navigation, route }) {
   const [view, setViewState] = useState('rings');
   const setView = (v) => { setViewState(v); tourEvent('cal-view', v); };
   // The app tour can put the calendar on the view a step talks about.
-  const tourCalView = (() => { const r = tourRun; const st = r && !r.min ? stepOf(r) : null; return st?.calView || null; })();
-  useEffect(() => { if (tourCalView) setViewState(tourCalView); }, [tourCalView]);
+  // (Set again at every step, in case you swiped the cards to another view.)
+  const tourStepNow = tourRun && !tourRun.min ? stepOf(tourRun) : null;
+  const tourCalView = tourStepNow?.calView || null;
+  const tourStepKey = tourRun ? `${tourRun.ch}.${tourRun.step}` : '';
+  useEffect(() => { if (tourCalView) setViewState(tourCalView); }, [tourCalView, tourStepKey]);
   const [podcast, setPodcast] = useState(null); // newest episode, for the new-episode switch
   const notify = useNotifySettings();
   const [notifyNote, setNotifyNote] = useState(null); // 'denied' | null
@@ -128,6 +135,7 @@ export default function CalendarScreen({ navigation, route }) {
     return map;
   }, [view, weeks, data]);
   const monthMedalNow = useMemo(() => monthProgress(data.sessions, month), [data, month]);
+  const hasCountdown = !!nextUpcoming(events);
 
   const sel = days[selected] || calendarDay(data.sessions, data.dailyGoals, data.goals, selected, today);
   const selEvents = byDay[selected] || [];
@@ -194,21 +202,24 @@ export default function CalendarScreen({ navigation, route }) {
     <Screen scrollRef={scrollRef}>
       <Header title="Calendar" subtitle="Every day you showed up to write" />
       <View style={s.pad}>
-        {/* ---------- Top card: the selected day ↔ the next event's countdown ----------
-            Switches every 6 s while today is selected; tapping another day
-            shows that day and holds still. */}
+        {/* ---------- Top cards: Today's rings · Feelings · Medals · Countdown ----------
+            Each has its own page. The calendar switch below jumps to its
+            card, and swiping to Rings, Feelings or Medals switches the
+            calendar too. The timer only alternates between the card that
+            matches the calendar and the salon countdown, and waits a full
+            turn after anything you do (it never moves straight after you). */}
         <TourTarget id="cal.top">
-        <Cycler paused={selected !== today || !!tourRun} resetKey={isTourTarget('cal.top', tourRun) ? `tour-${selected}-${view}` : `${selected}-${view}`} arrows tourId="cal" onIndex={(k) => tourEvent('cal-index', k)}>
-        {view === 'feelings' ? (
-          <LinearGradient colors={gradients.header} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={s.dayCard}>
-            <MonthFeelings mix={mix} month={month} />
-          </LinearGradient>
-        ) : view === 'medals' ? (
-          <LinearGradient colors={gradients.header} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={[s.dayCard, { justifyContent: 'center' }]}>
-            <Text style={s.topKick}>THIS MONTH’S MEDAL</Text>
-            <MonthMedalCard progress={monthMedalNow} dark />
-          </LinearGradient>
-        ) : (
+        <Cycler
+          paused={selected !== today || !!tourRun}
+          goTo={{ index: PAGE[view], key: `${selected}-${view}-${isTourTarget('cal.top', tourRun) ? 'tour' : ''}` }}
+          autoNext={(i) => (hasCountdown ? (i === 3 ? PAGE[view] : 3) : i)}
+          arrows
+          tourId="cal"
+          onIndex={(k, how) => {
+            tourEvent('cal-index', k);
+            if (how === 'user' && VIEW_OF[k] && VIEW_OF[k] !== view) setView(VIEW_OF[k]);
+          }}
+        >
         <LinearGradient colors={gradients.header} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={s.dayCard}>
           <View style={s.dayHead}>
             <Text style={s.dayTitle} numberOfLines={1}>
@@ -239,8 +250,13 @@ export default function CalendarScreen({ navigation, route }) {
             </Text>
           )}
         </LinearGradient>
-        )}
-        {nextUpcoming(events) ? <EventCountdown events={events} onDetails={(e) => showEvent(e.id)} style={{ flex: 1 }} /> : null}
+        <LinearGradient colors={gradients.header} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={s.dayCard}>
+          <FeelingsCard mix={mix} monthName={parseDayKey(`${month}-01`).toLocaleDateString(undefined, { month: 'long' })} />
+        </LinearGradient>
+        <LinearGradient colors={gradients.header} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={s.dayCard}>
+          <MonthMedalCardTop progress={monthMedalNow} onSeeAll={() => navigation.navigate('Brainstorm', { screen: 'Medals', initial: false })} />
+        </LinearGradient>
+        {hasCountdown ? <EventCountdown events={events} onDetails={(e) => showEvent(e.id)} style={{ flex: 1 }} /> : null}
         </Cycler>
         </TourTarget>
 
@@ -373,41 +389,6 @@ function DayFaces({ feelings, wrote, animate }) {
       <View style={s.faceBack}><Face id={prev} size={22} /></View>
       <View style={s.faceFront}><Face id={last} size={28} animate={animate} /></View>
       {more > 0 ? <View style={s.moreBadge}><Text style={s.moreText}>+{more}</Text></View> : null}
-    </View>
-  );
-}
-
-// The top card in Feelings view: this month's feelings (on the blue card).
-function MonthFeelings({ mix, month }) {
-  const name = parseDayKey(`${month}-01`).toLocaleDateString(undefined, { month: 'long' });
-  return (
-    <View style={{ gap: 10 }}>
-      <Text style={s.dayTitle}>How you’ve felt in {name}</Text>
-      {mix.total === 0 ? (
-        <Text style={s.dayNote}>No feelings picked yet this month. After you save your writing, tap how you feel and it shows up here.</Text>
-      ) : (
-        <>
-          <View style={s.mixBar} accessibilityLabel={mix.list.map((m) => `${feelingLabel(m.id)} ${m.n}`).join(', ')}>
-            {mix.list.map((m) => (
-              <View key={m.id} style={{ flex: m.n, backgroundColor: feelingById(m.id)?.color || '#DDD' }} />
-            ))}
-          </View>
-          <View style={s.mixRow}>
-            {mix.list.map((m) => (
-              <View key={m.id} style={s.mixItem}>
-                <Face id={m.id} size={18} />
-                <Text style={s.mixText}>{feelingLabel(m.id)} {m.n}</Text>
-              </View>
-            ))}
-          </View>
-          <View style={s.insight}>
-            <Text style={s.insightText}>
-              Mostly <Text style={s.bold}>{feelingLabel(mix.top)}</Text> this month.
-              {mix.pattern ? <Text> On days you wrote <Text style={s.bold}>{mix.pattern.minutes}+ minutes</Text>, you picked Happy or Ecstatic <Text style={s.bold}>{mix.pattern.good} of {mix.pattern.of}</Text> times.</Text> : null}
-            </Text>
-          </View>
-        </>
-      )}
     </View>
   );
 }

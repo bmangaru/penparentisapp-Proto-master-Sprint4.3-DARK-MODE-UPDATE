@@ -314,8 +314,8 @@ export const CHAPTERS = [
       tapTab('Calendar', 'Calendar', 'Every day you showed up to write: as rings, as feelings, and as monthly medals.', { section: 'Today & the next salon' }),
       {
         target: 'cal.top', tab: 'Calendar', marks: ['cal.prev', 'cal.next'], calView: 'rings',
-        text: 'Today’s rings take turns with a countdown to the next salon. (They switch every few seconds; that’s paused for the tour.) This card also follows the calendar below, so you’ll see it change in a moment.',
-        task: 'Tap the arrows to see the countdown.', doneText: 'Look as long as you like, then go on.', manual: true, nextLabel: 'Ready to go on ›',
+        text: 'Four cards take turns here: today’s rings, this month’s feelings, this month’s medal, and a countdown to the next salon. They follow the calendar below: switch it, and the card switches too. (They also change by themselves now and then; that’s paused for the tour.)',
+        task: 'Tap the arrows to look through them.', doneText: 'Look as long as you like, then go on.', manual: true, nextLabel: 'Ready to go on ›',
         on: (ev, v) => ev === 'cal-index' && v > 0,
       },
       {

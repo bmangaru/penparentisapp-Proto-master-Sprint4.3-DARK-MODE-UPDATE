@@ -95,7 +95,9 @@ function Chip({ text }) {
 
 // One ring's line: its name on the left, "5:34 of 5 min ✓  1.1×" on the
 // right, and a bar in the ring's colour running to the card's edge.
-function Line({ name, color, value, of, pct, bar, noGoal }) {
+// One labelled line with its bar (also used by the Calendar's Feelings and
+// Medals cards, so all the top cards read the same).
+export function Line({ name, color, value, of, pct, bar, noGoal }) {
   const closed = pct != null && pct >= 100;
   const chip = overMultiple(pct);
   return (

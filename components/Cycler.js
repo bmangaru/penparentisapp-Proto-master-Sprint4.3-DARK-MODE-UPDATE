@@ -10,6 +10,12 @@
 //     your finger. `paused` stops it (e.g. while another day is selected).
 //   • When `resetKey` changes it goes back to the first card (e.g. a day tapped).
 //   • tourId: the app tour can point at the arrows ('<tourId>.prev' / '.next').
+//   • goTo: { index, key } — jump to that card whenever key changes (e.g. the
+//     Calendar's Rings / Feelings / Medals switch). Counts as a touch, so the
+//     timer never moves it again straight after.
+//   • autoNext(i): which card the timer goes to next (default: the next one).
+//   • onIndex(k, how): how = 'user' (swipe, arrow, dot), 'auto' (timer) or
+//     'set' (goTo / resetKey).
 // With one card there are no dots and nothing moves.
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -20,7 +26,7 @@ import TourTarget from './TourTarget';
 
 const HOLD_AFTER_TOUCH = 12000;
 
-export default function Cycler({ children, every = 10000, paused = false, resetKey, arrows = false, onIndex, tourId }) {
+export default function Cycler({ children, every = 10000, paused = false, resetKey, arrows = false, onIndex, tourId, goTo, autoNext }) {
   const pages = React.Children.toArray(children).filter(Boolean);
   const n = pages.length;
   const [w, setW] = useState(0);
@@ -36,14 +42,14 @@ export default function Cycler({ children, every = 10000, paused = false, resetK
 
   // Scroll positions: [copy of last] [card 0] … [card n-1] [copy of first]
   const xOf = (slot) => slot * w;
-  const setIndex = (k) => { iRef.current = k; setI(k); if (onIndex) onIndex(k); };
+  const setIndex = (k, how = 'set') => { iRef.current = k; setI(k); if (onIndex) onIndex(k, how); };
 
   // Go to card k; k = n or -1 wraps round through the copy at that end.
-  function show(k, animated = true) {
-    if (!n || !w) { setIndex(((k % (n || 1)) + (n || 1)) % (n || 1)); return; }
+  function show(k, animated = true, how = 'set') {
+    if (!n || !w) { setIndex(((k % (n || 1)) + (n || 1)) % (n || 1), how); return; }
     const anim = animated && !reduceMotion;
     const real = ((k % n) + n) % n;
-    setIndex(real);
+    setIndex(real, how);
     if (k >= n || k < 0) {
       // Slide on to the copy at that end; onScroll swaps to the real card the
       // moment the slide arrives (no timer, so it never jumps mid-slide).
@@ -59,7 +65,14 @@ export default function Cycler({ children, every = 10000, paused = false, resetK
   // current card in place if the width changes.
   useEffect(() => { if (w && n > 1) ref.current?.scrollTo({ x: xOf(iRef.current + 1), animated: false }); }, [w, n]);
   // Back to the first card from outside.
-  useEffect(() => { show(0, false); }, [resetKey]);
+  useEffect(() => { if (resetKey !== undefined) show(0, false); }, [resetKey]);
+  // To a given card from outside; then the timer waits a full turn.
+  const goKey = goTo ? goTo.key : undefined;
+  useEffect(() => {
+    if (!goTo) return;
+    heldUntil.current = Date.now() + Math.max(every, HOLD_AFTER_TOUCH);
+    if (goTo.index !== iRef.current) show(goTo.index, true);
+  }, [goKey]);
   // Fewer cards than before (e.g. the event ended): stay in range.
   useEffect(() => { if (iRef.current >= n) show(0, false); }, [n]);
 
@@ -68,7 +81,10 @@ export default function Cycler({ children, every = 10000, paused = false, resetK
     if (n < 2 || paused || !w) return undefined;
     const id = setInterval(() => {
       if (Date.now() < heldUntil.current) return;
-      show(iRef.current + 1);
+      const next = autoNext ? autoNext(iRef.current) : iRef.current + 1;
+      if (next == null || next === iRef.current) return;
+      // Going backwards past the start wraps the long way round; go direct.
+      show(next < iRef.current && next !== 0 ? next : next === 0 && iRef.current === n - 1 ? n : next, true, 'auto');
     }, every);
     return () => clearInterval(id);
   }, [n, paused, w, every, reduceMotion]);
@@ -88,9 +104,9 @@ export default function Cycler({ children, every = 10000, paused = false, resetK
   function onSwipeEnd(e) {
     if (!w) return;
     const slot = Math.round(e.nativeEvent.contentOffset.x / w);
-    if (slot <= 0) { setIndex(n - 1); ref.current?.scrollTo({ x: xOf(n), animated: false }); }
-    else if (slot >= n + 1) { setIndex(0); ref.current?.scrollTo({ x: xOf(1), animated: false }); }
-    else setIndex(slot - 1);
+    if (slot <= 0) { setIndex(n - 1, 'user'); ref.current?.scrollTo({ x: xOf(n), animated: false }); }
+    else if (slot >= n + 1) { setIndex(0, 'user'); ref.current?.scrollTo({ x: xOf(1), animated: false }); }
+    else if (slot - 1 !== iRef.current) setIndex(slot - 1, 'user');
   }
 
   if (n < 2) return <View>{pages[0] || null}</View>;
@@ -126,12 +142,12 @@ export default function Cycler({ children, every = 10000, paused = false, resetK
         ))}
       </ScrollView>
       <View style={s.bar}>
-        {arrows ? <TourTarget id={tourId ? `${tourId}.prev` : null}><Arrow dir={-1} onPress={() => { hold(); show(i - 1); }} /></TourTarget> : null}
+        {arrows ? <TourTarget id={tourId ? `${tourId}.prev` : null}><Arrow dir={-1} onPress={() => { hold(); show(i - 1, true, 'user'); }} /></TourTarget> : null}
         <View style={s.dots}>
           {pages.map((_, k) => (
             <Pressable
               key={k}
-              onPress={() => { hold(); show(k); }}
+              onPress={() => { hold(); show(k, true, 'user'); }}
               hitSlop={6}
               accessibilityRole="button"
               accessibilityLabel={`Card ${k + 1} of ${n}`}
@@ -141,7 +157,7 @@ export default function Cycler({ children, every = 10000, paused = false, resetK
             </Pressable>
           ))}
         </View>
-        {arrows ? <TourTarget id={tourId ? `${tourId}.next` : null}><Arrow dir={1} onPress={() => { hold(); show(i + 1); }} /></TourTarget> : null}
+        {arrows ? <TourTarget id={tourId ? `${tourId}.next` : null}><Arrow dir={1} onPress={() => { hold(); show(i + 1, true, 'user'); }} /></TourTarget> : null}
       </View>
     </View>
   );
