@@ -17,7 +17,7 @@
 import React, { useContext, useEffect, useRef } from 'react';
 import { View, Animated, StyleSheet } from 'react-native';
 import { NavigationContext, NavigationRouteContext } from '@react-navigation/native';
-import { TourHostContext, TourScrollContext, registerTarget, stepOf, usePulseBox, useRun } from '../tourRun';
+import { TourHostContext, TourScrollContext, marksOf, registerTarget, stepOf, usePulseBox, useRun } from '../tourRun';
 
 export default function TourTarget({ id, style, children, ...rest }) {
   const ref = useRef(null);
@@ -42,8 +42,9 @@ export default function TourTarget({ id, style, children, ...rest }) {
   const run = useRun();
   const st = id && run && run.phase === 'step' ? stepOf(run) : null;
   const box = usePulseBox(id);
-  const isMark = !!(st && st.marks && st.marks.includes(id) && (!run.min || (st.inline && st.task && !run.taskDone)));
-  const showBox = !!(box && st && !run.min && typeof st.inline === 'string' && !(st.marks && st.marks.length) && !st.noBox);
+  const marks = marksOf(st, run); // (step.marks can be worked out from what you did)
+  const isMark = !!(st && marks.includes(id) && (!run.min || (st.inline && st.task && !run.taskDone)));
+  const showBox = !!(box && st && !run.min && typeof st.inline === 'string' && !marks.length && !st.noBox);
   let ring = null;
   if (isMark) {
     const p = 5;

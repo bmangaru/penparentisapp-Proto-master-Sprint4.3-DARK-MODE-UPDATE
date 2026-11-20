@@ -98,7 +98,7 @@ export default function TodayPlanSheet({ visible, goals, current, onPick, onEdit
       <View style={s.tip}>
         <Text style={s.tipText}>✏️  To change your goals, tap <Text style={{ fontWeight: '700' }}>Edit</Text> on My usual. The others follow it.</Text>
       </View>
-      <TourTarget id="plan.save">
+      <TourTarget id="plan.save" style={{ marginBottom: 8 }}>
         <Pressable style={s.cta} onPress={() => { tourEvent('plan-saved', picked); onPick(planFor(picked, goals)); }}>
           <Text style={s.ctaText}>{cta}</Text>
         </Pressable>

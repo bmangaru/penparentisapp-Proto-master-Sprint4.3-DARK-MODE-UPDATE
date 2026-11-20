@@ -61,6 +61,16 @@ export function usePulseBox(id) {
   return id && v && v.id === id ? v : null;
 }
 
+// A step's "tap here" spots: a list, or worked out from what you've done so far
+// (e.g. the day's sizes, then Save once you picked one).
+export function marksOf(st, r = run) {
+  if (!st || !st.marks) return [];
+  try {
+    const m = typeof st.marks === 'function' ? st.marks((r && r.data) || {}) : st.marks;
+    return Array.isArray(m) ? m : [];
+  } catch { return []; }
+}
+
 export function stepOf(r = run) {
   if (!r || r.phase !== 'step') return null;
   return CHAPTERS[r.ch]?.steps?.[r.step] || null;
