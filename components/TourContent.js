@@ -300,7 +300,7 @@ export const CHAPTERS = [
       },
       {
         target: 'bs.medals', tab: 'Brainstorm', info: true, look: true,
-        title: 'Your medals', text: 'Medals live here, at the bottom of Brainstorm. Every word you type, minute you spend, session you finish and goal you meet moves you closer to your next one, and there’s much more to earn!',
+        title: 'Your medals', text: 'Medals live here, at the bottom of Brainstorm. Every word you type, minute you spend, session you finish and goal you meet moves you closer to your next one, and there’s much more to earn! Open any medal you’ve earned to see its celebration again: tap one of its tiers, or See the celebration again.',
       },
       {
         target: 'bs.medals', tab: 'Brainstorm', info: true, look: true, section: 'Four tiers', offNote: offInTour('The medals card'),
@@ -313,7 +313,7 @@ export const CHAPTERS = [
     steps: [
       tapTab('Calendar', 'Calendar', 'Every day you showed up to write: as rings, as feelings, and as monthly medals.', { section: 'The top cards' }),
       {
-        target: 'cal.top', tab: 'Calendar', marks: ['cal.prev', 'cal.next'], calView: 'rings',
+        target: 'cal.top', tab: 'Calendar', inline: 'cal.top', marks: ['cal.prev', 'cal.next'], calView: 'rings',
         text: 'Four cards take turns here: today’s rings, this month’s feelings, this month’s medal, and a countdown to the next salon. Swipe the card, or tap the arrows, to move between them; the calendar below follows along. (They also change by themselves now and then; that’s paused for the tour.)',
         task: 'Swipe or tap the arrows to see every card.', doneText: 'You’ve seen them all. Look as long as you like, then go on.', manual: true, nextLabel: 'Ready to go on ›',
         on: (ev, v, d) => {
@@ -325,40 +325,40 @@ export const CHAPTERS = [
         },
       },
       {
-        target: 'cal.grid', tab: 'Calendar', info: true, look: true, section: 'Your writing calendar', calView: 'rings', offNote: offInTour('The days', true),
+        target: 'cal.grid', tab: 'Calendar', inline: 'cal.grid', info: true, look: true, section: 'Your writing calendar', calView: 'rings', offNote: offInTour('The days', true),
         text: 'Each day’s progress is shown as its own set of rings. It shows four weeks at a time: two weeks back, the current week, and next week. ‹ Earlier and Later › move between weeks, and Current week brings you back. When the next event is further ahead, a note tells you how many days away it is. A gold date with a ★ marks a salon or event day, on every calendar. Tap a past day to read what you wrote that day.',
       },
       {
-        target: 'cal.view.feelings', tab: 'Calendar', section: 'Feelings', round: 999,
+        target: 'cal.grid', tab: 'Calendar', inline: 'cal.grid', marks: ['cal.view.feelings'], section: 'Feelings',
         text: 'The calendar can also show how you felt.',
         task: 'Tap Feelings.',
         on: (ev, v) => ev === 'cal-view' && v === 'feelings',
       },
       {
-        target: 'cal.grid', tab: 'Calendar', info: true, look: true, calView: 'feelings', offNote: offInTour('The days', true),
+        target: 'cal.grid', tab: 'Calendar', inline: 'cal.grid', info: true, look: true, calView: 'feelings', offNote: offInTour('The days', true),
         text: 'Each day shows the faces you picked after writing. Wrote more than once? Your latest feeling is in front, with the one before it peeking out (and “+1” for more). Tap a day to see them all.',
       },
       {
-        target: 'cal.top', tab: 'Calendar', info: true, calView: 'feelings',
+        target: 'cal.top', tab: 'Calendar', inline: 'cal.top', info: true, calView: 'feelings',
         text: 'Look up: the top card switched too. It now shows how you’ve felt this month, and a pattern once there’s enough to tell.',
       },
       {
-        target: 'cal.view.medals', tab: 'Calendar', section: 'Monthly medals', round: 999,
+        target: 'cal.grid', tab: 'Calendar', inline: 'cal.grid', marks: ['cal.view.medals'], section: 'Monthly medals',
         text: 'Every month has a medal of its own.',
         task: 'Tap Medals.',
         on: (ev, v) => ev === 'cal-view' && v === 'medals',
       },
       {
-        target: 'cal.top', tab: 'Calendar', info: true, calView: 'medals',
+        target: 'cal.top', tab: 'Calendar', inline: 'cal.top', info: true, calView: 'medals',
         title: `This month: ${THIS_MONTH.when} · ${THIS_MONTH.name}`,
         text: 'Every month has a medal for you to try and earn! Words you write this month count toward this month’s medal: Bronze at 500 words, Silver at 1,000, Gold at 5,000, Diamond at 10,000. It starts fresh on the 1st, and a missed month never takes anything away.',
       },
       {
-        target: 'cal.grid', tab: 'Calendar', info: true, look: true, calView: 'medals', offNote: offInTour('The days', true),
+        target: 'cal.grid', tab: 'Calendar', inline: 'cal.grid', info: true, look: true, calView: 'medals', offNote: offInTour('The days', true),
         text: 'In this view each day you wrote gets an ink drop with its words in green. Both are compared with your typical day over the last 7 days: more words is always a bigger drop and a darker green, and a big day for you gets a “!”. A little medal marks the day you reached a tier. Every month you’ve earned, year by year, is on the Medals page at the bottom of Brainstorm.',
       },
       {
-        target: 'cal.share', tab: 'Calendar', info: true, look: true, round: 999, section: 'Share', offNote: offInTour('Share'),
+        target: 'cal.grid', tab: 'Calendar', inline: 'cal.grid', marks: ['cal.share'], info: true, look: true, section: 'Share', offNote: offInTour('Share'),
         text: 'Share shares the view you’re on: your rings, your feelings, or your monthly medals, as a picture of 1, 3 or 6 months. Your writing is never included.',
       },
     ],

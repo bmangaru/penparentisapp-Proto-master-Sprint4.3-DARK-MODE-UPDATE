@@ -101,23 +101,19 @@ export default function MedalPopup({ medals, onClose, onSeeMedals, replay = fals
       <LinearGradient colors={dk(['#FFFFFF', '#EEF2FF'], ['#1B3FA0', '#0C2265'])} style={{ flex: 1 }}>
         <Page key={`${m.id}-${tier}-${i}-${again}`} m={m} tier={tier} fx={fx} calm={calm} insets={insets} onReplay={() => setAgain((n) => n + 1)} onExit={list.length === 1 ? onClose : null} onPrev={i > 0 ? () => setI(i - 1) : null}
           counter={list.length > 1 ? `${i + 1} of ${list.length}` : null}>
+          {/* Same buttons on every tier: Share (outlined), then Next medal / Done.
+              Diamond adds Email Pen Parentis on top. */}
           {diamond ? (
-            <>
-              <Pressable onPress={() => emailPenParentis(m, tier, m.threshold)} style={({ pressed }) => [s.btn, s.btnDiamond, pressed && s.pressed]} accessibilityRole="button">
-                <Text style={[s.btnText, { color: '#1A1240' }]}>✉️  Email Pen Parentis</Text>
-              </Pressable>
-              <Pressable onPress={() => shareMedal(m, tier, m.threshold)} style={({ pressed }) => [s.btn, s.btnOut, pressed && s.pressed]} accessibilityRole="button">
-                <Text style={[s.btnText, s.btnOutText]}>Share</Text>
-              </Pressable>
-            </>
-          ) : replay ? (
-            <Pressable onPress={() => shareMedal(m, tier, m.threshold)} style={({ pressed }) => [s.btn, s.btnOut, pressed && s.pressed]} accessibilityRole="button">
-              <Text style={[s.btnText, s.btnOutText]}>Share</Text>
+            <Pressable onPress={() => emailPenParentis(m, tier, m.threshold)} style={({ pressed }) => [s.btn, s.btnDiamond, pressed && s.pressed]} accessibilityRole="button">
+              <Text style={[s.btnText, { color: '#1A1240' }]}>✉️  Email Pen Parentis</Text>
             </Pressable>
           ) : null}
+          <Pressable onPress={() => shareMedal(m, tier, m.threshold)} style={({ pressed }) => [s.btn, s.btnOut, pressed && s.pressed]} accessibilityRole="button">
+            <Text style={[s.btnText, s.btnOutText]}>Share</Text>
+          </Pressable>
           {/* Next medal / Done: solid blue (like Chapters). Close (a replay): red. */}
-          <Pressable onPress={next} style={({ pressed }) => [s.btn, last && replay ? s.btnClose : diamond ? s.btnOut : s.btnMain, pressed && s.pressed]} accessibilityRole="button">
-            <Text style={[s.btnText, last && replay ? s.btnCloseText : diamond ? s.btnOutText : s.btnMainText]}>{last ? (replay ? 'Close' : 'Done') : 'Next medal  ›'}</Text>
+          <Pressable onPress={next} style={({ pressed }) => [s.btn, last && replay ? s.btnClose : s.btnMain, pressed && s.pressed]} accessibilityRole="button">
+            <Text style={[s.btnText, last && replay ? s.btnCloseText : s.btnMainText]}>{last ? (replay ? 'Close' : 'Done') : 'Next medal  ›'}</Text>
           </Pressable>
           {/* Only on the last page: leaving early would skip the rest. */}
           {!replay && onSeeMedals && last ? (

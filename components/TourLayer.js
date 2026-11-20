@@ -670,12 +670,17 @@ function ProgressRing({ frac, light }) {
   );
 }
 
-// The tip inside the writing page (under the rings and the prompt), for
-// steps marked inline, so it never covers your words, rings or "Paused".
-export function TourInline() {
+// The tip inside the page, for steps marked inline, so it never covers what
+// it's about. On the writing page (<TourInline />, inline: true) it sits
+// under the rings and the prompt. Elsewhere a page places one per spot
+// (<TourInline at="cal.grid" />) and a step picks it with inline: 'cal.grid':
+// the Calendar shows its tips right under the top cards, or at the top of
+// the calendar card, like a part of the page.
+export function TourInline({ at = null }) {
   const run = useRun();
   const step = stepOf(run);
   if (!run || !step || !step.inline) return null;
+  if (at ? step.inline !== at : step.inline !== true) return null;
   if (run.min) {
     return (
       <View style={[c.pausedStrip, { marginHorizontal: 14, marginBottom: 8 }]}>

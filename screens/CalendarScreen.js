@@ -24,6 +24,7 @@ import RingStats from '../components/RingStats';
 import { LinearGradient } from 'expo-linear-gradient';
 import Cycler from '../components/Cycler';
 import TourTarget from '../components/TourTarget';
+import { TourInline } from '../components/TourLayer';
 import { isTourTarget, stepOf, tourEvent, tourRunning, useRun } from '../tourRun';
 import ShareCalendarSheet from '../components/ShareCalendarSheet';
 import EventCountdown, { nextUpcoming } from '../components/EventCountdown';
@@ -242,10 +243,14 @@ export default function CalendarScreen({ navigation, route }) {
         </LinearGradient>
         {hasCountdown ? <EventCountdown events={events} onDetails={(e) => showEvent(e.id)} style={{ flex: 1 }} /> : null}
         </Cycler>
+        {/* The tour's tip about the top cards, right under them. */}
+        <TourInline at="cal.top" />
         </TourTarget>
 
         {/* ---------- Rolling calendar ---------- */}
         <TourTarget id="cal.grid" style={[s.card, lift, { paddingHorizontal: 10 }]} onTouchStart={touchCalendar}>
+          {/* The tour's tips about the calendar, at the top of its card. */}
+          <View style={{ marginHorizontal: -6 }}><TourInline at="cal.grid" /></View>
           <View style={s.titleRow}>
             <Text style={s.h}>{view === 'feelings' ? 'Feelings calendar' : view === 'medals' ? 'Ink calendar' : 'Rings calendar'}</Text>
             <TourTarget id="cal.share">
