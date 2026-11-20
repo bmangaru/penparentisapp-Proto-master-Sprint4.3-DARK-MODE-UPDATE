@@ -6,7 +6,8 @@
 //
 //   <FeelingsCard mix={monthFeelings(...)} monthName="November" />
 //     a ring of this month's feelings with the top face in the middle;
-//     the top three feelings as lines (how many times each)
+//     three lines: the top feelings (the top one's bar full), or the top two
+//     and "Others" in each one's colour
 //   <MonthMedalCardTop progress={monthProgress(...)} onSeeAll />
 //     "This month: November 2026 · First Frost"; a line for each tier
 //     ("313 of 500 words" … Diamond 10,000), so it's clear words are what count
@@ -56,9 +57,18 @@ function FeelingRing({ list, total, size = SIZE }) {
   );
 }
 
+// Three lines: with up to three feelings, one each; with more, the top two
+// and "Others" (the rest together, a bar in each one's colour). Bars are
+// measured against the biggest line, so the top feeling's bar is full.
+export function feelingLines(list) {
+  if (list.length <= 3) return list.map((m) => ({ id: m.id, n: m.n }));
+  const rest = list.slice(2);
+  return [...list.slice(0, 2).map((m) => ({ id: m.id, n: m.n })), { id: 'others', n: rest.reduce((a, m) => a + m.n, 0), parts: rest }];
+}
+
 export function FeelingsCard({ mix, monthName }) {
-  const top = mix.list.slice(0, 3);
-  const more = mix.list.length - top.length;
+  const lines = feelingLines(mix.list);
+  const scale = Math.max(1, ...lines.map((l) => l.n));
   return (
     <View style={s.card}>
       <View style={s.head}>
@@ -71,19 +81,20 @@ export function FeelingsCard({ mix, monthName }) {
           {mix.top ? <Face id={mix.top} size={46} animate /> : null}
         </View>
         <View style={s.lines}>
-          {top.length ? top.map((m) => (
+          {lines.length ? lines.map((m) => (
             <Line
               key={m.id}
-              name={feelingLabel(m.id).toUpperCase()}
-              color={feelingById(m.id)?.color || '#FFF'}
+              name={m.parts ? `OTHERS (${m.parts.length})` : feelingLabel(m.id).toUpperCase()}
+              color={m.parts ? '#FFFFFF' : feelingById(m.id)?.color || '#FFF'}
               value={`${m.n} ${m.n === 1 ? 'time' : 'times'}`}
               of={null}
-              bar={(m.n / mix.total) * 100}
+              bar={(m.n / scale) * 100}
+              segments={m.parts ? m.parts.map((x) => ({ pct: (x.n / scale) * 100, color: feelingById(x.id)?.color || '#FFF' })) : undefined}
             />
           )) : <Text style={s.empty}>No feelings picked yet this month.</Text>}
         </View>
       </View>
-      <Text style={s.note}>{more > 0 ? `+${more} more · ` : ''}Use the calendar below to see what you wrote and how you felt each day.</Text>
+      <Text style={s.note}>Use the calendar below to see what you wrote and how you felt each day.</Text>
     </View>
   );
 }

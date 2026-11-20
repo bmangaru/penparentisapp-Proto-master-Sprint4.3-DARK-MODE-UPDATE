@@ -97,7 +97,9 @@ function Chip({ text }) {
 // right, and a bar in the ring's colour running to the card's edge.
 // One labelled line with its bar (also used by the Calendar's Feelings and
 // Medals cards, so all the top cards read the same).
-export function Line({ name, color, value, of, pct, bar, noGoal }) {
+// segments: [{ pct, color }] draws a bar of several colours side by side
+// (the Feelings card's "Others" line) instead of one fill.
+export function Line({ name, color, value, of, pct, bar, noGoal, segments }) {
   const closed = pct != null && pct >= 100;
   const chip = overMultiple(pct);
   return (
@@ -113,7 +115,11 @@ export function Line({ name, color, value, of, pct, bar, noGoal }) {
         </View>
       </View>
       <View style={s.track}>
-        {bar ? <View style={[s.fill, { width: `${Math.max(3, Math.min(100, bar))}%`, backgroundColor: color }]} /> : null}
+        {segments ? (
+          <View style={{ flexDirection: 'row', height: '100%' }}>
+            {segments.map((g, i) => <View key={i} style={{ width: `${Math.max(1.5, g.pct)}%`, backgroundColor: g.color, marginRight: i < segments.length - 1 ? 1.5 : 0 }} />)}
+          </View>
+        ) : bar ? <View style={[s.fill, { width: `${Math.max(3, Math.min(100, bar))}%`, backgroundColor: color }]} /> : null}
       </View>
     </View>
   );
