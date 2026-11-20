@@ -170,8 +170,9 @@ export default function TourLayer({ host = 'root' }) {
             tip.measureInWindow((tx, ty, tw, th) => {
               // (A tip outside the spot, e.g. Home's under the header: the whole spot.)
               if (!th || ty < y - 1 || ty > y + h) { box({ x, y, w, h }); return; }
-              if (ty - y < h / 2) { const top = ty + th + 8; box({ x, y: top, w, h: Math.max(0, y + h - top) }); }
-              else box({ x, y, w, h: Math.max(0, ty - y) });
+              // A little gap either side, so the gold box never touches the tip.
+              if (ty - y < h / 2) { const top = ty + th + 14; box({ x, y: top, w, h: Math.max(0, y + h - top) }); }
+              else box({ x, y, w, h: Math.max(0, ty - y - 14) });
             });
           }
         }
@@ -820,21 +821,21 @@ function ProgressRing({ frac, light }) {
 // flush: no side inset (for a spot already inside the page's padding):
 // the Calendar shows its tips right under the top cards, or at the top of
 // the calendar card, like a part of the page.
-export function TourInline({ at = null, flush = false }) {
+export function TourInline({ at = null, flush = false, top = 0 }) {
   const run = useRun();
   const step = stepOf(run);
   if (!run || !step || !step.inline) return null;
   if (at ? step.inline !== at : step.inline !== true) return null;
   if (run.min) {
     return (
-      <View style={[c.pausedStrip, { marginHorizontal: flush ? 0 : 14, marginBottom: 8 }]}>
+      <View style={[c.pausedStrip, { marginHorizontal: flush ? 0 : 14, marginBottom: 8, marginTop: top }]}>
         <PausedCard run={run} slim />
       </View>
     );
   }
   // Registered as a spot of its own, so the tour can outline what's below it.
   return (
-    <TourTarget id={typeof step.inline === 'string' ? `inline:${step.inline}` : null} style={{ marginHorizontal: flush ? 0 : 14, marginBottom: 8 }}>
+    <TourTarget id={typeof step.inline === 'string' ? `inline:${step.inline}` : null} style={{ marginHorizontal: flush ? 0 : 14, marginBottom: 8, marginTop: top }}>
       <Bubble run={run} step={step} inline />
     </TourTarget>
   );

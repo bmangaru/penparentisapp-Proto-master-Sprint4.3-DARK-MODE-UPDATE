@@ -126,7 +126,7 @@ function Toggle({ value, onChange, label }) {
 function Example({ title, body, when, actions }) {
   return (
     <View style={s.eg} accessibilityLabel={`Example: ${title}. ${body}`}>
-      <View style={s.egIcon}><Image source={require('../assets/pen-parentis-logo.png')} style={{ width: 28, height: 28 }} resizeMode="cover" accessibilityIgnoresInvertColors /></View>
+      <View style={s.egIcon}><Image source={require('../assets/pen-icon.png')} style={{ width: 28, height: 28 }} resizeMode="cover" accessibilityIgnoresInvertColors /></View>
       <View style={{ flex: 1 }}>
         <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
           <Text style={s.egTitle} numberOfLines={1}>{title}</Text>

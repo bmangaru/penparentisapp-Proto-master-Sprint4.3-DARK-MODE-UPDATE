@@ -18,14 +18,18 @@ export default function WeekCarousel({ week, last, onPressDay, onOpenReview }) {
   const [w, setW] = useState(0);
   const [i, setI] = useState(1); // This week
   const ref = useRef(null);
+  // Where the strip starts (This week), set once: a new start position on
+  // every redraw made iOS jump and stick mid-swipe (as Cycler found).
+  const start = useRef(null);
+  if (w && !start.current) start.current = { x: w, y: 0 };
   const show = (n) => { setI(n); ref.current?.scrollTo({ x: n * w, animated: true }); };
   return (
     <View onLayout={(e) => setW(Math.round(e.nativeEvent.layout.width))}>
       {w ? (
         <ScrollView
           ref={ref} horizontal pagingEnabled showsHorizontalScrollIndicator={false} nestedScrollEnabled
-          contentOffset={{ x: w, y: 0 }}
-          onLayout={() => ref.current?.scrollTo({ x: i * w, animated: false })}
+          contentOffset={start.current}
+          scrollEventThrottle={16}
           onMomentumScrollEnd={(e) => setI(Math.round(e.nativeEvent.contentOffset.x / w))}
         >
           <View style={{ width: w }}>

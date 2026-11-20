@@ -291,7 +291,7 @@ export const CHAPTERS = [
         on: (ev, v) => ev === 'revealed' && v === 'bs.week',
       },
       {
-        target: 'bs.week', inline: 'bs.week', tab: 'Brainstorm', info: true, look: true,
+        target: 'bs.week', inline: 'bs.week', tab: 'Brainstorm', info: true, // (not look: swiping works; days and the review link are off)
         title: 'Your week at a glance', text: 'Seven sets of rings, Sunday to Saturday, with the week’s totals underneath. Tip: a day with all three rings closed is a day you met your goal. Swipe it to the right (or tap ‹ Last week) for last week and your week in review; a 🌙 marks a rest day.',
       },
       {
@@ -359,23 +359,15 @@ export const CHAPTERS = [
         text: 'Each day shows the faces you picked after writing. Wrote more than once? Your latest feeling is in front, with the one before it peeking out (and “+1” for more). Tap a day to see them all.',
       },
       {
-        target: 'cal.top', tab: 'Calendar', inline: 'cal.top', info: true, calView: 'feelings',
-        text: 'Look up: the top card switched too. It now shows how you’ve felt this month, and a pattern once there’s enough to tell.',
-      },
-      {
         target: 'cal.grid', tab: 'Calendar', inline: 'cal.grid', marks: ['cal.view.medals'], section: 'Monthly medals',
         text: 'Every month has a medal of its own.',
         task: 'Tap Medals.',
         on: (ev, v) => ev === 'cal-view' && v === 'medals',
       },
       {
-        target: 'cal.top', tab: 'Calendar', inline: 'cal.top', info: true, calView: 'medals',
-        title: `This month: ${THIS_MONTH.when} · ${THIS_MONTH.name}`,
-        text: 'Every month has a medal for you to try and earn! Words you write this month count toward this month’s medal: Bronze at 500 words, Silver at 1,000, Gold at 5,000, Diamond at 10,000. It starts fresh on the 1st, and a missed month never takes anything away.',
-      },
-      {
         target: 'cal.grid', tab: 'Calendar', inline: 'cal.grid', info: true, look: true, calView: 'medals', offNote: offInTour('The days', true),
-        text: 'In this view each day you wrote gets an ink drop with its words in green. Both are compared with your typical day over the last 7 days: more words is always a bigger drop and a darker green, and a big day for you gets a “!”. A little medal marks the day you reached a tier. Every month you’ve earned, year by year, is on the Medals page at the bottom of Brainstorm.',
+        title: `This month: ${THIS_MONTH.when} · ${THIS_MONTH.name}`,
+        text: 'Every month has a medal to earn: Bronze at 500 words, Silver at 1,000, Gold at 5,000, Diamond at 10,000. It starts fresh on the 1st, and a missed month never takes anything away. Here each day you wrote gets an ink drop with its words in green. Both are compared with your typical day over the last 7 days: more words is always a bigger drop and a darker green, and a big day for you gets a “!”. A little medal marks the day you reached a tier. Every month you’ve earned, year by year, is on the Medals page at the bottom of Brainstorm.',
       },
       {
         target: 'cal.grid', tab: 'Calendar', inline: 'cal.grid', marks: ['cal.share'], info: true, look: true, section: 'Share', offNote: offInTour('Share'),

@@ -244,7 +244,8 @@ export default function CalendarScreen({ navigation, route }) {
         {hasCountdown ? <EventCountdown events={events} onDetails={(e) => showEvent(e.id)} style={{ flex: 1 }} /> : null}
         </Cycler>
         {/* The tour's tip about the top cards, right under them. */}
-        <TourInline at="cal.top" />
+        {/* (top: room for the pulsing rings round the arrows above it.) */}
+        <TourInline at="cal.top" top={14} />
         </TourTarget>
 
         {/* ---------- Rolling calendar ---------- */}

@@ -263,8 +263,9 @@ export default function BrainstormHomeScreen({ navigation, route }) {
           <TourInline at="bs.week" flush />
           <WeekCarousel
             week={week} last={lastWeek}
-            onPressDay={(d) => navigation.navigate('BrainstormDay', { day: d.key })}
-            onOpenReview={() => navigation.navigate('WeekReview')}
+            // (Off during the tour, so a tap can't take you out of it; swiping still works.)
+            onPressDay={(d) => { if (!tourRunning()) navigation.navigate('BrainstormDay', { day: d.key }); }}
+            onOpenReview={() => { if (!tourRunning()) navigation.navigate('WeekReview'); }}
           />
         </TourTarget>
 
