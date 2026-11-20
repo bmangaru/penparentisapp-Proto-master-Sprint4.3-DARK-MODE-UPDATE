@@ -177,7 +177,7 @@ export default function OfflineLogSheet({ visible, onClose, onSave, sessions = [
         })}
       </View>
 
-      <MedalPreview preview={preview} day={day} isToday={isToday} />
+      <MedalPreview preview={preview} monthRow={monthRow} day={day} isToday={isToday} />
 
       {/* During the app tour you can try everything, but nothing is saved. */}
       <Pressable onPress={save} disabled={empty || saving || !!run} style={[s.cta, (empty || saving || !!run) && { opacity: 0.45 }]} accessibilityRole="button" accessibilityState={{ disabled: empty || saving || !!run }}>
@@ -281,7 +281,7 @@ function DayRingsCard({ preview, day, isToday }) {
 
 // "Counts toward" (bars that grow with this log) and "Only from writing in
 // Brainstorm" (badges). Tapping a row or badge opens a short note under it.
-function MedalPreview({ preview, day, isToday }) {
+function MedalPreview({ preview, monthRow, day, isToday }) {
   const [open, setOpen] = useState(null);
   useEffect(() => setOpen(null), [day]);
   if (!preview) return null;
@@ -298,7 +298,7 @@ function MedalPreview({ preview, day, isToday }) {
         <Text style={s.legendText}>So far, in your medal's colour</Text>
         <View style={[s.legendSwatch, { backgroundColor: ADDED_BAR, marginLeft: 12 }]} /><Text style={s.legendText}>This log</Text>
       </View>
-      <MedalSummary rows={[monthRow, ...preview.medals]} pending open={open} onToggle={toggle} />
+      <MedalSummary rows={monthRow ? [monthRow, ...preview.medals] : preview.medals} pending open={open} onToggle={toggle} />
 
       <View style={s.sep} />
       <Text style={s.countsHead}>✕  ONLY FROM WRITING IN BRAINSTORM</Text>
