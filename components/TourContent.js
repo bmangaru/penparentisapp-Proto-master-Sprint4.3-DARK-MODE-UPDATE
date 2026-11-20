@@ -326,7 +326,7 @@ export const CHAPTERS = [
       },
       {
         target: 'cal.grid', tab: 'Calendar', info: true, look: true, section: 'Your writing calendar', calView: 'rings', offNote: offInTour('The days', true),
-        text: 'Each day’s progress is shown as its own set of rings. The current week is at the top of the calendar; scroll up for earlier weeks. A gold star (★) marks a salon day. Tap a past day to read what you wrote that day.',
+        text: 'Each day’s progress is shown as its own set of rings. It shows four weeks at a time, starting with this week; ‹ Earlier and Later › move between weeks, and This week brings you back. A gold star (★) marks a salon day. Tap a past day to read what you wrote that day.',
       },
       {
         target: 'cal.view.feelings', tab: 'Calendar', section: 'Feelings', round: 999,
