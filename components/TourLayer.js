@@ -21,6 +21,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { BlackPen, PEN, TIP } from './IntroSplash';
 import { colors, isDark } from '../theme';
 import Medal from './Medal';
+import TourTarget from './TourTarget';
 import { MEDALS } from '../medals';
 import {
   getRun, getTarget, tourEvent, getTourChapters, minimizeTour, nextStep, revealTarget, scrollForStep, sectionOf, startChapter, stepOf, stopTour, swipeTab, topHost, useRun,
@@ -47,6 +48,9 @@ export default function TourLayer({ host = 'root' }) {
   const [bubble, setBubble] = useState({ key: null, h: 0 });
   const [ringRects, setRingRects] = useState(null); // step.rings: outline these spots one by one
   const [markRects, setMarkRects] = useState(null); // step.marks: pulsing gold rings ("tap here")
+  // Tips inside the page: the part of the spot that isn't the tip (what the
+  // tip is about), outlined in pulsing gold when there are no marks.
+  const [boxRect, setBoxRect] = useState(null);
   const pulse = useRef(new Animated.Value(1)).current;
   const scrolledFor = useRef(null);
   const hiddenSince = useRef(0); // when the spot's page got covered
@@ -90,6 +94,7 @@ export default function TourLayer({ host = 'root' }) {
     setMissing(false);
     setRingRects(null);
     setMarkRects(null);
+    setBoxRect(null);
     if (!step?.target) return undefined;
     const since = Date.now();
     const tick = () => {
@@ -135,6 +140,21 @@ export default function TourLayer({ host = 'root' }) {
           return;
         }
         setRect((r) => (r && r.x === x && r.y === y && r.w === w && r.h === h ? r : { x, y, w, h }));
+        // A tip inside the page: the spot minus the tip (it sits at the top of
+        // the spot, or at the bottom, as on the calendar's top cards).
+        if (typeof step.inline === 'string') {
+          const box = (b) => setBoxRect((p) => (p && p.x === b.x && p.y === b.y && p.w === b.w && p.h === b.h ? p : b));
+          const tip = getTarget(`inline:${step.inline}`)?.ref.current;
+          if (!tip?.measureInWindow) box({ x, y, w, h });
+          else {
+            tip.measureInWindow((tx, ty, tw, th) => {
+              // (A tip outside the spot, e.g. Home's under the header: the whole spot.)
+              if (!th || ty < y - 1 || ty > y + h) { box({ x, y, w, h }); return; }
+              if (ty - y < h / 2) { const top = ty + th + 8; box({ x, y: top, w, h: Math.max(0, y + h - top) }); }
+              else box({ x, y, w, h: Math.max(0, ty - y) });
+            });
+          }
+        }
         // "Scroll down to …" steps: done once the spot's top part is on screen
         // (you scroll yourself; the tour doesn't).
         if (step.reveal) {
@@ -272,7 +292,7 @@ export default function TourLayer({ host = 'root' }) {
   }, []);
 
   // The marks breathe, so they read as "tap me".
-  const marking = !!(markRects && markRects.length);
+  const marking = !!(markRects && markRects.length) || !!(boxRect && step?.inline && !step.noBox);
   useEffect(() => {
     if (!marking) return undefined;
     const loop = Animated.loop(Animated.sequence([
@@ -346,12 +366,31 @@ export default function TourLayer({ host = 'root' }) {
 
   // Tips shown inside the page (the writing page: TourInline): no dimming
   // and no floating bubble, just the pulsing "tap here" marks.
+  // In the page itself (inline: 'bs.start' etc.) the spot gets a pulsing gold
+  // box too, unless it has its own "tap here" marks. On "just look" steps the
+  // spot can't be tapped (so it can't take you out of the tour), but a drag
+  // on it still scrolls the page.
   if (step.inline) {
-    if (!markRects || !markRects.length) return null;
+    const bottom = Math.min(barTop.current || H, kb ? H - kb : H);
+    const marks = (markRects || []).filter((r) => { const cy = r.y + r.h / 2; return cy > insets.top && cy < bottom; });
+    // The box, clipped to what's on screen.
+    let vis = null;
+    if (boxRect && boxRect.h > 4) {
+      const top = Math.max(boxRect.y, insets.top);
+      const bot = Math.min(boxRect.y + boxRect.h, bottom);
+      if (bot - top > 12) vis = { x: boxRect.x, y: top, w: boxRect.w, h: bot - top };
+    }
+    const showBox = vis && !marks.length && !step.noBox;
+    const block = vis && step.look;
+    if (!marks.length && !showBox && !block) return null;
     return (
-      <View style={StyleSheet.absoluteFill} pointerEvents="none">
-        {markRects.filter((r) => { const cy = r.y + r.h / 2; const bottom = Math.min(barTop.current || H, kb ? H - kb : H); return cy > insets.top && cy < bottom; }).map((r, i) => (
-          <Animated.View key={`m${i}`} style={[c.abs, c.mark, { left: r.x - 5, top: r.y - 5, width: r.w + 10, height: r.h + 10, borderRadius: step.markRound ?? 999, opacity: pulse }]} />
+      <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+        {block ? <View {...dragProps} style={[c.abs, { left: vis.x, top: vis.y, width: vis.w, height: vis.h }]} /> : null}
+        {showBox ? (
+          <Animated.View pointerEvents="none" style={[c.abs, c.mark, { left: vis.x - 5, top: vis.y - 5, width: vis.w + 10, height: vis.h + 10, borderRadius: step.boxRound ?? 24, opacity: pulse }]} />
+        ) : null}
+        {marks.map((r, i) => (
+          <Animated.View key={`m${i}`} pointerEvents="none" style={[c.abs, c.mark, { left: r.x - 5, top: r.y - 5, width: r.w + 10, height: r.h + 10, borderRadius: step.markRound ?? 999, opacity: pulse }]} />
         ))}
       </View>
     );
@@ -692,10 +731,11 @@ export function TourInline({ at = null, flush = false }) {
       </View>
     );
   }
+  // Registered as a spot of its own, so the tour can outline what's below it.
   return (
-    <View style={{ marginHorizontal: flush ? 0 : 14, marginBottom: 8 }}>
+    <TourTarget id={typeof step.inline === 'string' ? `inline:${step.inline}` : null} style={{ marginHorizontal: flush ? 0 : 14, marginBottom: 8 }}>
       <Bubble run={run} step={step} inline />
-    </View>
+    </TourTarget>
   );
 }
 
