@@ -273,7 +273,7 @@ export default function CalendarScreen({ navigation, route }) {
         {/* ---------- Rolling calendar ---------- */}
         <TourTarget id="cal.grid" style={[s.card, lift, { paddingHorizontal: 10 }]} onTouchStart={touchCalendar}>
           <View style={s.titleRow}>
-            <Text style={s.h}>Your writing calendar</Text>
+            <Text style={s.h}>{view === 'feelings' ? 'Feelings calendar' : view === 'medals' ? 'Ink calendar' : 'Rings calendar'}</Text>
             <TourTarget id="cal.share">
               <Pressable onPress={() => setShareOpen(true)} style={s.shareBtn} hitSlop={6} accessibilityRole="button" accessibilityLabel={view === 'rings' ? 'Share your rings' : view === 'feelings' ? 'Share your feelings' : 'Share your medals'}>
                 <Ionicons name="share-outline" size={14} color="#FFFFFF" />
@@ -377,7 +377,7 @@ export default function CalendarScreen({ navigation, route }) {
                     feelings={view === 'feelings' ? feelingsByDay[k] || [] : null}
                     medal={view === 'medals' ? medalDays[k] || { words: 0, tier: null } : null}
                     selected={k === selected}
-                    hasEvent={!!byDay[k]}
+                    hasEvent={view === 'rings' && !!byDay[k]}
                     onPress={() => onPressDay(days[k])}
                   />
                 ))}
