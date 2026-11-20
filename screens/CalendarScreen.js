@@ -7,7 +7,7 @@
 //     through it, and "Current week" comes back. Earlier goes back to the
 //     week you first wrote; Later goes as far as the last upcoming event, and
 //     a "★ Next event in N days" note shows when it's out of view. Each day shows its rings (minutes, words,
-//     sessions); a big gold star marks event days.
+//     sessions); an event day's date is gold with a ★ (on every calendar).
 // Tapping a past day you wrote on opens what you wrote that day.
 //   • Previous salons: past salons on YouTube, the podcast on Spotify, and the
 //     "New episode in the feed" switch right under the Spotify button.
@@ -43,7 +43,7 @@ const PAGE = { rings: 0, feelings: 1, medals: 2 };
 const VIEW_OF = ['rings', 'feelings', 'medals'];
 import { TIER_LABEL } from '../medals';
 import { InkDrop, WordBadge, MedalPin } from '../components/InkDrop';
-import { monthDays, monthKeyOf, monthProgress } from '../monthMedals';
+import { monthDays, monthKey, monthKeyOf, monthProgress, splitMonth, typicalDay } from '../monthMedals';
 import { FEELINGS, feelingById, feelingLabel } from '../feelings';
 import { loadAll, useDataChange, useToday } from '../writingStore';
 
@@ -137,7 +137,6 @@ export default function CalendarScreen({ navigation, route }) {
   const nextIn = nextEvent ? Math.round((parseDayKey(nextEvent) - parseDayKey(today)) / 864e5) : 0;
   function showNextEvent() {
     if (!nextEvent) return;
-    if (view !== 'rings') setView('rings'); // stars show on the Rings calendar
     setPage(pageOf(nextEvent));
   }
   const rangeLabel = useMemo(() => {
@@ -167,8 +166,12 @@ export default function CalendarScreen({ navigation, route }) {
     for (const w of weeks) for (const k of w) months.add(monthKeyOf(k));
     for (const mk of months) {
       const { days: words, reached } = monthDays(data.sessions, mk);
-      for (const [k, n] of Object.entries(words)) map[k] = { words: n, tier: null };
-      for (const [tier, k] of Object.entries(reached)) map[k] = { ...(map[k] || { words: 0 }), tier };
+      // Drops and greens are sized against your typical day that month.
+      const { year, m } = splitMonth(mk);
+      const prev = monthKey(m === 0 ? year - 1 : year, (m + 11) % 12);
+      const typ = typicalDay(words, monthDays(data.sessions, prev).days);
+      for (const [k, n] of Object.entries(words)) map[k] = { words: n, tier: null, typ };
+      for (const [tier, k] of Object.entries(reached)) map[k] = { ...(map[k] || { words: 0, typ }), tier };
     }
     return map;
   }, [view, weeks, data]);
@@ -290,7 +293,7 @@ export default function CalendarScreen({ navigation, route }) {
                   </View>
                 ))}
                 <View style={[s.medalRow, s.medalRowLine]}>
-                  <View style={s.keyIcon}><Ionicons name="star" size={15} color={STAR} /></View>
+                  <View style={[s.dateRow, s.dateEvent]}><Ionicons name="star" size={9} color="#2A1A00" /><Text style={[s.cellNum, s.cellNumEvent]}>8</Text></View>
                   <Text style={s.medalRowName}>Event</Text>
                   <Text style={s.medalRowWords}>A salon or event that day</Text>
                 </View>
@@ -308,7 +311,7 @@ export default function CalendarScreen({ navigation, route }) {
                   </View>
                 ))}
               </View>
-              <Text style={s.legendText}>Your latest feeling is in front. Tap a day to see them all.</Text>
+              <Text style={s.legendText}>Your latest feeling is in front. Tap a day to see them all. A gold date with a ★ is an event.</Text>
             </View>
           ) : (
             // Key: the ink drops, then the four medals with the words each needs.
@@ -327,7 +330,7 @@ export default function CalendarScreen({ navigation, route }) {
                   </View>
                 ))}
               </View>
-              <Text style={s.legendText}>Every word you write this month counts toward its medal. A medal marks the day you reached it.</Text>
+              <Text style={s.legendText}>Drops and greens are compared with your typical day this month, so a big day for you stands out. Every word counts toward the month’s medal; a medal marks the day you reached it, and a gold date with a ★ is an event.</Text>
             </View>
           )}
           <View style={s.weekHead}>
@@ -344,7 +347,7 @@ export default function CalendarScreen({ navigation, route }) {
                     feelings={view === 'feelings' ? feelingsByDay[k] || [] : null}
                     medal={view === 'medals' ? medalDays[k] || { words: 0, tier: null } : null}
                     selected={k === selected}
-                    hasEvent={view === 'rings' && !!byDay[k]}
+                    hasEvent={!!byDay[k]}
                     onPress={() => onPressDay(days[k])}
                   />
                 ))}
@@ -370,8 +373,8 @@ export default function CalendarScreen({ navigation, route }) {
           </View>
           {page !== 0 ? <Text style={[s.hint, { marginTop: 4 }]}>{rangeLabel}</Text> : null}
           {/* Heads-up when the next event is off screen (or on another calendar). */}
-          {nextEvent && (!nextOnScreen || view !== 'rings') ? (
-            <Pressable onPress={showNextEvent} hitSlop={4} style={({ pressed }) => [s.nextEvent, pressed && { opacity: 0.8 }]} accessibilityRole="button" accessibilityHint="Shows it on the Rings calendar">
+          {nextEvent && !nextOnScreen ? (
+            <Pressable onPress={showNextEvent} hitSlop={4} style={({ pressed }) => [s.nextEvent, pressed && { opacity: 0.8 }]} accessibilityRole="button" accessibilityHint="Moves the calendar to that week">
               <Ionicons name="star" size={14} color={STAR} />
               <Text style={s.nextEventText}>
                 Next event {nextIn === 1 ? 'tomorrow' : `in ${nextIn} days`} · {parseDayKey(nextEvent).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
@@ -440,21 +443,25 @@ function DayCell({ day, selected, hasEvent, onPress, feelings, medal }) {
   return (
     <Pressable
       onPress={onPress}
-      style={[s.cell, medal?.tier && s.cellWon, selected && s.cellSelected, day.isToday && s.cellToday]}
+      style={[s.cell, selected && s.cellSelected, day.isToday && s.cellToday]}
       accessibilityRole="button"
       accessibilityLabel={`${date.toDateString()}${hasEvent ? ', event' : ''}${day.count ? `, ${day.words} words` : ''}${medal?.tier ? `, reached ${TIER_LABEL[medal.tier]}` : ''}${feelings && feelings.length ? `, felt ${feelings.map((f) => feelingLabel(f.feeling)).join(' then ')}` : ''}`}
     >
-      <Text style={[s.cellNum, day.isToday && s.cellNumToday, day.future && { color: colors.muted }]}>
-        {monthTag ? <Text style={s.monthTag}>{monthTag} </Text> : null}{n}
-      </Text>
+      {/* An event day: the date turns gold with a star (on every calendar). */}
+      <View style={[s.dateRow, hasEvent && s.dateEvent]}>
+        {hasEvent ? <Ionicons name="star" size={9} color="#2A1A00" /> : null}
+        <Text style={[s.cellNum, day.isToday && s.cellNumToday, day.future && { color: colors.muted }, hasEvent && s.cellNumEvent]}>
+          {monthTag ? <Text style={[s.monthTag, hasEvent && s.cellNumEvent]}>{monthTag} </Text> : null}{n}
+        </Text>
+      </View>
       <View>
         {feelings ? (
           <DayFaces feelings={feelings} wrote={day.count > 0} animate={day.isToday} />
         ) : medal ? (
           // An ink drop (bigger for more words) with the green "+words" badge.
           <View style={s.medalCell}>
-            <InkDrop words={medal.words} />
-            {medal.words > 0 ? <WordBadge words={medal.words} at={s.wordBadge} /> : null}
+            <InkDrop words={medal.words} typical={medal.typ} />
+            {medal.words > 0 ? <WordBadge words={medal.words} typical={medal.typ} at={s.wordBadge} /> : null}
           </View>
         ) : (
           <Rings
@@ -463,11 +470,6 @@ function DayCell({ day, selected, hasEvent, onPress, feelings, medal }) {
           />
         )}
         {medal?.tier ? <View style={s.pin} pointerEvents="none"><MedalPin tier={medal.tier} height={18} /></View> : null}
-        {hasEvent && (
-          <View style={s.star} pointerEvents="none">
-            <Ionicons name="star" size={22} color={STAR} style={s.starIcon} />
-          </View>
-        )}
       </View>
     </Pressable>
   );
@@ -528,6 +530,9 @@ const s = themed(() => ({
   cell: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: 12, borderWidth: 1.5, borderColor: 'transparent' },
   cellSelected: { backgroundColor: '#EEF2FB' },
   cellToday: { borderColor: colors.royal },
+  dateRow: { flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: 5, minHeight: 17, borderRadius: 999 },
+  dateEvent: { backgroundColor: STAR },
+  cellNumEvent: { color: '#2A1A00', fontWeight: '800' },
   cellNum: { fontSize: 11, fontWeight: '600', color: colors.ink },
   cellNumToday: { color: colors.royal, fontWeight: '800' },
   monthTag: { fontSize: 10, fontWeight: '800', color: '#8A5E12' },
@@ -565,7 +570,6 @@ const s = themed(() => ({
   medalCell: { width: 34, height: 32, alignItems: 'center', justifyContent: 'center' },
   wordBadge: { right: -14, bottom: -5 },
   pin: { position: 'absolute', top: -20, right: -12 },
-  cellWon: { backgroundColor: '#FFF6DE' },
   keyIcon: { width: 18, alignItems: 'center', justifyContent: 'center' },
   faceKey: { flexDirection: 'row', flexWrap: 'wrap', paddingVertical: 8, rowGap: 8 },
   faceKeyItem: { width: '16.66%', alignItems: 'center', gap: 2 },

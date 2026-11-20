@@ -144,10 +144,36 @@ export function milestoneParts(words) {
 // drop's area tracks the words): 5 words → a small dot, 100 → about a third
 // of the way, 1,000+ → the biggest.
 export const INK = '#16181D';
-export function inkSize(words, min = 12, max = 30) {
+//
+// With `typical` (your typical day: see typicalDay), drops are sized against
+// you rather than a fixed scale: a typical day is a medium drop, twice it or
+// more (or 1,000+ words) the biggest, and a light day a small one.
+export function inkSize(words, min = 12, max = 30, typical = null) {
   if (!words || words <= 0) return 0;
-  const t = Math.sqrt(Math.min(1000, words) / 1000);
+  const t = typical
+    ? (words >= 1000 ? 1 : Math.min(1, (words / typical / 2.2) ** 0.75))
+    : Math.sqrt(Math.min(1000, words) / 1000);
   return Math.round(min + (max - min) * t);
+}
+
+// Your typical day: the middle value (median) of the days you wrote, so one
+// huge day doesn't move it. days: { '2026-11-03': 150, … }. With fewer than 3
+// days, `earlier` (last month's days) are counted too. null with no days.
+export function typicalDay(days, earlier = null) {
+  let list = Object.values(days || {}).filter((n) => n > 0);
+  if (list.length < 3 && earlier) list = list.concat(Object.values(earlier).filter((n) => n > 0));
+  if (!list.length) return null;
+  list.sort((a, b) => a - b);
+  const m = list.length >> 1;
+  return list.length % 2 ? list[m] : (list[m - 1] + list[m]) / 2;
+}
+
+// How a day compares with your typical day: 0 (light) … 4 (big, "!").
+//   under 0.6× · 0.6–1× · 1–1.5× · 1.5–2× · 2× or more (1,000+ is always 4)
+export function dayLevel(words, typical) {
+  if (words >= 1000) return 4;
+  const r = words / typical;
+  return r < 0.6 ? 0 : r < 1 ? 1 : r < 1.5 ? 2 : r < 2 ? 3 : 4;
 }
 
 // The green "+words" badge on a day: pale lime for a few words, darker as it
@@ -167,9 +193,12 @@ export function shortWords(words) {
   }
   return String(words);
 }
-export function wordBadge(words) {
+// With `typical`, the green comes from dayLevel (compared with your month)
+// and the "!" marks a big day for you (2× typical or more, or 1,000+).
+export function wordBadge(words, typical = null) {
   if (!words || words <= 0) return null;
-  const g = WORD_GREENS.reduce((a, x) => (words >= x.from ? x : a), WORD_GREENS[0]);
-  const big = words >= 500;
+  const lv = typical ? dayLevel(words, typical) : null;
+  const g = lv != null ? WORD_GREENS[lv] : WORD_GREENS.reduce((a, x) => (words >= x.from ? x : a), WORD_GREENS[0]);
+  const big = lv != null ? lv === 4 : words >= 500;
   return { text: `+${shortWords(words)}${big ? '!' : ''}`, bg: g.bg, fg: g.fg, big };
 }

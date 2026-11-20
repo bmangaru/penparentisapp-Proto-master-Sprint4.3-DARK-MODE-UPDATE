@@ -326,7 +326,7 @@ export const CHAPTERS = [
       },
       {
         target: 'cal.grid', tab: 'Calendar', info: true, look: true, section: 'Your writing calendar', calView: 'rings', offNote: offInTour('The days', true),
-        text: 'Each day’s progress is shown as its own set of rings. It shows four weeks at a time: two weeks back, the current week, and next week. ‹ Earlier and Later › move between weeks, and Current week brings you back. When the next event is further ahead, a note tells you how many days away it is. A gold star (★) marks a salon day. Tap a past day to read what you wrote that day.',
+        text: 'Each day’s progress is shown as its own set of rings. It shows four weeks at a time: two weeks back, the current week, and next week. ‹ Earlier and Later › move between weeks, and Current week brings you back. When the next event is further ahead, a note tells you how many days away it is. A gold date with a ★ marks a salon or event day, on every calendar. Tap a past day to read what you wrote that day.',
       },
       {
         target: 'cal.view.feelings', tab: 'Calendar', section: 'Feelings', round: 999,
@@ -355,7 +355,7 @@ export const CHAPTERS = [
       },
       {
         target: 'cal.grid', tab: 'Calendar', info: true, look: true, calView: 'medals', offNote: offInTour('The days', true),
-        text: 'In this view each day you wrote gets an ink drop: the more words, the bigger the drop, with the words in green. A little medal marks the day you reached a tier. Every month you’ve earned, year by year, is on the Medals page at the bottom of Brainstorm.',
+        text: 'In this view each day you wrote gets an ink drop with its words in green. Both are compared with your typical day this month: a big day for you gets a bigger drop, a darker green and a “!”. A little medal marks the day you reached a tier. Every month you’ve earned, year by year, is on the Medals page at the bottom of Brainstorm.',
       },
       {
         target: 'cal.share', tab: 'Calendar', info: true, look: true, round: 999, section: 'Share', offNote: offInTour('Share'),

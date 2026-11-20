@@ -13,16 +13,16 @@ import Svg, { Defs, LinearGradient, Stop, ClipPath, G, Rect, Path, Circle, Polyg
 import { INK, inkSize, wordBadge } from '../monthMedals';
 
 // edge: a thin light rim, so the drop stands out on the dark blue share picture.
-export function InkDrop({ words, min = 12, max = 30, color = INK, edge = null }) {
-  const d = inkSize(words, min, max);
+export function InkDrop({ words, min = 12, max = 30, color = INK, edge = null, typical = null }) {
+  const d = inkSize(words, min, max, typical);
   if (!d) return null;
   return <View style={[{ width: d, height: d, borderRadius: d / 2, backgroundColor: color }, edge && { borderWidth: 1, borderColor: edge }]} />;
 }
 
 // at: where to pin it (absolute). It gets its own wide box there, so the
 // text is never squeezed by a small cell ("+150" not "+…").
-export function WordBadge({ words, at, border = '#FFFFFF', size = 10, align = 'flex-end' }) {
-  const b = wordBadge(words);
+export function WordBadge({ words, at, border = '#FFFFFF', size = 10, align = 'flex-end', typical = null }) {
+  const b = wordBadge(words, typical);
   if (!b) return null;
   const pad = size < 8 ? 2.5 : 4;
   const badge = (
