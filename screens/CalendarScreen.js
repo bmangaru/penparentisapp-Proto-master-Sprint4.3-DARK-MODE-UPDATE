@@ -290,13 +290,8 @@ export default function CalendarScreen({ navigation, route }) {
                     <Text style={s.medalRowWords}>{what}</Text>
                   </View>
                 ))}
-                <View style={[s.medalRow, s.medalRowLine]}>
-                  <View style={[s.dateRow, s.dateEvent]}><Ionicons name="star" size={9} color="#2A1A00" /><Text style={[s.cellNum, s.cellNumEvent]}>8</Text></View>
-                  <Text style={s.medalRowName}>Event</Text>
-                  <Text style={s.medalRowWords}>A salon or event that day</Text>
-                </View>
               </View>
-              <Text style={s.legendText}>A ring closes when you reach that day’s goal. Close all three for a full day.</Text>
+              <Text style={s.legendText}>A ring closes when you reach that day’s goal. Close all three for a full day, and a gold date with a <Text style={s.goldStar}>★</Text> is an event.</Text>
             </View>
           ) : view === 'feelings' ? (
             // Key: all twelve faces, six to a row, as in the feelings picker.
@@ -309,7 +304,7 @@ export default function CalendarScreen({ navigation, route }) {
                   </View>
                 ))}
               </View>
-              <Text style={s.legendText}>Your latest feeling is in front. Tap a day to see them all. A gold date with a ★ is an event.</Text>
+              <Text style={s.legendText}>Your latest feeling is in front. Tap a day to see them all, and a gold date with a <Text style={s.goldStar}>★</Text> is an event.</Text>
             </View>
           ) : (
             // Key: the ink drops, then the four medals with the words each needs.
@@ -328,7 +323,7 @@ export default function CalendarScreen({ navigation, route }) {
                   </View>
                 ))}
               </View>
-              <Text style={s.legendText}>Each day’s drop and green are compared with your 7 days before it, so a big day for you stands out. Every word counts toward the month’s medal; a medal marks the day you reached it, and a gold date with a ★ is an event.</Text>
+              <Text style={s.legendText}>Each day’s drop and green are compared with your 7 days before it, so a big day for you stands out. Every word counts toward the month’s medal; a medal marks the day you reached it, and a gold date with a <Text style={s.goldStar}>★</Text> is an event.</Text>
             </View>
           )}
           <View style={s.weekHead}>
@@ -530,6 +525,7 @@ const s = themed(() => ({
   cellToday: { borderColor: colors.royal },
   dateRow: { flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: 5, minHeight: 17, borderRadius: 999 },
   dateEvent: { backgroundColor: STAR },
+  goldStar: { color: STAR, fontWeight: '800' },
   cellNumEvent: { color: '#2A1A00', fontWeight: '800' },
   cellNum: { fontSize: 11, fontWeight: '600', color: colors.ink },
   cellNumToday: { color: colors.royal, fontWeight: '800' },
