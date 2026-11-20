@@ -245,3 +245,30 @@ export function wordBadge(words, typical = null) {
   const big = lv != null ? lv === 4 : words >= 500;
   return { text: `+${shortWords(words)}${big ? '!' : ''}`, bg: g.bg, fg: g.fg, big };
 }
+
+// ---------- New medal celebrations ----------
+// The month's tiers a session (or an offline log) crossed, one item per tier,
+// Bronze first: 4,000 → 6,000 words gives Gold; 0 → 5,000 gives Bronze,
+// Silver and Gold. Shaped like medals.diffMedals' newlyEarned items.
+export function monthTiersCrossed(mk, before, after) {
+  const out = [];
+  const p = monthProgress([], mk, after);
+  MONTH_TIERS.forEach((t, i) => {
+    if (before < t && after >= t) out.push({ ...p, earnedTier: TIERS[i], earnedTierIndex: i, threshold: t });
+  });
+  return out;
+}
+
+// The order celebrations play in: this month's medal first, then each other
+// medal in turn; for every medal, its tiers in order (Bronze, Silver, Gold,
+// Diamond), so a big offline log plays each one, smallest first.
+export function celebrationOrder(list) {
+  const groups = [];
+  for (const m of list || []) {
+    let g = groups.find((x) => x.id === m.id);
+    if (!g) { g = { id: m.id, monthly: !!m.monthly, items: [] }; groups.push(g); }
+    g.items.push(m);
+  }
+  groups.sort((a, b) => b.monthly - a.monthly);
+  return groups.flatMap((g) => g.items.sort((a, b) => a.earnedTierIndex - b.earnedTierIndex));
+}

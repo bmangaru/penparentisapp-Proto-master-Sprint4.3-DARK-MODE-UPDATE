@@ -19,6 +19,7 @@ import { loadAll, syncMedals, useToday } from '../writingStore';
 import { MonthMedalCard } from '../components/MonthMedal';
 import { medalYears, monthDays, monthKeyOf, monthProgress, yearMedals, yearSummary } from '../monthMedals';
 import { parseDayKey } from '../writingLogic';
+import MedalPopup, { replayItem } from '../components/MedalPopup';
 
 export default function MedalsScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -139,6 +140,7 @@ export default function MedalsScreen({ navigation }) {
 // A tapped month: its name, tier, words, and the day each tier was reached.
 function MonthNote({ sessions, mk }) {
   const p = monthProgress(sessions, mk);
+  const [again, setAgain] = useState(false); // its celebration, shown again
   const { reached, days } = monthDays(sessions, mk);
   const fmt = (k) => parseDayKey(k).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   return (
@@ -152,7 +154,13 @@ function MonthNote({ sessions, mk }) {
         {Object.keys(reached).length ? (
           <Text style={s.noteText}>{TIERS.filter((t) => reached[t]).map((t) => `${TIER_LABEL[t]} · ${fmt(reached[t])}`).join('   ')}</Text>
         ) : null}
+        {p.tier ? (
+          <Pressable onPress={() => setAgain(true)} hitSlop={6} accessibilityRole="button" accessibilityHint="Shows this month's medal celebration again, with Share">
+            <Text style={s.noteLink}>✦ See the celebration again</Text>
+          </Pressable>
+        ) : null}
       </View>
+      {again ? <MedalPopup medals={[replayItem(p)]} replay onClose={() => setAgain(false)} /> : null}
     </View>
   );
 }
@@ -179,6 +187,7 @@ const s = themed(() => ({
   note: { flexDirection: 'row', gap: 12, alignItems: 'center', backgroundColor: '#EEF2FB', margin: 8, marginTop: 0, borderRadius: 12, padding: 10 },
   noteTitle: { fontSize: 14, fontWeight: '800', color: colors.ink },
   noteText: { fontSize: 12, color: colors.body },
+  noteLink: { marginTop: 4, fontSize: 12.5, fontWeight: '800', color: colors.royal },
   header: { paddingHorizontal: space.lg, paddingBottom: space.lg },
   back: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' },
   backText: { color: colors.cream, fontSize: 14, fontWeight: '700' },

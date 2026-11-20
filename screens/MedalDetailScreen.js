@@ -11,7 +11,7 @@ import Medal, { TIER_STYLE } from '../components/Medal';
 import { colors, radius, space, themed } from '../theme';
 import { TIER_LABEL, TIERS, formatAmount, tierBarColor } from '../medals';
 import { syncMedals } from '../writingStore';
-import { emailPenParentis } from '../components/MedalPopup';
+import MedalPopup, { emailPenParentis, replayItem } from '../components/MedalPopup';
 
 function shortDate(iso) {
   return iso ? new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '';
@@ -20,6 +20,7 @@ function shortDate(iso) {
 export default function MedalDetailScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
   const [data, setData] = useState(null);
+  const [again, setAgain] = useState(false); // the celebration, shown again
 
   useFocusEffect(
     useCallback(() => {
@@ -50,6 +51,11 @@ export default function MedalDetailScreen({ navigation, route }) {
         </Text>
         <Text style={s.name}>{m.name}</Text>
         <Text style={s.desc}>{m.desc}</Text>
+        {m.tier ? (
+          <Pressable style={s.again} onPress={() => setAgain(true)} accessibilityRole="button" accessibilityHint="Shows this medal's celebration again, with Share">
+            <Text style={s.againText}>✦  See the celebration again</Text>
+          </Pressable>
+        ) : null}
         {m.tier === 'diamond' && (
           // Diamond: the same "Email Pen Parentis" as the popup, for "Maybe later".
           <Pressable style={s.email} onPress={() => emailPenParentis(m, 'diamond', m.tiers[3])} accessibilityRole="button">
@@ -95,11 +101,14 @@ export default function MedalDetailScreen({ navigation, route }) {
           );
         })}
       </View>
+      {again ? <MedalPopup medals={[replayItem(m)]} replay onClose={() => setAgain(false)} /> : null}
     </Screen>
   );
 }
 
 const s = themed(() => ({
+  again: { marginTop: 10, minHeight: 40, paddingHorizontal: 16, borderRadius: 999, borderWidth: 1.5, borderColor: colors.royal, justifyContent: 'center' },
+  againText: { color: colors.royal, fontSize: 14, fontWeight: '800' },
   back: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' },
   backText: { color: colors.royal, fontSize: 14, fontWeight: '700' },
   email: { backgroundColor: '#4B3FB8', borderRadius: radius.md, minHeight: 46, paddingHorizontal: 22, alignItems: 'center', justifyContent: 'center', marginTop: 6 },

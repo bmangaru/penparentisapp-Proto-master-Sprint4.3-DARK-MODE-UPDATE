@@ -133,9 +133,16 @@ export default function BrainstormHomeScreen({ navigation, route }) {
   // An offline log can cross several of the month's tiers at once (say 5,000
   // words): each one celebrates in turn, Bronze first, with the other medals.
   async function onSaveOffline(day, values) {
-    const mk = monthKeyOf(day);
-    const before = monthWords(sessions, mk);
-    const crossed = monthTiersCrossed(mk, before, before + (values.words || 0));
+    // Saving comes first and never waits on the celebration: if working out
+    // the month's tiers fails, the log is still saved (just no month pages).
+    let crossed = [];
+    try {
+      const mk = monthKeyOf(day);
+      const before = monthWords(sessions, mk);
+      crossed = monthTiersCrossed(mk, before, before + (values.words || 0));
+    } catch (e) {
+      console.warn('Month medal check failed', e);
+    }
     await addOfflineSession(day, values);
     setOfflineOpen(false);
     setTimeout(() => {
