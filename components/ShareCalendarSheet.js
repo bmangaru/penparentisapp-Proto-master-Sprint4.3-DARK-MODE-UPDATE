@@ -173,22 +173,29 @@ export default function ShareCalendarSheet({ visible, onClose, mode = 'rings', s
 
           {mode === 'medals' && medalLook === 'ink' ? (
             // The ink-drop calendar: each month with the medal it earned by its name.
-            <View style={[s.months, { gap }]}>
+            <View style={[s.months, { gap, justifyContent: 'center' }]}>
               {months.map((m) => {
                 const mk = monthKey(m.year, m.month);
                 const p = medals.find((x) => x.monthKey === mk);
                 const { days = {}, tierOn = {} } = ink[mk] || {};
+                // One month: big drops with the badge on the drop. 3 and 6
+                // months: two months to a row (room for each day's "+words"
+                // under its drop).
                 const one = perRow === 1;
-                const cellW = monthW / 7;
-                const cellH = one ? ring + 14 : ring + 3;
+                const mW = one ? monthW : (inner - gap) / 2;
+                const cellW = mW / 7;
+                const drop = Math.floor(cellW - (one ? 12 : 5));
+                const badgeH = one ? 0 : 11;
+                const cellH = one ? drop + 14 : drop + badgeH + 3;
                 return (
-                  <View key={mk} style={{ width: monthW }}>
+                  <View key={mk} style={{ width: mW }}>
                     <View style={s.inkHead}>
-                      <Text style={[s.mon, { marginTop: 0, marginBottom: 0 }, !one && { fontSize: 9 }]} numberOfLines={1}>
+                      <Text style={[s.mon, { marginTop: 0, marginBottom: 0 }, !one && { fontSize: 9.5 }]} numberOfLines={1}>
                         {new Date(m.year, m.month, 1).toLocaleDateString('en-US', { month: one ? 'long' : 'short' }).toUpperCase()}
                       </Text>
-                      {p && p.tier ? <MedalPin tier={p.tier} height={one ? 22 : 15} /> : null}
+                      {p && p.tier ? <MedalPin tier={p.tier} height={one ? 22 : 16} /> : null}
                       {one && p ? <Text style={s.inkName} numberOfLines={1}>{p.name} · {p.tier ? TIER_LABEL[p.tier] : 'on the way'} · {p.value.toLocaleString()} words</Text> : null}
+                      {!one && p && p.value > 0 ? <Text style={s.inkTotal} numberOfLines={1}>{p.value.toLocaleString()} words</Text> : null}
                     </View>
                     {monthGrid(m.year, m.month).map((row, r) => (
                       <View key={r} style={s.week}>
@@ -196,12 +203,15 @@ export default function ShareCalendarSheet({ visible, onClose, mode = 'rings', s
                           if (!k) return <View key={c} style={{ width: cellW, height: cellH }} />;
                           const w = days[k] || 0;
                           return (
-                            <View key={k} style={{ width: cellW, height: cellH, alignItems: 'center', justifyContent: 'center' }}>
-                              {w > 0
-                                ? <InkDrop words={w} min={Math.max(4, ring * 0.32)} max={ring} color="#0B0C10" edge="rgba(255,255,255,0.45)" />
-                                : <View style={[s.blank, { width: ring * 0.22, height: ring * 0.22, borderRadius: ring, opacity: k > today ? 0.4 : 1 }]} />}
-                              {one && w > 0 ? <WordBadge words={w} size={8.5} border="#1B3FA0" style={s.inkBadge} /> : null}
-                              {one && tierOn[k] ? <View style={s.inkPin}><MedalPin tier={tierOn[k]} height={16} /></View> : null}
+                            <View key={k} style={{ width: cellW, height: cellH, alignItems: 'center', justifyContent: one ? 'center' : 'flex-start', paddingTop: one ? 0 : 1 }}>
+                              <View style={{ width: drop, height: drop, alignItems: 'center', justifyContent: 'center' }}>
+                                {w > 0
+                                  ? <InkDrop words={w} min={Math.max(4, drop * 0.22)} max={drop} color="#0B0C10" edge="rgba(255,255,255,0.45)" />
+                                  : <View style={[s.blank, { width: drop * 0.2, height: drop * 0.2, borderRadius: drop, opacity: k > today ? 0.4 : 1 }]} />}
+                              </View>
+                              {w > 0 && one ? <WordBadge words={w} size={8.5} border="#1B3FA0" at={s.inkBadge} /> : null}
+                              {w > 0 && !one ? <WordBadge words={w} size={6.5} border={null} at={s.inkBadgeSmall} align="center" /> : null}
+                              {tierOn[k] ? <View style={[s.inkPin, !one && { top: -3, right: -2 }]}><MedalPin tier={tierOn[k]} height={one ? 16 : 11} /></View> : null}
                             </View>
                           );
                         })}
@@ -321,7 +331,10 @@ const s = themed(() => ({
   lookText: { fontSize: 12.5, fontWeight: '800', color: '#5A6484' },
   inkHead: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4, marginBottom: 4, minHeight: 16 },
   inkName: { flex: 1, fontSize: 11, color: 'rgba(255,255,255,0.85)' },
-  inkBadge: { position: 'absolute', bottom: -1, right: -2 },
+  inkBadge: { bottom: -1, right: -2 },
+  // under the drop, centred on the day (may run a little into its neighbours)
+  inkBadgeSmall: { bottom: 1, left: '50%', marginLeft: -40 },
+  inkTotal: { flex: 1, textAlign: 'right', fontSize: 9.5, fontWeight: '800', color: '#B8F07A' },
   inkPin: { position: 'absolute', top: -2, right: 0 },
   blank: { backgroundColor: 'rgba(255,255,255,0.18)' },
   medName: { fontSize: 18, fontWeight: '800', color: '#FFFFFF' },

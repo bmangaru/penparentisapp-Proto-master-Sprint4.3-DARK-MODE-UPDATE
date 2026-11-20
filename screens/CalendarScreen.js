@@ -305,18 +305,20 @@ export default function CalendarScreen({ navigation, route }) {
             <Text style={[s.legendText, s.legend]}>Your latest feeling is in front. Tap a day to see them all.</Text>
           ) : (
             // Key: the ink drops, then the four medals with the words each needs.
-            <View style={s.legend}>
+            <View style={[s.legend, { flexDirection: 'column', gap: 7 }]}>
               <View style={s.legendItem}>
-                <View style={s.dropsKey}><InkDrop words={3} min={6} max={14} /><InkDrop words={80} min={6} max={14} /><InkDrop words={1000} min={6} max={14} /></View>
-                <Text style={s.legendText}>Bigger drop = more words</Text>
+                <View style={s.dropsKey}><InkDrop words={5} min={5} max={14} /><InkDrop words={150} min={5} max={14} /><InkDrop words={1000} min={5} max={14} /></View>
+                <Text style={s.legendText}>Bigger drop = more words that day</Text>
               </View>
-              {[['bronze', '500'], ['silver', '1k'], ['gold', '5k'], ['diamond', '10k']].map(([t, n]) => (
-                <View key={t} style={s.legendItem}>
-                  <MedalPin tier={t} height={15} />
-                  <Text style={s.legendText}>{TIER_LABEL[t]} {n}</Text>
-                </View>
-              ))}
-              <Text style={[s.legendText, { width: '100%' }]}>Every word you write this month counts toward its medal. A medal marks the day you reached it.</Text>
+              <View style={s.medalKey}>
+                {[['bronze', '500'], ['silver', '1k'], ['gold', '5k'], ['diamond', '10k']].map(([t, n]) => (
+                  <View key={t} style={s.legendItem}>
+                    <MedalPin tier={t} height={15} />
+                    <Text style={s.legendText} numberOfLines={1}>{TIER_LABEL[t]} {n}</Text>
+                  </View>
+                ))}
+              </View>
+              <Text style={s.legendText}>Every word you write this month counts toward its medal. A medal marks the day you reached it.</Text>
             </View>
           )}
           <View style={s.weekHead}>
@@ -437,7 +439,7 @@ function DayCell({ day, selected, hasEvent, onPress, feelings, medal }) {
           // An ink drop (bigger for more words) with the green "+words" badge.
           <View style={s.medalCell}>
             <InkDrop words={medal.words} />
-            {medal.words > 0 ? <WordBadge words={medal.words} style={s.wordBadge} /> : null}
+            {medal.words > 0 ? <WordBadge words={medal.words} at={s.wordBadge} /> : null}
           </View>
         ) : (
           <Rings
@@ -544,8 +546,9 @@ const s = themed(() => ({
 
   // Medals view day cells: an ink drop and "+words"; a medal on the day a tier was reached
   medalCell: { width: 34, height: 32, alignItems: 'center', justifyContent: 'center' },
-  wordBadge: { position: 'absolute', right: -13, bottom: -5 },
+  wordBadge: { right: -14, bottom: -5 },
   pin: { position: 'absolute', top: -20, right: -12 },
   cellWon: { backgroundColor: '#FFF6DE' },
+  medalKey: { flexDirection: 'row', justifyContent: 'space-between', gap: 4 },
   dropsKey: { flexDirection: 'row', alignItems: 'center', gap: 2 },
 }));

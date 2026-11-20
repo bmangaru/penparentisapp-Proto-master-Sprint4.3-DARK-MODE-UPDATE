@@ -19,14 +19,19 @@ export function InkDrop({ words, min = 12, max = 30, color = INK, edge = null })
   return <View style={[{ width: d, height: d, borderRadius: d / 2, backgroundColor: color }, edge && { borderWidth: 1, borderColor: edge }]} />;
 }
 
-export function WordBadge({ words, style, border = '#FFFFFF', size = 10 }) {
+// at: where to pin it (absolute). It gets its own wide box there, so the
+// text is never squeezed by a small cell ("+150" not "+…").
+export function WordBadge({ words, at, border = '#FFFFFF', size = 10, align = 'flex-end' }) {
   const b = wordBadge(words);
   if (!b) return null;
-  return (
-    <View style={[{ backgroundColor: b.bg, borderRadius: 999, borderWidth: 1.5, borderColor: border, paddingHorizontal: 4, paddingVertical: 1.5 }, style]}>
-      <Text style={{ color: b.fg, fontSize: size, fontWeight: '800', fontVariant: ['tabular-nums'] }} numberOfLines={1}>{b.text}</Text>
+  const pad = size < 8 ? 2.5 : 4;
+  const badge = (
+    <View style={{ backgroundColor: b.bg, borderRadius: 999, borderWidth: border ? 1.5 : 0, borderColor: border || 'transparent', paddingHorizontal: pad, paddingVertical: size < 8 ? 0.5 : 1.5, flexShrink: 0 }}>
+      <Text style={{ color: b.fg, fontSize: size, lineHeight: Math.round(size * 1.2), fontWeight: '800', fontVariant: ['tabular-nums'] }}>{b.text}</Text>
     </View>
   );
+  if (!at) return badge;
+  return <View pointerEvents="none" style={[{ position: 'absolute', width: 80, alignItems: align }, at]}>{badge}</View>;
 }
 
 const PIN = {

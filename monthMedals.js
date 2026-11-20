@@ -140,11 +140,13 @@ export function milestoneParts(words) {
 // ---------- The ink-drop calendar ----------
 // Each day you wrote gets an ink drop: the more words, the bigger the drop.
 // Even a few words leave a clear dot (min), and the biggest drop still fits
-// under the date (max). Grows on a log scale: 1 → min, 1,000+ → max.
+// under the date (max). Grows with the square root of the words (so the
+// drop's area tracks the words): 5 words → a small dot, 100 → about a third
+// of the way, 1,000+ → the biggest.
 export const INK = '#16181D';
 export function inkSize(words, min = 12, max = 30) {
   if (!words || words <= 0) return 0;
-  const t = Math.min(1, Math.log10(Math.max(1, words)) / 3);
+  const t = Math.sqrt(Math.min(1000, words) / 1000);
   return Math.round(min + (max - min) * t);
 }
 
