@@ -355,7 +355,7 @@ export const CHAPTERS = [
       },
       {
         target: 'cal.grid', tab: 'Calendar', info: true, look: true, calView: 'medals', offNote: offInTour('The days', true),
-        text: 'In this view each day you wrote gets an ink drop with its words in green. Both are compared with your typical day this month: a big day for you gets a bigger drop, a darker green and a “!”. A little medal marks the day you reached a tier. Every month you’ve earned, year by year, is on the Medals page at the bottom of Brainstorm.',
+        text: 'In this view each day you wrote gets an ink drop with its words in green. Both are compared with your 7 days before it: a big day for you gets a bigger drop, a darker green and a “!”. A little medal marks the day you reached a tier. Every month you’ve earned, year by year, is on the Medals page at the bottom of Brainstorm.',
       },
       {
         target: 'cal.share', tab: 'Calendar', info: true, look: true, round: 999, section: 'Share', offNote: offInTour('Share'),

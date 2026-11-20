@@ -156,24 +156,39 @@ export function inkSize(words, min = 12, max = 30, typical = null) {
   return Math.round(min + (max - min) * t);
 }
 
-// Your typical day: the middle value (median) of the days you wrote, so one
-// huge day doesn't move it. days: { '2026-11-03': 150, … }.
-// Until the month has 7 writing days, it's your last 7 writing days: this
-// month's, topped up with the latest from `earlier` (last month's days). So
-// Dec 1 is compared with your last week or so of November, not with nothing.
-// A brand-new writer's first day is their own typical day. null with no days.
-export const TYPICAL_DAYS = 7;
-export function typicalDay(days, earlier = null) {
-  let list = Object.values(days || {}).filter((n) => n > 0);
-  if (list.length < TYPICAL_DAYS && earlier) {
-    const recent = Object.keys(earlier).filter((k) => earlier[k] > 0).sort().reverse()
-      .slice(0, TYPICAL_DAYS - list.length).map((k) => earlier[k]);
-    list = list.concat(recent);
-  }
+// The middle value (median) of some days' words, so one huge day doesn't
+// move it. null with none.
+export function typicalDay(days) {
+  const list = Object.values(days || {}).filter((n) => n > 0);
   if (!list.length) return null;
   list.sort((a, b) => a - b);
   const m = list.length >> 1;
   return list.length % 2 ? list[m] : (list[m - 1] + list[m]) / 2;
+}
+
+// Words written each day, all time: { '2026-11-03': 150, … }
+export function dayTotals(sessions) {
+  const out = {};
+  for (const s of sessions) if (s.day) out[s.day] = (out[s.day] || 0) + (s.words || 0);
+  return out;
+}
+
+// A day's typical day: your writing days in the 7 days before it (not
+// counting the day itself). So a day is always compared with your most
+// recent week; nothing older ever counts (back after a month away, nothing
+// stale), and a day's colour never changes later. With no writing in the 7
+// days before (a first day, or the first day back), the day is its own
+// typical day: a medium drop and green. null on a day with no words.
+export const RECENT_DAYS = 7;
+export function recentTypical(totals, key) {
+  const [y, mo, d] = key.split('-').map(Number);
+  const prev = {};
+  for (let i = 1; i <= RECENT_DAYS; i++) {
+    const t = new Date(Date.UTC(y, mo - 1, d - i));
+    const k = t.toISOString().slice(0, 10);
+    if (totals[k] > 0) prev[k] = totals[k];
+  }
+  return typicalDay(prev) ?? (totals[key] > 0 ? totals[key] : null);
 }
 
 // How a day compares with your typical day: 0 (light) … 4 (big, "!").
