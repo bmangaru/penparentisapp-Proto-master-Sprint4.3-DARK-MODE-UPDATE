@@ -23,6 +23,7 @@ import DonorCrawl from '../components/DonorCrawl';
 import BlogCarousel from '../components/BlogCarousel';
 import TourCard from '../components/TourCard';
 import TourTarget from '../components/TourTarget';
+import { TourInline } from '../components/TourLayer';
 import { tourEvent } from '../tourRun';
 import { colors, lift, radius, space, themed } from '../theme';
 import { LINKS } from '../links';
@@ -79,9 +80,11 @@ export default function HomeScreen() {
       />
 
       <View style={[s.pad, { paddingBottom: 0 }]}>
+        <TourInline at="home.top" flush />
         <TourCard />
-        <TourTarget id="home.blog"><BlogCarousel /></TourTarget>
+        <TourTarget id="home.blog"><TourInline at="home.blog" flush /><BlogCarousel /></TourTarget>
         <TourTarget id="home.socials" style={{ gap: 9, marginTop: space.md }}>
+        <TourInline at="home.socials" flush />
         <Pressable onPress={() => go(LINKS.website)} style={({ pressed }) => [s.web, pressed && { opacity: 0.85 }]} accessibilityRole="link" accessibilityLabel="Visit penparentis.org">
           <Image source={require('../assets/pen-parentis-logo.png')} style={s.webLogo} resizeMode="cover" accessibilityIgnoresInvertColors />
           <Text style={s.webText}>Visit penparentis.org</Text>
@@ -97,6 +100,7 @@ export default function HomeScreen() {
 
       {/* Get Karma, the thank-you and the supporters scroll (one spot for the tour). */}
       <TourTarget id="home.supporters">
+      <TourInline at="home.supporters" />
       <View style={[s.pad, { paddingTop: 9 }]}>
         <Pressable onPress={() => openLink(LINKS.donate)}>
           <LinearGradient

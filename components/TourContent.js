@@ -17,7 +17,9 @@
 //   steps: start on a new line with the keyboard up).
 //   subsection ('Title': an extra part shown as e.g. 5.2a), noTyping (the
 //   writing page can't be typed in during this step), marks ([ids] pulsing
-//   "tap here" rings), noRing, inline (the tip sits inside the writing page),
+//   "tap here" rings), noRing, inline (the tip sits inside the page instead
+//   of over it: true = the writing page; 'bs.today' etc. = the
+//   <TourInline at="bs.today" /> placed at the top of that spot),
 //   offNote (a 🔒 line in the tips box: this button is off during the tour).
 // Every chapter now runs on the app. (TourModal.js can still show chapters
 // made of `cards` — a picture, a title and a few sentences — if one is added.)
@@ -47,7 +49,7 @@ const onWriter = () => !!getTarget('writer.page');
 const toWriter = (why) => [
   tapTab('Brainstorm', 'Back to Brainstorm', why, { skipIf: onWriter }),
   {
-    target: 'bs.start', tab: 'Brainstorm', skipIf: onWriter,
+    target: 'bs.start', inline: 'bs.start', marks: ['bs.startBtn'], markRound: 16, tab: 'Brainstorm', skipIf: onWriter,
     text: 'Open the writing page. It picks up where you left off today.',
     task: 'Tap the big blue button.', on: (ev) => ev === 'writer-open',
   },
@@ -59,7 +61,7 @@ export const CHAPTERS = [
     steps: [
       { kind: 'welcome', go: { tab: 'Home' }, section: 'Welcome' },
       {
-        target: 'home.settings', tab: 'Home', round: 20, section: 'Settings',
+        target: 'home.settings', tab: 'Home', inline: 'home.top', marks: ['home.settings'], markRound: 20, section: 'Settings',
         text: 'Settings lives here on the Home page. Here you control how the app looks, and find this tour if you ever need a refresher.',
         task: 'Tap ⚙ Settings.', on: (ev, v) => ev === 'sheet-open' && v === 'settings',
       },
@@ -96,7 +98,7 @@ export const CHAPTERS = [
     steps: [
       tapTab('Home', 'Back to Home', 'Every chapter starts from the tab bar, so you get to know where everything is.', { section: 'From the blog' }),
       {
-        target: 'home.blog', tab: 'Home',
+        target: 'home.blog', inline: 'home.blog', tab: 'Home',
         text: 'The newest blog posts from penparentis.org. Tap a blog post to read it right in the app. (Normally the posts move on by themselves every 10 seconds; that’s paused for the tour.)',
         task: 'Swipe, or tap the arrows, to see 3 posts.', marks: ['blog.prev', 'blog.next'],
         on: (ev, v, d) => {
@@ -108,12 +110,12 @@ export const CHAPTERS = [
         doneText: 'Keep looking as long as you like, then go on.', manual: true, nextLabel: 'Ready to go on ›',
       },
       {
-        target: 'home.socials', tab: 'Home', section: 'Website & socials',
+        target: 'home.socials', inline: 'home.socials', tab: 'Home', section: 'Website & socials',
         info: true, look: true, offNote: offInTour('These buttons', true),
         text: 'Visit penparentis.org, or follow Pen Parentis on Facebook, Instagram, LinkedIn, X and Bluesky. Each button shows the account it opens.',
       },
       {
-        target: 'home.supporters', tab: 'Home', info: true, look: true, section: 'Our supporters', offNote: offInTour('Get Karma'),
+        target: 'home.supporters', inline: 'home.supporters', tab: 'Home', info: true, look: true, section: 'Our supporters', offNote: offInTour('Get Karma'),
         text: 'Get Karma keeps the salons free. The names scrolling here are the organizations and people who keep Pen Parentis going. Thank you!',
       },
     ],
@@ -123,11 +125,11 @@ export const CHAPTERS = [
     steps: [
       tapTab('Brainstorm', 'Brainstorm', 'On the tab bar, the pencil is Brainstorm: where you write and set your goals.', { section: 'Your three rings' }),
       {
-        target: 'bs.today', tab: 'Brainstorm', info: true, look: true,
+        target: 'bs.today', inline: 'bs.today', tab: 'Brainstorm', info: true, look: true,
         text: 'Minutes writing, words written and sessions (each time you sat down to use the app and write). They fill as you write and close when you meet the day’s goal.',
       },
       {
-        target: 'bs.today', tab: 'Brainstorm', editPulse: true, section: 'Change your goals',
+        target: 'bs.today', inline: 'bs.today', tab: 'Brainstorm', editPulse: true, section: 'Change your goals',
         title: 'Edit goals', text: 'Here you set your goals. No worries if they aren’t right the first time: you can always change them later.',
         task: 'Tap Edit goals.', on: (ev, v) => ev === 'sheet-open' && v === 'plan',
       },
@@ -162,7 +164,7 @@ export const CHAPTERS = [
     steps: [
       tapTab('Brainstorm', 'Where you write', 'The pencil takes you to Brainstorm, where all your writing lives.', { skipIf: onWriter, section: 'Open the writing page' }),
       {
-        target: 'bs.start', tab: 'Brainstorm', skipIf: onWriter,
+        target: 'bs.start', inline: 'bs.start', marks: ['bs.startBtn'], markRound: 16, tab: 'Brainstorm', skipIf: onWriter,
         title: 'Your first entry', text: 'This is the real thing: what you write is saved on your phone and counts toward your rings and medals.',
         task: 'Tap the big blue button to start.', on: (ev) => ev === 'writer-open',
       },
@@ -258,11 +260,11 @@ export const CHAPTERS = [
     steps: [
       tapTab('Brainstorm', 'Brainstorm', 'There’s more on Brainstorm: writing you did elsewhere, your week, and everything you’ve written.'),
       {
-        target: 'bs.start', tab: 'Brainstorm', info: true, look: true, round: 16, section: 'Keep writing', offNote: offInTour('Keep writing'),
+        target: 'bs.start', inline: 'bs.start', tab: 'Brainstorm', info: true, look: true, round: 16, section: 'Keep writing', offNote: offInTour('Keep writing'),
         text: 'Have more to write? This button is always here. Until your rings are closed it says “Keep writing”; once you’ve met today’s goal it says “Write a little more?” so you can keep going above and beyond. Either way, it picks up right where you left off.',
       },
       {
-        target: 'bs.offline', tab: 'Brainstorm', info: true, look: true, round: 16, section: 'Log offline writing', offNote: offInTour('Log offline writing'),
+        target: 'bs.offline', inline: 'bs.offline', tab: 'Brainstorm', info: true, look: true, round: 16, section: 'Log offline writing', offNote: offInTour('Log offline writing'),
         title: 'Wrote somewhere else?', text: 'Wrote in Word, a notebook or another app? Tap Log offline writing any time to add the minutes, words and sessions, on the honor system. It works just like setting your goals, and counts toward your rings and most medals.',
       },
       {
@@ -271,7 +273,7 @@ export const CHAPTERS = [
         on: (ev, v) => ev === 'revealed' && v === 'bs.week',
       },
       {
-        target: 'bs.week', tab: 'Brainstorm', info: true, look: true,
+        target: 'bs.week', inline: 'bs.week', tab: 'Brainstorm', info: true, look: true,
         title: 'Your week at a glance', text: 'Seven sets of rings, Sunday to Saturday, with the week’s totals underneath. Tip: a day with all three rings closed is a day you met your goal.',
       },
       {
@@ -280,11 +282,11 @@ export const CHAPTERS = [
         on: (ev, v) => ev === 'revealed' && v === 'bs.history',
       },
       {
-        target: 'bs.history', tab: 'Brainstorm', info: true, look: true, noRing: true, markRound: 16, marks: ['bs.folder'], offNote: offInTour('The folder'),
+        target: 'bs.history', inline: 'bs.history', tab: 'Brainstorm', info: true, look: true, noRing: true, markRound: 16, marks: ['bs.folder'], offNote: offInTour('The folder'),
         text: 'It’s all saved on your phone, in a folder for the week. Closed, it shows your most recent day; tap the folder any time to see everything else you wrote this week.',
       },
       {
-        target: 'bs.history', tab: 'Brainstorm', info: true, look: true, noRing: true, markRound: 16, marks: ['bs.seeAll'], offNote: offInTour('See all my writing'),
+        target: 'bs.history', inline: 'bs.history', tab: 'Brainstorm', info: true, look: true, noRing: true, markRound: 16, marks: ['bs.seeAll'], offNote: offInTour('See all my writing'),
         text: '“See all my writing” has every day you’ve ever written, by week.',
       },
     ],
@@ -299,11 +301,11 @@ export const CHAPTERS = [
         on: (ev, v) => ev === 'revealed' && v === 'bs.medals',
       },
       {
-        target: 'bs.medals', tab: 'Brainstorm', info: true, look: true,
+        target: 'bs.medals', inline: 'bs.medals', tab: 'Brainstorm', info: true, look: true,
         title: 'Your medals', text: 'Medals live here, at the bottom of Brainstorm. Every word you type, minute you spend, session you finish and goal you meet moves you closer to your next one, and there’s much more to earn! Open any medal you’ve earned to see its celebration again: tap one of its tiers, or See the celebration again.',
       },
       {
-        target: 'bs.medals', tab: 'Brainstorm', info: true, look: true, section: 'Four tiers', offNote: offInTour('The medals card'),
+        target: 'bs.medals', inline: 'bs.medals', tab: 'Brainstorm', info: true, look: true, section: 'Four tiers', offNote: offInTour('The medals card'),
         title: 'Bronze, Silver, Gold, Diamond', text: 'Every medal has four tiers. Its bar is the colour of the medal you have and shows how close the next one is. There’s also a medal for every month, with its own name; you’ll meet it in the Calendar chapter. Tap this card any time to see them all.',
       },
     ],
@@ -368,11 +370,11 @@ export const CHAPTERS = [
     steps: [
       tapTab('Eventbrite', 'Eventbrite', 'Pen Parentis salons: monthly, free and online.', { section: 'Monthly salons' }),
       {
-        target: 'ev.next', tab: 'Eventbrite', info: true, look: true, wait: true, offNote: offInTour('The event’s buttons', true),
+        target: 'ev.next', inline: 'ev.next', tab: 'Eventbrite', info: true, look: true, wait: true, offNote: offInTour('The event’s buttons', true),
         text: 'The next salon. Register on Eventbrite, watch it live on YouTube, add it to your calendar, or share it with a friend.',
       },
       {
-        target: 'ev.remind', tab: 'Eventbrite', info: true, round: 16,
+        target: 'ev.remind', inline: 'ev.remind', tab: 'Eventbrite', info: true, round: 16,
         title: 'Never miss one', text: 'Turn this on and you’ll get one reminder half an hour before a salon goes live. Nothing else. Try it, keep it on if you’d like it, then tap Got it.',
       },
       {
@@ -381,16 +383,16 @@ export const CHAPTERS = [
         on: (ev, v) => ev === 'revealed' && v === 'ev.past',
       },
       {
-        target: 'ev.past', tab: 'Eventbrite', info: true,
+        target: 'ev.past', inline: 'ev.past', tab: 'Eventbrite', info: true,
         text: 'Missed a salon, or want to hear it again? Recordings are on YouTube and the salon podcast is on Spotify (they open after the tour). Try the switch: it tells you when a new episode lands. Tap Got it when you’re ready.',
       },
       tapTab('Community', 'Community', 'People to write with.', { section: 'Community' }),
       {
-        target: 'com.links', tab: 'Community', info: true, look: true, offNote: offInTour('The Discord and Facebook buttons', true),
+        target: 'com.links', inline: 'com.links', tab: 'Community', info: true, look: true, offNote: offInTour('The Discord and Facebook buttons', true),
         text: 'The Pen Parentis Discord runs around the clock (there’s almost always someone up), and the Facebook group is there too. Both are free.',
       },
       {
-        target: 'com.groupsInfo', tab: 'Community', info: true, look: true, section: 'Accountability groups',
+        target: 'com.groupsInfo', inline: 'com.groupsInfo', tab: 'Community', info: true, look: true, section: 'Accountability groups',
         text: 'Small groups of writer-parents who meet to set goals and keep each other writing. Pick a group by when you’re free: each group’s meeting day and time are in the table just below. They’re for sustaining members at the All-Access level.',
       },
     ],

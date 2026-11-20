@@ -24,6 +24,7 @@ import { addEventToCalendar, openPhoneSettings, shareEvent } from '../eventActio
 import { LEAD_MINUTES, setNotify, syncNotifications, useNotifySettings } from '../notify';
 import { BrandButton, DeniedNote, ToggleCard, SPOTIFY_GREEN, YT_RED } from '../components/LinkButtons';
 import TourTarget from '../components/TourTarget';
+import { TourInline } from '../components/TourLayer';
 import { tourRunning } from '../tourRun';
 
 const STAR = '#E0AE45';
@@ -170,6 +171,7 @@ export default function EventbriteScreen({ route }) {
 
           {coming.map((e, i) => (
             <TourTarget key={e.id} id={i === 0 ? 'ev.next' : null}>
+            {i === 0 ? <TourInline at="ev.next" flush /> : null}
             <EventCard
               event={e}
               now={now}
@@ -201,6 +203,7 @@ export default function EventbriteScreen({ route }) {
 
         {/* ---------- Notifications ---------- */}
         <TourTarget id="ev.remind" style={{ gap: 8, marginTop: 6 }}>
+          <TourInline at="ev.remind" flush />
           <ToggleCard
             title="Tell me when a salon goes live"
             sub={`One notification, ${LEAD_MINUTES === 30 ? 'half an hour' : `${LEAD_MINUTES} minutes`} before. Nothing else.`}
@@ -212,6 +215,7 @@ export default function EventbriteScreen({ route }) {
 
         {/* ---------- Previous salons ---------- */}
         <TourTarget id="ev.past" style={{ gap: 8, marginTop: space.md }}>
+          <TourInline at="ev.past" flush />
           <Text style={s.h}>Previous salons</Text>
           <Text style={s.body}>
             Missed one, or want to hear it again? Recordings of past salons are on YouTube,

@@ -30,6 +30,7 @@ import { addOfflineSession, loadAll, saveDailyGoal, saveGoals, syncMedals, useTo
 import { monthKeyOf, monthTiersCrossed, monthWords } from '../monthMedals';
 import PromptHeader from '../components/PromptHeader';
 import TourTarget from '../components/TourTarget';
+import { TourInline } from '../components/TourLayer';
 import { stepOf, tourEvent, tourRunning, useRun } from '../tourRun';
 import { useTapHint } from '../components/TapHint';
 
@@ -202,6 +203,7 @@ export default function BrainstormHomeScreen({ navigation, route }) {
       <View style={s.pad}>
         {/* Today: the three rings */}
         <TourTarget id="bs.today">
+        <TourInline at="bs.today" flush />
         <LinearGradient colors={gradients.header} style={[s.today, lift]}>
           <View style={s.todayHead}>
             <Text style={s.todayLabel}>Today · {todayLabel}{rest ? ' · rest day' : ''}</Text>
@@ -219,6 +221,8 @@ export default function BrainstormHomeScreen({ navigation, route }) {
 
         {/* Start writing — label and action change with the day */}
         <TourTarget id="bs.start">
+        <TourInline at="bs.start" flush />
+        <TourTarget id="bs.startBtn">
         <Pressable onPress={onStartPress} style={({ pressed }) => [lift, s.startWrap, pressed && { opacity: 0.92 }]}>
           <LinearGradient colors={button.state === 'met' ? gradients.gold : gradients.button} style={s.start}>
             <Text style={[s.startTitle, button.state === 'met' && { color: '#231702' }]}>{button.title}</Text>
@@ -226,9 +230,11 @@ export default function BrainstormHomeScreen({ navigation, route }) {
           </LinearGradient>
         </Pressable>
         </TourTarget>
+        </TourTarget>
 
         {/* Writing done outside the app, on the honor system */}
         <TourTarget id="bs.offline" style={{ marginTop: -4 }}>
+        <TourInline at="bs.offline" flush />
         <Pressable onPress={() => setOfflineOpen(true)} style={({ pressed }) => [s.offline, pressed && { opacity: 0.85 }]} accessibilityRole="button" accessibilityLabel="Log offline writing">
           <View style={s.offlineIcon}><Ionicons name="download-outline" size={20} color={colors.royal} /></View>
           <View style={{ flex: 1 }}>
@@ -241,6 +247,7 @@ export default function BrainstormHomeScreen({ navigation, route }) {
 
         {/* This week: seven ring sets */}
         <TourTarget id="bs.week">
+          <TourInline at="bs.week" flush />
           <WeekRings
             week={week}
             onPressDay={(d) => navigation.navigate('BrainstormDay', { day: d.key })}
@@ -250,6 +257,7 @@ export default function BrainstormHomeScreen({ navigation, route }) {
         {/* Your writing: one folder for this week. Closed, it shows your most
             recent day; open, every day this week. */}
         <TourTarget id="bs.history" style={{ gap: space.md }}>
+        <TourInline at="bs.history" flush />
         <View style={s.titleRow}>
           <Text style={s.h}>Your writing</Text>
           <Text style={s.meta}>tap a day to read it</Text>
@@ -291,6 +299,7 @@ export default function BrainstormHomeScreen({ navigation, route }) {
         </TourTarget>
 
         <TourTarget id="bs.medals">
+          <TourInline at="bs.medals" flush />
           <MedalsCard medals={medalState.medals} record={medalState.record} onPress={() => navigation.navigate('Medals')} />
         </TourTarget>
       </View>

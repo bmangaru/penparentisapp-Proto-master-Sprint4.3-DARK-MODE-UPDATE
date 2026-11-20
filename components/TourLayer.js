@@ -52,10 +52,13 @@ export default function TourLayer({ host = 'root' }) {
   const hiddenSince = useRef(0); // when the spot's page got covered
   const barTop = useRef(0);      // where the tab bar starts (pages scroll behind it)
   // Is the spot (mostly) off screen, above or below what you can see?
-  const outOfView = (y, h) => y < insets.top + 8 || y + Math.min(h, H * 0.45) > H - 96;
+  // A tip inside the page (inline: '<place>') sits at the top of its spot, so
+  // the spot needs more of itself showing, and goes near the top.
+  const inPage = () => typeof stepOf(getRun())?.inline === 'string';
+  const outOfView = (y, h) => y < insets.top + 8 || y + Math.min(h, H * (inPage() ? 0.62 : 0.45)) > H - 96;
   // Scroll its page so the spot sits about a quarter of the way down.
   const scrollSpotIntoView = (t, y, h) => {
-    const want = h > H * 0.45 ? insets.top + 24 : H * 0.28;
+    const want = h > H * 0.45 || inPage() ? insets.top + 24 : H * 0.28;
     const max = t.scroll.max ? t.scroll.max() : Infinity;
     t.scroll.ref.current?.scrollTo({ y: Math.max(0, Math.min(max, t.scroll.y.current + y - want)), animated: true });
   };
@@ -673,23 +676,24 @@ function ProgressRing({ frac, light }) {
 // The tip inside the page, for steps marked inline, so it never covers what
 // it's about. On the writing page (<TourInline />, inline: true) it sits
 // under the rings and the prompt. Elsewhere a page places one per spot
-// (<TourInline at="cal.grid" />) and a step picks it with inline: 'cal.grid':
+// (<TourInline at="cal.grid" />) and a step picks it with inline: 'cal.grid'.
+// flush: no side inset (for a spot already inside the page's padding):
 // the Calendar shows its tips right under the top cards, or at the top of
 // the calendar card, like a part of the page.
-export function TourInline({ at = null }) {
+export function TourInline({ at = null, flush = false }) {
   const run = useRun();
   const step = stepOf(run);
   if (!run || !step || !step.inline) return null;
   if (at ? step.inline !== at : step.inline !== true) return null;
   if (run.min) {
     return (
-      <View style={[c.pausedStrip, { marginHorizontal: 14, marginBottom: 8 }]}>
+      <View style={[c.pausedStrip, { marginHorizontal: flush ? 0 : 14, marginBottom: 8 }]}>
         <PausedCard run={run} slim />
       </View>
     );
   }
   return (
-    <View style={{ marginHorizontal: 14, marginBottom: 8 }}>
+    <View style={{ marginHorizontal: flush ? 0 : 14, marginBottom: 8 }}>
       <Bubble run={run} step={step} inline />
     </View>
   );

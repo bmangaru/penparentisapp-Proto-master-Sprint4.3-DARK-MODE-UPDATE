@@ -18,6 +18,7 @@ import { colors, lift, radius, space, themed, dk, isDark } from '../theme';
 import { LINKS } from '../links';
 import { BrandButton, DISCORD_BLURPLE, FACEBOOK_BLUE } from '../components/LinkButtons';
 import TourTarget from '../components/TourTarget';
+import { TourInline } from '../components/TourLayer';
 
 const TABLE_HEIGHT = 540;
 
@@ -27,6 +28,7 @@ export default function CommunitiesScreen() {
       <Header title="Community" subtitle="The National Writer-Parent Hub" />
       <View style={s.pad}>
         <TourTarget id="com.links" style={{ gap: space.sm }}>
+        <TourInline at="com.links" flush />
         <Text style={s.h}>There's almost always someone up</Text>
         <Text style={s.p}>
           Our Discord runs around the clock: accountability groups, residency tips, and a
@@ -49,6 +51,7 @@ export default function CommunitiesScreen() {
 
         <TourTarget id="com.groups" style={{ gap: space.sm }}>
         <TourTarget id="com.groupsInfo">
+        <TourInline at="com.groupsInfo" flush />
         <View style={s.secRow}>
           <Text style={s.sec}>Accountability groups</Text>
           <Pressable onPress={() => openLink(LINKS.cycleOfSupport)} hitSlop={8} accessibilityRole="link" accessibilityLabel="Open the accountability groups in Airtable">
