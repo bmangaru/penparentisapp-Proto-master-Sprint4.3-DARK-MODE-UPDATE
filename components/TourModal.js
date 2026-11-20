@@ -90,10 +90,10 @@ export default function TourModal({ navRef }) {
     const first = await markChapter(chapter.id, CHAPTER_IDS);
     const nowDone = { ...done, [chapter.id]: true };
     // Chapters count toward the Tour Guide medal: Bronze 3 · Silver 6 · Gold 9 ·
-    // Diamond 10. A new tier pops up over the tour.
+    // Diamond 10. A new tier celebrates over the tour, and so does any other
+    // medal this check finds (once recorded, it would never show otherwise).
     const { newlyEarned } = await syncMedals();
-    const tourTiers = newlyEarned.filter((m) => m.id === 'tour');
-    if (tourTiers.length) setMedals(tourTiers);
+    if (newlyEarned.length) setMedals(newlyEarned);
     if (first) { setView('end'); return; }
     // Otherwise: on to the next chapter; after the last one, the end (or the
     // list, if some chapters were skipped).
