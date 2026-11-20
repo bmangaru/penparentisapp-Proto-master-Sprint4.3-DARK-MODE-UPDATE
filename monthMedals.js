@@ -157,11 +157,19 @@ export function inkSize(words, min = 12, max = 30, typical = null) {
 }
 
 // Your typical day: the middle value (median) of the days you wrote, so one
-// huge day doesn't move it. days: { '2026-11-03': 150, … }. With fewer than 3
-// days, `earlier` (last month's days) are counted too. null with no days.
+// huge day doesn't move it. days: { '2026-11-03': 150, … }.
+// Until the month has 7 writing days, it's your last 7 writing days: this
+// month's, topped up with the latest from `earlier` (last month's days). So
+// Dec 1 is compared with your last week or so of November, not with nothing.
+// A brand-new writer's first day is their own typical day. null with no days.
+export const TYPICAL_DAYS = 7;
 export function typicalDay(days, earlier = null) {
   let list = Object.values(days || {}).filter((n) => n > 0);
-  if (list.length < 3 && earlier) list = list.concat(Object.values(earlier).filter((n) => n > 0));
+  if (list.length < TYPICAL_DAYS && earlier) {
+    const recent = Object.keys(earlier).filter((k) => earlier[k] > 0).sort().reverse()
+      .slice(0, TYPICAL_DAYS - list.length).map((k) => earlier[k]);
+    list = list.concat(recent);
+  }
   if (!list.length) return null;
   list.sort((a, b) => a - b);
   const m = list.length >> 1;
