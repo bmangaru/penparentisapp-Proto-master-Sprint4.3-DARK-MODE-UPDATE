@@ -10,11 +10,15 @@ import { CHAPTER_IDS } from './TourContent';
 import { colors, radius, themed } from '../theme';
 import { MEDALS } from '../medals';
 import { openTour, setTourHidden, useTour } from '../tour';
+import { useRun } from '../tourRun';
 
 const TOUR_MEDAL = MEDALS.find((m) => m.id === 'tour');
 
 export default function TourCard() {
   const tour = useTour();
+  const run = useRun();
+  // Not while a chapter is running (or paused): you're already in the tour.
+  if (run) return null;
   if (!tour || tour.finished || tour.hidden) return null;
   const n = CHAPTER_IDS.filter((id) => tour.done[id]).length;
   const started = n > 0;
