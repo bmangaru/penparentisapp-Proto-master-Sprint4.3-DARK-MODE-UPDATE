@@ -168,8 +168,8 @@ export const CHAPTERS = [
       },
       {
         target: 'writer.page', inline: true, wait: true, section: 'Your first words', freshLine: true,
-        title: 'Just write', text: 'Your page for today: anything you wrote earlier today is here, and you carry on from a new line. Anything on your mind: a line, a memory, an idea. Watch the rings above fill as you type. No need to stress over every detail: you can always come back and add more.',
-        task: 'Write at least 5 words.', doneText: 'Keep writing as long as you like. Need more room to write? Tap Hide up top to tuck the tour away. When you’re done, tap I’m done writing.', manual: true, nextLabel: 'I’m done writing ›',
+        title: 'Just write', text: 'Your page for today: anything you wrote earlier today is here, and you carry on from a new line. Anything on your mind: a line, a memory, an idea. Watch the rings above fill as you type. Want more room? Tap Hide up top to tuck the tour away; it shows a ✓ when you’re done, and you carry on from there.',
+        task: 'Write at least 5 words.', doneText: 'Keep writing as long as you like. When you’re done, tap I’m done writing.', manual: true, nextLabel: 'I’m done writing ›',
         on: (ev, v, d) => {
           if (ev !== 'words') return null;
           const base = d.base ?? v - 1; // words already written today, before this step
@@ -228,7 +228,7 @@ export const CHAPTERS = [
       ...toWriter('Saving happens on the writing page.'),
       {
         target: 'writer.finish', inline: true, section: 'Save & check in', marks: ['writer.finish'], markRound: 14, wait: true,
-        text: 'Keep writing as long as you like. Need more room? Tap Hide up here to tuck the tour away; when you’re done, tap Save & check in and the tour comes back. (Nothing on this page yet? Type a line first.)',
+        text: 'Keep writing as long as you like. Need more room? Tap Hide up here to tuck the tour away; when you’re done, tap Save & check in and the tour comes back.',
         task: 'Tap Save & check in.', hold: 600, on: (ev) => ev === 'session-saved',
       },
       {
@@ -314,9 +314,15 @@ export const CHAPTERS = [
       tapTab('Calendar', 'Calendar', 'Every day you showed up to write: as rings, as feelings, and as monthly medals.', { section: 'Today & the next salon' }),
       {
         target: 'cal.top', tab: 'Calendar', marks: ['cal.prev', 'cal.next'], calView: 'rings',
-        text: 'Four cards take turns here: today’s rings, this month’s feelings, this month’s medal, and a countdown to the next salon. They follow the calendar below: switch it, and the card switches too. (They also change by themselves now and then; that’s paused for the tour.)',
-        task: 'Tap the arrows to look through them.', doneText: 'Look as long as you like, then go on.', manual: true, nextLabel: 'Ready to go on ›',
-        on: (ev, v) => ev === 'cal-index' && v > 0,
+        text: 'Four cards take turns here: today’s rings, this month’s feelings, this month’s medal, and a countdown to the next salon. Swipe the card, or tap the arrows, to move between them; the calendar below follows along. (They also change by themselves now and then; that’s paused for the tour.)',
+        task: 'Swipe or tap the arrows to see every card.', doneText: 'You’ve seen them all. Look as long as you like, then go on.', manual: true, nextLabel: 'Ready to go on ›',
+        on: (ev, v, d) => {
+          if (ev !== 'cal-index' || !v) return null;
+          const seen = { ...(d.seen || { 0: true }), [v.k]: true };
+          const got = Object.keys(seen).length;
+          const n = v.n || 4;
+          return { data: { seen }, progress: `${Math.min(got, n)} of ${n} cards`, frac: got / n, done: got >= n };
+        },
       },
       {
         target: 'cal.grid', tab: 'Calendar', info: true, look: true, section: 'Your writing calendar', calView: 'rings', offNote: offInTour('The days', true),
@@ -345,7 +351,7 @@ export const CHAPTERS = [
       {
         target: 'cal.top', tab: 'Calendar', info: true, calView: 'medals',
         title: `This month: ${THIS_MONTH.when} · ${THIS_MONTH.name}`,
-        text: 'Every month has its own medal, with a name that changes each year. Words you write this month earn it: Bronze at 500 words, Silver at 1,000, Gold at 5,000, Diamond at 10,000. It starts fresh on the 1st, and a missed month never takes anything away.',
+        text: 'Every month has a medal for you to try and earn! Words you write this month count toward this month’s medal: Bronze at 500 words, Silver at 1,000, Gold at 5,000, Diamond at 10,000. Each month’s medal has its own name, which changes every year. It starts fresh on the 1st, and a missed month never takes anything away.',
       },
       {
         target: 'cal.grid', tab: 'Calendar', info: true, look: true, calView: 'medals', offNote: offInTour('The days', true),

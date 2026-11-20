@@ -599,11 +599,13 @@ function PausedCard({ run, slim }) {
     );
   }
   // Slim (the writing page): one row, so your words keep the room.
+  // When the step's task got done while hidden, it shows a ✓ instead.
   if (slim) {
+    const ok = !!run.taskDone;
     return (
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Ionicons name="pause-circle" size={17} color="#0A1633" />
-        <Text style={[c.pausedTitle, { flex: 1, fontSize: 13.5 }]} numberOfLines={1}>Tour hidden</Text>
+        <Ionicons name={ok ? 'checkmark-circle' : 'pause-circle'} size={17} color={ok ? '#2E7D4F' : '#0A1633'} />
+        <Text style={[c.pausedTitle, { flex: 1, fontSize: 13.5 }, ok && { color: '#2E7D4F' }]} numberOfLines={1}>{ok ? 'Goal reached!' : 'Tour hidden'}</Text>
         {cont()}
         {exit}
       </View>

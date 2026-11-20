@@ -263,7 +263,9 @@ export function tourEvent(name, value) {
   const res = r === true ? { done: true } : r;
   // Doing the task while the tour is hidden (e.g. Finish & check in after
   // Hide on the writing page) brings the tour back for what comes next.
-  const back = !!res.done && run.min;
+  // Steps that wait for you (manual) stay hidden: the hidden strip shows a ✓
+  // instead, so nothing jumps while you're typing.
+  const back = !!res.done && run.min && !st.manual;
   set({
     ...run,
     data: res.data !== undefined ? res.data : run.data,

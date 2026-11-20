@@ -157,7 +157,7 @@ export default function CalendarScreen({ navigation, route }) {
 
   function onPressDay(d) {
     setSelected(d.key);
-    if (!d.future && !d.isToday && d.count > 0) openDay(d.key);
+    if (!d.future && d.count > 0) openDay(d.key);
   }
 
   // Where this week's row starts inside the calendar scroll.
@@ -226,7 +226,7 @@ export default function CalendarScreen({ navigation, route }) {
           arrows
           tourId="cal"
           onIndex={(k, how) => {
-            tourEvent('cal-index', k);
+            tourEvent('cal-index', { k, n: hasCountdown ? 4 : 3 });
             if (how === 'user' && VIEW_OF[k] && VIEW_OF[k] !== view) setView(VIEW_OF[k]);
           }}
         >

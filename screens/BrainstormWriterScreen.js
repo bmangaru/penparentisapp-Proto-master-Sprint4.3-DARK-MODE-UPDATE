@@ -44,7 +44,7 @@ import usePromptLevel, { LEVEL_STYLE } from '../components/usePromptLevel';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TourTarget from '../components/TourTarget';
 import { TourInline } from '../components/TourLayer';
-import { isTourTarget, stepOf, tourEvent, useRun } from '../tourRun';
+import { isTourTarget, minimizeTour, nextStep, stepOf, tourEvent, useRun } from '../tourRun';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function BrainstormWriterScreen({ navigation, route }) {
@@ -456,6 +456,21 @@ export default function BrainstormWriterScreen({ navigation, route }) {
   }, [navigation]);
 
   async function finish() {
+    // In the tour, saving comes in its own step (6.1). Before that (e.g. 4.2
+    // "Just write", shown or hidden), Save & check in doesn't save and leave:
+    // with the step's goal reached it moves the tour on, like "I'm done
+    // writing"; otherwise it says what to do first.
+    const tourNow = tourRun && tourRun.phase === 'step' ? stepOf(tourRun) : null;
+    if (tourNow && String(tourNow.target || '').startsWith('writer.') && tourNow.target !== 'writer.finish') {
+      if (tourRun.taskDone && tourNow.manual) {
+        if (tourRun.min) minimizeTour(false);
+        nextStep();
+      } else {
+        if (tourRun.min) minimizeTour(false);
+        flash('The tour shows you Save & check in in a moment. Finish this step first.');
+      }
+      return;
+    }
     // Opened the page and left without writing anything new: nothing to log.
     if (finalWords() === 0 && seconds < 60 && tourStep) {
       flash('Write a few words first, then tap Save & check in.');
