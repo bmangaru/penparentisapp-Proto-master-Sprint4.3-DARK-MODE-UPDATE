@@ -9,10 +9,10 @@ import Rings from './Rings';
 import { colors, lift, themed } from '../theme';
 import { timeClock, timeLabel } from '../writingLogic';
 
-export default function WeekRings({ week, onPressDay, title = 'This week', meta = null, footer = null }) {
+export default function WeekRings({ week, onPressDay, title = 'This week', meta = null, footer = null, flat = false }) {
   const { days, done, closedDays } = week;
   return (
-    <View style={[s.card, lift]}>
+    <View style={[s.card, !flat && lift]}>
       <View style={s.head}>
         <Text style={s.h}>{title}</Text>
         <Text style={s.meta}>{meta || `${closedDays} day${closedDays === 1 ? '' : 's'} with all rings closed`}</Text>

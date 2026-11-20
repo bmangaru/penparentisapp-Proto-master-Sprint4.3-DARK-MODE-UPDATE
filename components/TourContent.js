@@ -292,7 +292,7 @@ export const CHAPTERS = [
       },
       {
         target: 'bs.week', inline: 'bs.week', tab: 'Brainstorm', info: true, look: true,
-        title: 'Your week at a glance', text: 'Seven sets of rings, Sunday to Saturday, with the week’s totals underneath. Tip: a day with all three rings closed is a day you met your goal. Swipe it sideways (or tap Last week ›) for last week and your week in review; a 🌙 marks a rest day.',
+        title: 'Your week at a glance', text: 'Seven sets of rings, Sunday to Saturday, with the week’s totals underneath. Tip: a day with all three rings closed is a day you met your goal. Swipe it to the right (or tap ‹ Last week) for last week and your week in review; a 🌙 marks a rest day.',
       },
       {
         target: 'bs.history', reveal: true, hold: 500, section: 'Everything you’ve written',

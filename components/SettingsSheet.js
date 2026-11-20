@@ -5,9 +5,7 @@
 //             ├─ Notifications   writing reminders (add, rename, remove), Streak
 //             │                  saver, medals, month's medal, week in review,
 //             │                  salons, quiet hours; each with an example
-//             ├─ Week in review  (opens the page on Brainstorm)
-//             ├─ Writing prompts the level prompts start at
-//             ├─ App tour        chapters, start over
+//             ├─ App tour        every chapter (tap one to go over it), start over
 //             └─ Contact Pen Parentis
 //
 // It's one sheet with pages inside (‹ back), so the app tour can point at
@@ -15,10 +13,9 @@
 // the same page (keepSettingsOpen).
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, Pressable, Switch, TextInput, Linking } from 'react-native';
+import { View, Text, Pressable, Switch, TextInput, Linking, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
 import Sheet from './Sheet';
 import TourTarget from './TourTarget';
 import { colors, dk, isDark, radius, themed } from '../theme';
@@ -32,12 +29,9 @@ import {
   DAY_LETTERS, countOn, daysText, examples, newReminder, stepTime, timeText,
 } from '../reminders';
 import { loadAll } from '../writingStore';
-import { weekReview, parseDayKey } from '../writingLogic';
 import { loadEvents, upcoming } from '../eventsService';
-import usePromptLevel from './usePromptLevel';
-import { LEVEL_LABEL, PROMPT_LEVELS, promptForDay } from '../prompts';
-import { dayKey } from '../writingLogic';
 import { PEN_PARENTIS_EMAIL } from './MedalPopup';
+import { CHAPTERS } from './TourContent';
 
 const OPTIONS = [
   { id: 'system', label: 'System' },
@@ -45,11 +39,10 @@ const OPTIONS = [
   { id: 'dark', label: 'Dark' },
 ];
 const APPEARANCE_LABEL = { system: 'System', light: 'Light', dark: 'Dark' };
-const TITLES = { root: 'Settings', appearance: 'Appearance', notifications: 'Notifications', reminder: 'Reminder', tour: 'App tour', prompts: 'Writing prompts' };
-const PARENT = { appearance: 'root', notifications: 'root', tour: 'root', prompts: 'root', reminder: 'notifications' };
+const TITLES = { root: 'Settings', appearance: 'Appearance', notifications: 'Notifications', reminder: 'Reminder', quiet: 'Quiet hours', tour: 'App tour', prompts: 'Writing prompts' };
+const PARENT = { appearance: 'root', notifications: 'root', tour: 'root', prompts: 'root', reminder: 'notifications', quiet: 'notifications' };
 const BLUE = '#3352C4';
 
-const shortDate = (k) => parseDayKey(k).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 
 // ---------------------------------------------------------------------------
 export default function SettingsSheet({ visible, onClose, page: startPage = 'root' }) {
@@ -75,11 +68,11 @@ export default function SettingsSheet({ visible, onClose, page: startPage = 'roo
       {page === 'root' ? <RootPage go={go} data={data} perm={perm} onClose={onClose} /> : null}
       {page === 'appearance' ? <AppearancePage /> : null}
       {page === 'notifications' ? (
-        <NotificationsPage data={data} perm={perm} setPerm={setPerm} onEdit={(id) => { setEditing(id); go('reminder'); }} />
+        <NotificationsPage data={data} perm={perm} setPerm={setPerm} onEdit={(id) => { setEditing(id); go('reminder'); }} onQuiet={() => go('quiet')} />
       ) : null}
       {page === 'reminder' ? <ReminderPage id={editing} data={data} onDone={() => go('notifications')} /> : null}
+      {page === 'quiet' ? <QuietPage /> : null}
       {page === 'tour' ? <TourPage onClose={onClose} /> : null}
-      {page === 'prompts' ? <PromptsPage /> : null}
     </Sheet>
   );
 }
@@ -98,8 +91,8 @@ function Group({ children, style }) {
 
 function Row({ icon, iconBg, title, sub, value, onPress, right, chevron = true, disabled, label }) {
   const body = (
-    <View style={[s.row, disabled && { opacity: 0.45 }]}>
-      {icon ? <View style={[s.ico, { backgroundColor: iconBg || BLUE }]}><Ionicons name={icon} size={16} color="#FFFFFF" /></View> : null}
+    <View style={[s.row, icon && s.bigRow, disabled && { opacity: 0.45 }]}>
+      {icon ? <View style={[s.ico, { backgroundColor: iconBg || BLUE }]}><Ionicons name={icon} size={21} color="#FFFFFF" /></View> : null}
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text style={s.rowTitle} numberOfLines={1}>{title}</Text>
         {sub ? <Text style={s.rowSub} numberOfLines={2}>{sub}</Text> : null}
@@ -133,7 +126,7 @@ function Toggle({ value, onChange, label }) {
 function Example({ title, body, when, actions }) {
   return (
     <View style={s.eg} accessibilityLabel={`Example: ${title}. ${body}`}>
-      <LinearGradient colors={['#1C2C7A', BLUE]} style={s.egIcon}><Text style={s.egP}>P</Text></LinearGradient>
+      <View style={s.egIcon}><Image source={require('../assets/pen-parentis-logo.png')} style={{ width: 28, height: 28 }} resizeMode="cover" accessibilityIgnoresInvertColors /></View>
       <View style={{ flex: 1 }}>
         <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
           <Text style={s.egTitle} numberOfLines={1}>{title}</Text>
@@ -158,17 +151,10 @@ function RootPage({ go, data, perm, onClose }) {
   const prefs = useNotifySettings();
   const tour = useTour();
   const run = useRun();
-  const [level] = usePromptLevel();
-  const navigation = useNavigation();
   // During the tour, only the row it points at can be tapped.
   const off = (id) => !!run && !run.min && !isTourTarget(id, run);
-  const review = data ? weekReview(data.sessions, data.dailyGoals, data.goals) : null;
   const doneN = tour ? TOUR_CHAPTER_IDS.filter((id) => tour.done?.[id]).length : 0;
   const notifyValue = perm && !perm.granted ? 'Off' : `${countOn(prefs)} on`;
-  const openReview = () => {
-    onClose();
-    setTimeout(() => navigation.navigate('Brainstorm', { screen: 'WeekReview' }), 300);
-  };
   return (
     <View>
       <Group>
@@ -178,16 +164,6 @@ function RootPage({ go, data, perm, onClose }) {
         <TourTarget id="settings.rowNotify">
           <Row icon="notifications" iconBg="#E5484D" title="Notifications" value={notifyValue} onPress={() => go('notifications')} disabled={off('settings.rowNotify')} />
         </TourTarget>
-      </Group>
-
-      <Header>YOUR WRITING</Header>
-      <Group>
-        <Row
-          icon="refresh" iconBg="#2E9E62" title="Week in review"
-          sub={review ? `${shortDate(review.start)} – ${shortDate(review.end)} · ${review.done.words.toLocaleString()} words` : null}
-          onPress={openReview} disabled={off('settings.rowReview')}
-        />
-        <Row icon="sparkles" iconBg="#C9884F" title="Writing prompts" value={LEVEL_LABEL[level]} onPress={() => go('prompts')} disabled={off('settings.rowPrompts')} />
       </Group>
 
       <Header>HELP</Header>
@@ -295,7 +271,7 @@ function MiniApp({ dark }) {
 // ---------------------------------------------------------------------------
 // Notifications
 // ---------------------------------------------------------------------------
-function NotificationsPage({ data, perm, setPerm, onEdit }) {
+function NotificationsPage({ data, perm, setPerm, onEdit, onQuiet }) {
   const prefs = useNotifySettings();
   const [denied, setDenied] = useState(false);
   const eg = examples(prefs, data || {});
@@ -318,13 +294,17 @@ function NotificationsPage({ data, perm, setPerm, onEdit }) {
     const res = await setNotify(kind, on, { events: upcoming(r.events || []), podcast: r.podcast });
     if (res === 'denied') setDenied(true);
   };
-  const add = () => {
+  // Saved first, then its page opens (so the page finds it); permission is
+  // asked after, and the reminder stays even if the phone says no.
+  const add = async () => {
     const r = newReminder(prefs.reminders);
-    set({ reminders: [...prefs.reminders, r] }, true);
+    await updateNotify({ reminders: [...prefs.reminders, r] });
     onEdit(r.id);
+    if (!perm?.granted) ensure();
   };
   const evening = prefs.reminders.find((r) => r.id === 'evening') || { h: 20, m: 30 };
-  const morning = prefs.reminders.find((r) => r.id === 'morning') || { h: 7, m: 30 };
+  // The example: your first reminder that's on (none on → no example).
+  const firstOn = prefs.reminders.find((r) => r.on !== false);
   const q = prefs.quiet;
 
   return (
@@ -359,7 +339,7 @@ function NotificationsPage({ data, perm, setPerm, onEdit }) {
           />
         ))}
         <Row title="＋ Add a reminder" onPress={add} chevron={false} label="Add a reminder" />
-        <Example {...eg.reminder(morning)} when={timeText(morning.h, morning.m)} />
+        {firstOn ? <Example {...eg.reminder(firstOn)} when={timeText(firstOn.h, firstOn.m)} /> : null}
       </Group>
       <Group style={{ marginTop: 8 }}>
         <Row title="Skip once today’s rings are closed" chevron={false} right={<Toggle value={prefs.skipDone} onChange={(v) => set({ skipDone: v })} label="Skip reminders once today's rings are closed" />} />
@@ -369,17 +349,17 @@ function NotificationsPage({ data, perm, setPerm, onEdit }) {
       <Header>STREAK SAVER</Header>
       <Group>
         <Row title="Save my streak" sub="At your Evening time, only if you haven’t written yet" chevron={false} right={<Toggle value={prefs.streak} onChange={(v) => set({ streak: v }, v)} label="Streak saver" />} />
-        <Example {...eg.streak} when={timeText(evening.h, evening.m)} actions={['Write now', '🌙 Rest day']} />
+        {prefs.streak ? <Example {...eg.streak} when={timeText(evening.h, evening.m)} actions={['Write now', '🌙 Rest day']} /> : null}
       </Group>
       <Foot>Hold the notification for its buttons. A rest day keeps your streak going without opening the app (2 a week). No writing and no rest day by midnight, and the streak starts again. Instead of the Evening reminder that day, never as well as it.</Foot>
 
       <Header>MEDALS</Header>
       <Group>
         <Row title="Almost there" sub="When a medal’s next tier is close" chevron={false} right={<Toggle value={prefs.almost} onChange={(v) => set({ almost: v }, v)} label="Medal almost there" />} />
-        <Example {...eg.almost} when="next morning" />
+        {prefs.almost ? <Example {...eg.almost} when="next morning" /> : null}
         <Row title="Month’s medal" sub="On the 1st, and 3 days before the month ends" chevron={false} right={<Toggle value={prefs.month} onChange={(v) => set({ month: v }, v)} label="Month's medal" />} />
-        <Example {...eg.monthStart} when="the 1st" />
-        <Example {...eg.monthEnd} when="3 days left" />
+        {prefs.month ? <Example {...eg.monthStart} when="the 1st" /> : null}
+        {prefs.month ? <Example {...eg.monthEnd} when="3 days left" /> : null}
       </Group>
       <Foot>No writing last month? The 1st just introduces the new month’s medal.</Foot>
 
@@ -394,23 +374,24 @@ function NotificationsPage({ data, perm, setPerm, onEdit }) {
             </View>
           )}
         />
-        <Example {...eg.week} when="Sunday" />
+        {prefs.weekly.on ? <Example {...eg.week} when="Sunday" /> : null}
       </Group>
-      <Foot>It’s always on Brainstorm too: swipe This week to see last week.</Foot>
+      <Foot>It’s always on Brainstorm too: swipe This week to the right to see last week.</Foot>
 
       <Header>SALONS</Header>
       <Group>
         <Row title="When a salon goes live" sub="30 minutes before · also on Eventbrite" chevron={false} right={<Toggle value={prefs.live} onChange={(v) => salon('live', v)} label="When a salon goes live" />} />
-        <Example title="Salon in 30 minutes" body="Pen Parentis Literary Salon. Tap for the link." when="6:30 PM" />
+        {prefs.live ? <Example title="Salon in 30 minutes" body="Pen Parentis Literary Salon. Tap for the link." when="6:30 PM" /> : null}
         <Row title="New episode in the feed" chevron={false} right={<Toggle value={prefs.episodes} onChange={(v) => salon('episodes', v)} label="New episode in the feed" />} />
-        <Example title="New salon episode on Spotify" body="A new Pen Parentis salon just landed in the feed." when="now" />
+        {prefs.episodes ? <Example title="New salon episode on Spotify" body="A new Pen Parentis salon just landed in the feed." when="now" /> : null}
       </Group>
       <Foot>The same two switches are on the Eventbrite page; changing one changes both.</Foot>
 
       <Header>QUIET HOURS</Header>
       <Group>
         <Row
-          title="Nothing between" sub={`${timeText(q.from[0], q.from[1])} – ${timeText(q.to[0], q.to[1])}`} chevron={false}
+          title="Nothing between" sub={`${timeText(q.from[0], q.from[1])} – ${timeText(q.to[0], q.to[1])} · tap to change`} onPress={onQuiet} chevron={false}
+          label={`Quiet hours, ${timeText(q.from[0], q.from[1])} to ${timeText(q.to[0], q.to[1])}. Tap to change.`}
           right={<Toggle value={q.on} onChange={(v) => set({ quiet: { ...q, on: v } })} label="Quiet hours" />}
         />
       </Group>
@@ -451,16 +432,7 @@ function ReminderPage({ id, data, onDone }) {
 
       <Header>TIME</Header>
       <Group>
-        <View style={[s.row, { justifyContent: 'center', paddingVertical: 10 }]}>
-          <Text style={s.bigTime} accessibilityLiveRegion="polite">{timeText(rem.h, rem.m)}</Text>
-        </View>
-        <View style={[s.row, { gap: 8, justifyContent: 'center', flexWrap: 'wrap', paddingBottom: 12 }]}>
-          {[[-60, '− 1 hr'], [-5, '− 5 min'], [5, '+ 5 min'], [60, '+ 1 hr']].map(([n, t]) => (
-            <Pressable key={t} onPress={() => step(n)} style={({ pressed }) => [s.stepBtn, pressed && { opacity: 0.7 }]} accessibilityRole="button">
-              <Text style={s.stepText}>{t}</Text>
-            </Pressable>
-          ))}
-        </View>
+        <TimeStepper h={rem.h} m={rem.m} onStep={step} />
       </Group>
 
       <Header>REPEAT</Header>
@@ -507,60 +479,77 @@ function ReminderPage({ id, data, onDone }) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// App tour
-// ---------------------------------------------------------------------------
-function TourPage({ onClose }) {
-  const run = useRun();
-  const tour = useTour();
-  const touring = !!run;
-  const doneN = tour ? TOUR_CHAPTER_IDS.filter((id) => tour.done?.[id]).length : 0;
-  const go = (restart) => {
-    if (touring) return;
-    onClose();
-    setTimeout(async () => { if (restart) { await restartTour(); openTour(); } else openTour('__list'); }, 350);
-  };
+// A time with − 1 hr / − 5 min / + 5 min / + 1 hr.
+function TimeStepper({ h, m, onStep }) {
   return (
     <View>
-      <Foot>A hands-on guide to everything in the app. Go over any chapter or section you’ve done, or start over from the beginning. {doneN} of {TOUR_CHAPTER_IDS.length} chapters done.</Foot>
-      <View style={[s.pickRow, { marginTop: 12, gap: 8, paddingHorizontal: 0 }]}>
-        <Pressable onPress={() => go(false)} disabled={touring} style={[s.tourBtn, s.tourBtnFill, touring && { opacity: 0.4 }]} accessibilityRole="button" accessibilityState={{ disabled: touring }}>
-          <Ionicons name="compass-outline" size={17} color="#FFFFFF" />
-          <Text style={[s.tourText, { color: '#FFFFFF' }]}>Chapters</Text>
-        </Pressable>
-        <Pressable onPress={() => go(true)} disabled={touring} style={[s.tourBtn, touring && { opacity: 0.4 }]} accessibilityRole="button" accessibilityState={{ disabled: touring }}>
-          <Ionicons name="refresh" size={16} color={colors.royal} />
-          <Text style={s.tourText}>Start over</Text>
-        </Pressable>
+      <View style={[s.row, { justifyContent: 'center', paddingVertical: 10 }]}>
+        <Text style={s.bigTime} accessibilityLiveRegion="polite">{timeText(h, m)}</Text>
       </View>
-      {touring ? <Foot>You’re in the tour now, so these are off until it’s done.</Foot> : null}
+      <View style={[s.row, { gap: 8, justifyContent: 'center', flexWrap: 'wrap', paddingBottom: 12 }]}>
+        {[[-60, '− 1 hr'], [-5, '− 5 min'], [5, '+ 5 min'], [60, '+ 1 hr']].map(([n, t]) => (
+          <Pressable key={t} onPress={() => onStep(n)} style={({ pressed }) => [s.stepBtn, pressed && { opacity: 0.7 }]} accessibilityRole="button">
+            <Text style={s.stepText}>{t}</Text>
+          </Pressable>
+        ))}
+      </View>
     </View>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Writing prompts: the level they start at.
+// Quiet hours: from / until.
 // ---------------------------------------------------------------------------
-function PromptsPage() {
-  const [level, setLevel] = usePromptLevel();
-  const today = dayKey();
-  const blurb = { simple: 'Everyday and quick to start.', thoughtful: 'A memory or a small scene.', deep: 'Harder, more personal.' };
+function QuietPage() {
+  const prefs = useNotifySettings();
+  const q = prefs.quiet;
+  const save = (patch) => updateNotify({ quiet: { ...q, ...patch } });
+  const move = (key) => (mins) => save({ [key]: stepTime(q[key][0], q[key][1], mins) });
   return (
     <View>
-      <Foot>Where ✦ Prompt starts on the writing page. You can always switch there too.</Foot>
+      <Group>
+        <Row title="Quiet hours" sub={q.on ? 'On' : 'Off'} chevron={false} right={<Toggle value={q.on} onChange={(v) => save({ on: v })} label="Quiet hours" />} />
+      </Group>
+      <Header>FROM</Header>
+      <Group><TimeStepper h={q.from[0]} m={q.from[1]} onStep={move('from')} /></Group>
+      <Header>UNTIL</Header>
+      <Group><TimeStepper h={q.to[0]} m={q.to[1]} onStep={move('to')} /></Group>
+      <Foot>Medal, month and week notes due in quiet hours wait until they end. Your own writing reminders still come at the time you set.</Foot>
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// App tour: every chapter (tap one to go over it), then Start over.
+// ---------------------------------------------------------------------------
+function TourPage({ onClose }) {
+  const run = useRun();
+  const tour = useTour();
+  const touring = !!run;
+  const done = tour?.done || {};
+  const doneN = TOUR_CHAPTER_IDS.filter((id) => done[id]).length;
+  const go = (id, restart = false) => {
+    if (touring) return;
+    onClose();
+    setTimeout(async () => { if (restart) { await restartTour(); openTour(); } else openTour(id); }, 350);
+  };
+  return (
+    <View>
+      <Foot>A hands-on guide to everything in the app. Tap a chapter to go over it. {doneN} of {TOUR_CHAPTER_IDS.length} done.</Foot>
+      {touring ? <Foot>You’re in the tour now, so these are off until it’s done.</Foot> : null}
       <Group style={{ marginTop: 10 }}>
-        {PROMPT_LEVELS.map((l) => (
-          <Pressable key={l} onPress={() => setLevel(l)} accessibilityRole="radio" accessibilityState={{ checked: l === level }}>
-            <View style={s.row}>
-              <View style={{ flex: 1 }}>
-                <Text style={s.rowTitle}>{LEVEL_LABEL[l]}</Text>
-                <Text style={s.rowSub}>{blurb[l]} Today: “{promptForDay(today, l)}”</Text>
-              </View>
-              {l === level ? <Ionicons name="checkmark" size={20} color={colors.royal} /> : null}
-            </View>
-          </Pressable>
+        {CHAPTERS.map((c, i) => (
+          <Row
+            key={c.id} title={`${i + 1}. ${c.title}`} sub={c.sub} onPress={() => go(c.id)} disabled={touring}
+            right={done[c.id] ? <Ionicons name="checkmark-circle" size={20} color="#2E9E62" accessibilityLabel="done" /> : null}
+          />
         ))}
       </Group>
+      <Pressable onPress={() => go(null, true)} disabled={touring} style={[s.tourBtn, { marginTop: 16 }, touring && { opacity: 0.4 }]} accessibilityRole="button" accessibilityState={{ disabled: touring }}>
+        <Ionicons name="refresh" size={16} color={colors.royal} />
+        <Text style={s.tourText}>Start the tour over</Text>
+      </Pressable>
+      <Foot>Starting over clears every ✓ (and the Tour Guide medal, so you can earn it again).</Foot>
     </View>
   );
 }
@@ -569,7 +558,8 @@ const s = themed(() => ({
   group: { backgroundColor: colors.card, borderRadius: 14, overflow: 'hidden', borderWidth: isDark() ? 0 : 1, borderColor: colors.line },
   sep: { height: 1, backgroundColor: colors.line, marginLeft: 14 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48, paddingHorizontal: 14, paddingVertical: 6 },
-  ico: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  ico: { width: 38, height: 38, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  bigRow: { minHeight: 64 },
   rowTitle: { fontSize: 15, fontWeight: '600', color: colors.ink },
   rowSub: { fontSize: 12.5, color: colors.muted, marginTop: 1 },
   value: { fontSize: 14, color: colors.muted, maxWidth: 140 },
@@ -577,7 +567,7 @@ const s = themed(() => ({
   foot: { fontSize: 12.5, lineHeight: 17, color: colors.muted, marginTop: 7, marginHorizontal: 6 },
   time: { fontSize: 13, fontWeight: '700', color: colors.royal, backgroundColor: dk('#EEF1FF', '#24305A'), paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, overflow: 'hidden', fontVariant: ['tabular-nums'] },
   eg: { flexDirection: 'row', gap: 9, marginHorizontal: 12, marginBottom: 12, marginTop: 2, padding: 10, borderRadius: 13, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.line, backgroundColor: colors.paper },
-  egIcon: { width: 26, height: 26, borderRadius: 7, alignItems: 'center', justifyContent: 'center' },
+  egIcon: { width: 28, height: 28, borderRadius: 7, overflow: 'hidden', backgroundColor: '#1B3FA0' },
   egP: { color: '#FFFFFF', fontWeight: '800', fontSize: 13 },
   egTitle: { flex: 1, fontSize: 13, fontWeight: '700', color: colors.ink },
   egWhen: { fontSize: 11, color: colors.muted },
