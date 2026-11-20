@@ -9,8 +9,8 @@
 //     a "★ Next event in N days" note shows when it's out of view. Each day shows its rings (minutes, words,
 //     sessions); an event day's date is gold with a ★ (on every calendar).
 // Tapping a past day you wrote on opens what you wrote that day.
-//   • Previous salons: past salons on YouTube, the podcast on Spotify, and the
-//     "New episode in the feed" switch right under the Spotify button.
+//   (Previous salons, YouTube / Spotify and the new-episode switch are on the
+//   Eventbrite tab, under Coming up.)
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -19,9 +19,6 @@ import {
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { Screen, Header, openLink } from '../components/ui';
-import { BrandButton, DeniedNote, ToggleCard, SPOTIFY_GREEN, YT_RED } from '../components/LinkButtons';
-import { LINKS } from '../links';
-import { setNotify, useNotifySettings } from '../notify';
 import Rings, { RING_COLORS } from '../components/Rings';
 import RingStats from '../components/RingStats';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -68,14 +65,6 @@ export default function CalendarScreen({ navigation, route }) {
   const tourCalView = tourStepNow?.calView || null;
   const tourStepKey = tourRun ? `${tourRun.ch}.${tourRun.step}` : '';
   useEffect(() => { if (tourCalView) setViewState(tourCalView); }, [tourCalView, tourStepKey]);
-  const [podcast, setPodcast] = useState(null); // newest episode, for the new-episode switch
-  const notify = useNotifySettings();
-  const [notifyNote, setNotifyNote] = useState(null); // 'denied' | null
-  async function toggleEpisodes(on) {
-    setNotifyNote(null);
-    const r = await setNotify('episodes', on, { podcast });
-    if (r === 'denied') setNotifyNote('denied');
-  }
   const [selected, setSelected] = useState(today);
   // Using the calendar (a touch anywhere on it) pauses the top cards for a
   // while, so they never change under you while you read the days.
@@ -111,7 +100,7 @@ export default function CalendarScreen({ navigation, route }) {
   useEffect(() => { setSelected(today); }, [today]);
 
   // Event days for the stars (the saved list; the Eventbrite tab refreshes it).
-  useFocusEffect(useCallback(() => { loadEvents().then((r) => { setEvents(r.events); setPodcast(r.podcast); }); }, []));
+  useFocusEffect(useCallback(() => { loadEvents().then((r) => { setEvents(r.events); }); }, []));
 
   const byDay = useMemo(() => eventsByDay(events), [events]);
   const weeks = useMemo(() => {
@@ -379,33 +368,6 @@ export default function CalendarScreen({ navigation, route }) {
           <Text style={s.hint}>Tap a past day to read what you wrote.</Text>
         </TourTarget>
 
-        {/* ---------- Previous salons ---------- */}
-        <TourTarget id="cal.past" style={{ gap: 8 }}>
-          <Text style={[s.h, { marginTop: 4 }]}>Previous salons</Text>
-          <Text style={s.body}>
-            Missed one, or want to hear it again? Recordings of past salons are on YouTube,
-            and the salon podcast is on Spotify.
-          </Text>
-          <BrandButton
-            icon={<Ionicons name="logo-youtube" size={22} color={YT_RED} />}
-            brand="youtube"
-            label="Watch past salons on YouTube"
-            onPress={() => { if (!tourRunning()) openLink(LINKS.youtube); }}
-          />
-          <BrandButton
-            icon={<FontAwesome name="spotify" size={21} color={SPOTIFY_GREEN} />}
-            brand="spotify"
-            label="Listen on Spotify"
-            onPress={() => { if (!tourRunning()) openLink(LINKS.spotify); }}
-          />
-          <ToggleCard
-            title="New episode in the feed"
-            sub="When the salon lands on Spotify."
-            value={!!notify.episodes}
-            onChange={toggleEpisodes}
-          />
-          {notifyNote === 'denied' && <DeniedNote />}
-        </TourTarget>
       </View>
 
       <ShareCalendarSheet visible={shareOpen} mode={view} onClose={() => setShareOpen(false)} sessions={data.sessions} dailyGoals={data.dailyGoals} goals={data.goals} />

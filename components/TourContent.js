@@ -309,9 +309,9 @@ export const CHAPTERS = [
     ],
   },
   {
-    id: 'calendar', title: 'Calendar', short: 'Calendar', sub: 'Rings, feelings and monthly medals; salons; sharing', prelude: [0],
+    id: 'calendar', title: 'Calendar', short: 'Calendar', sub: 'Rings, feelings and monthly medals; sharing', prelude: [0],
     steps: [
-      tapTab('Calendar', 'Calendar', 'Every day you showed up to write: as rings, as feelings, and as monthly medals.', { section: 'Today & the next salon' }),
+      tapTab('Calendar', 'Calendar', 'Every day you showed up to write: as rings, as feelings, and as monthly medals.', { section: 'The top cards' }),
       {
         target: 'cal.top', tab: 'Calendar', marks: ['cal.prev', 'cal.next'], calView: 'rings',
         text: 'Four cards take turns here: today’s rings, this month’s feelings, this month’s medal, and a countdown to the next salon. Swipe the card, or tap the arrows, to move between them; the calendar below follows along. (They also change by themselves now and then; that’s paused for the tour.)',
@@ -351,7 +351,7 @@ export const CHAPTERS = [
       {
         target: 'cal.top', tab: 'Calendar', info: true, calView: 'medals',
         title: `This month: ${THIS_MONTH.when} · ${THIS_MONTH.name}`,
-        text: 'Every month has a medal for you to try and earn! Words you write this month count toward this month’s medal: Bronze at 500 words, Silver at 1,000, Gold at 5,000, Diamond at 10,000. Each month’s medal has its own name, which changes every year. It starts fresh on the 1st, and a missed month never takes anything away.',
+        text: 'Every month has a medal for you to try and earn! Words you write this month count toward this month’s medal: Bronze at 500 words, Silver at 1,000, Gold at 5,000, Diamond at 10,000. It starts fresh on the 1st, and a missed month never takes anything away.',
       },
       {
         target: 'cal.grid', tab: 'Calendar', info: true, look: true, calView: 'medals', offNote: offInTour('The days', true),
@@ -360,15 +360,6 @@ export const CHAPTERS = [
       {
         target: 'cal.share', tab: 'Calendar', info: true, look: true, round: 999, section: 'Share', offNote: offInTour('Share'),
         text: 'Share shares the view you’re on: your rings, your feelings, or your monthly medals, as a picture of 1, 3 or 6 months. Your writing is never included.',
-      },
-      {
-        target: 'cal.past', reveal: true, hold: 500, section: 'Previous salons',
-        text: 'Further down the Calendar.', task: 'Scroll down to Previous salons.',
-        on: (ev, v) => ev === 'revealed' && v === 'cal.past',
-      },
-      {
-        target: 'cal.past', tab: 'Calendar', info: true,
-        text: 'Missed a salon, or want to hear it again? Recordings are on YouTube and the salon podcast is on Spotify (they open after the tour). Try the switch: it tells you when a new episode lands. Tap Got it when you’re ready.',
       },
     ],
   },
@@ -383,6 +374,15 @@ export const CHAPTERS = [
       {
         target: 'ev.remind', tab: 'Eventbrite', info: true, round: 16,
         title: 'Never miss one', text: 'Turn this on and you’ll get one reminder half an hour before a salon goes live. Nothing else. Try it, keep it on if you’d like it, then tap Got it.',
+      },
+      {
+        target: 'ev.past', reveal: true, hold: 500, section: 'Previous salons',
+        text: 'Further down Eventbrite.', task: 'Scroll down to Previous salons.',
+        on: (ev, v) => ev === 'revealed' && v === 'ev.past',
+      },
+      {
+        target: 'ev.past', tab: 'Eventbrite', info: true,
+        text: 'Missed a salon, or want to hear it again? Recordings are on YouTube and the salon podcast is on Spotify (they open after the tour). Try the switch: it tells you when a new episode lands. Tap Got it when you’re ready.',
       },
       tapTab('Community', 'Community', 'People to write with.', { section: 'Community' }),
       {
@@ -400,9 +400,9 @@ export const CHAPTERS = [
 // What each tab is for (chapter 1's tab bar step).
 const TAB_INFO = {
   Home: 'News from the blog, the website, our socials and Get Karma.',
-  Calendar: 'Every day you wrote, as rings, and a countdown to the next salon.',
+  Calendar: 'Every day you wrote, as rings, feelings and ink, with this month’s medal and the next salon.',
   Brainstorm: 'Where you write: today’s rings, Start writing, your week and everything you’ve written.',
-  Eventbrite: 'Upcoming salons: register, watch live on YouTube and get a reminder.',
+  Eventbrite: 'Upcoming salons: register, watch live on YouTube and get a reminder. Past salons and the podcast too.',
   Community: 'The Pen Parentis Discord, the Facebook group and accountability groups.',
 };
 

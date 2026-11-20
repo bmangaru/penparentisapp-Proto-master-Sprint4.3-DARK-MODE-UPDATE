@@ -1,6 +1,7 @@
 // screens/EventbriteScreen.js — Pen Parentis events (from Eventbrite), with
 // each event's YouTube livestream, and the "salon goes live" reminder switch.
-// (Previous salons and the new-episode switch live on the Calendar tab.)
+//   • Previous salons (under the reminder): past salons on YouTube, the
+//     podcast on Spotify, and the "New episode in the feed" switch.
 //   • Coming up: one event open at a time (gold border). Open: Register on
 //     Eventbrite, Watch on YouTube, Add to calendar,
 //     Share. Tap another to open it; leaving the app resets to the next event.
@@ -13,7 +14,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   View, Text, StyleSheet, Pressable, ActivityIndicator, Animated, AppState, LayoutAnimation, Platform, UIManager,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { Screen, Header, openLink } from '../components/ui';
 import { colors, lift, radius, space, themed } from '../theme';
@@ -21,8 +22,9 @@ import { LINKS } from '../links';
 import { eventWhen, loadEvents, upcoming, youtubeFor } from '../eventsService';
 import { addEventToCalendar, openPhoneSettings, shareEvent } from '../eventActions';
 import { LEAD_MINUTES, setNotify, syncNotifications, useNotifySettings } from '../notify';
-import { BrandButton, DeniedNote, ToggleCard, YT_RED } from '../components/LinkButtons';
+import { BrandButton, DeniedNote, ToggleCard, SPOTIFY_GREEN, YT_RED } from '../components/LinkButtons';
 import TourTarget from '../components/TourTarget';
+import { tourRunning } from '../tourRun';
 
 const STAR = '#E0AE45';
 
@@ -206,6 +208,33 @@ export default function EventbriteScreen({ route }) {
             onChange={(v) => toggleNotify('live', v)}
           />
           {notifyNote === 'denied' && <DeniedNote />}
+        </TourTarget>
+
+        {/* ---------- Previous salons ---------- */}
+        <TourTarget id="ev.past" style={{ gap: 8, marginTop: space.md }}>
+          <Text style={s.h}>Previous salons</Text>
+          <Text style={s.body}>
+            Missed one, or want to hear it again? Recordings of past salons are on YouTube,
+            and the salon podcast is on Spotify.
+          </Text>
+          <BrandButton
+            icon={<Ionicons name="logo-youtube" size={22} color={YT_RED} />}
+            brand="youtube"
+            label="Watch past salons on YouTube"
+            onPress={() => { if (!tourRunning()) openLink(LINKS.youtube); }}
+          />
+          <BrandButton
+            icon={<FontAwesome name="spotify" size={21} color={SPOTIFY_GREEN} />}
+            brand="spotify"
+            label="Listen on Spotify"
+            onPress={() => { if (!tourRunning()) openLink(LINKS.spotify); }}
+          />
+          <ToggleCard
+            title="New episode in the feed"
+            sub="When the salon lands on Spotify."
+            value={!!notify.episodes}
+            onChange={(v) => toggleNotify('episodes', v)}
+          />
         </TourTarget>
       </View>
     </Screen>
