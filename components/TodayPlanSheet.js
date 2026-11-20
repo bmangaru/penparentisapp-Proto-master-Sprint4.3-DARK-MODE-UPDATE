@@ -56,7 +56,7 @@ export default function TodayPlanSheet({ visible, goals, current, onPick, onEdit
           const rest = o.id === 'rest';
           const on = picked === o.id;
           return (
-            <TourTarget key={o.id} id={`plan.${o.id}`}>
+            <TourTarget key={o.id} id={`plan.${o.id}`} ringIn>
             <Pressable
               onPress={() => { if (rest && noRest) return; setPicked(o.id); tourEvent('plan-pick', o.id); }}
               disabled={rest && noRest}
@@ -98,7 +98,7 @@ export default function TodayPlanSheet({ visible, goals, current, onPick, onEdit
       <View style={s.tip}>
         <Text style={s.tipText}>✏️  To change your goals, tap <Text style={{ fontWeight: '700' }}>Edit</Text> on My usual. The others follow it.</Text>
       </View>
-      <TourTarget id="plan.save" style={{ marginBottom: 8 }}>
+      <TourTarget id="plan.save" ringIn>
         <Pressable style={s.cta} onPress={() => { tourEvent('plan-saved', picked); onPick(planFor(picked, goals)); }}>
           <Text style={s.ctaText}>{cta}</Text>
         </Pressable>

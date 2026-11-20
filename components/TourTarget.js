@@ -19,7 +19,7 @@ import { View, Animated, StyleSheet } from 'react-native';
 import { NavigationContext, NavigationRouteContext } from '@react-navigation/native';
 import { TourHostContext, TourScrollContext, marksOf, registerTarget, stepOf, usePulseBox, useRun } from '../tourRun';
 
-export default function TourTarget({ id, style, children, ...rest }) {
+export default function TourTarget({ id, style, children, ringIn = false, ...rest }) {
   const ref = useRef(null);
   const host = useContext(TourHostContext);
   const scroll = useContext(TourScrollContext);
@@ -47,7 +47,9 @@ export default function TourTarget({ id, style, children, ...rest }) {
   const showBox = !!(box && st && !run.min && typeof st.inline === 'string' && !marks.length && !st.noBox);
   let ring = null;
   if (isMark) {
-    const p = 5;
+    // ringIn: on the spot's own edge, for full-width buttons in a sheet (an
+    // outline outside them gets cut off at the sheet's sides).
+    const p = ringIn ? 0 : 5;
     ring = { top: -p, left: -p, right: -p, bottom: -p, borderRadius: st.markRound ?? 999 };
   } else if (showBox) {
     const p = st.boxPad ?? (st.box ? 8 : 5);

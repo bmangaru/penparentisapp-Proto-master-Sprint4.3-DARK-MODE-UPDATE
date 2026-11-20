@@ -14,7 +14,7 @@ import { parseDayKey } from '../writingLogic';
 const short = (k) => parseDayKey(k).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 const PAGES = ['Last week', 'This week'];
 
-export default function WeekCarousel({ week, last, onPressDay, onOpenReview }) {
+export default function WeekCarousel({ week, last, onPressDay, onOpenReview, onOpenAll }) {
   const [w, setW] = useState(0);
   const [i, setI] = useState(1); // This week
   const ref = useRef(null);
@@ -34,7 +34,7 @@ export default function WeekCarousel({ week, last, onPressDay, onOpenReview }) {
         >
           <View style={{ width: w }}>
             <WeekRings
-              flat week={last} onPressDay={onPressDay} title="Last week"
+              flat style={{ flex: 1 }} week={last} onPressDay={onPressDay} title="Last week"
               meta={`${short(last.start)} – ${short(last.end)}`}
               footer={(
                 <Pressable onPress={onOpenReview} style={({ pressed }) => [s.link, pressed && { opacity: 0.7 }]} accessibilityRole="button">
@@ -45,7 +45,17 @@ export default function WeekCarousel({ week, last, onPressDay, onOpenReview }) {
             />
           </View>
           <View style={{ width: w }}>
-            <WeekRings flat week={week} onPressDay={onPressDay} />
+            {/* Both cards the same height (so swiping never leaves a gap):
+                each fills its page, and each has a link at the bottom. */}
+            <WeekRings
+              flat style={{ flex: 1 }} week={week} onPressDay={onPressDay}
+              footer={(
+                <Pressable onPress={onOpenAll} style={({ pressed }) => [s.link, pressed && { opacity: 0.7 }]} accessibilityRole="button">
+                  <Text style={s.linkText}>See all my writing</Text>
+                  <Ionicons name="chevron-forward" size={15} color={colors.royal} />
+                </Pressable>
+              )}
+            />
           </View>
         </ScrollView>
       ) : null}
