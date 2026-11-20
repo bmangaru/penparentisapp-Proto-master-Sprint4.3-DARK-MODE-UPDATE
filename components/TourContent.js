@@ -235,7 +235,7 @@ export const CHAPTERS = [
       {
         target: 'writer.finish', inline: true, section: 'Save & check in', marks: ['writer.finish'], markRound: 14, wait: true,
         text: 'Keep writing as long as you like. Need more room? Tap Hide up here to tuck the tour away; when you’re done, tap Save & check in and the tour comes back.',
-        task: 'Tap Save & check in.', goal: 'Save & check in when you’re ready', hold: 600, on: (ev) => ev === 'session-saved',
+        task: 'Tap Save & check in.', goal: 'Save & check in', hold: 600, on: (ev) => ev === 'session-saved',
       },
       {
         target: 'done.summary', wait: true, lock: true, info: true, look: true, round: 16, section: 'Your summary', jump: false,

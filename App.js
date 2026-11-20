@@ -27,7 +27,7 @@ import BottomBar from './components/BottomBar';
 import IntroSplash from './components/IntroSplash';
 import TourModal from './components/TourModal';
 import TourOverlay from './components/TourOverlay';
-import { tourEvent } from './tourRun';
+import { tabsLocked, tourEvent, useRun } from './tourRun';
 import { loadEvents, upcoming } from './eventsService';
 import { onNotificationTap, syncNotifications } from './notify';
 import { openLink } from './components/ui';
@@ -55,6 +55,8 @@ function BrainstormStack() {
 }
 
 function TabNavigator() {
+  const run = useRun();
+  const locked = tabsLocked(run);
   // Swiping between tabs works during the tour too. However you get to a
   // tab (tap or swipe), the tour hears about it ("Tap Calendar" counts a
   // swipe to Calendar). If a step needs another page, the tour brings it back.
@@ -63,6 +65,8 @@ function TabNavigator() {
       tabBarPosition="bottom"
       initialRouteName="Home"
       tabBar={(props) => <BottomBar {...props} />}
+      // No swiping to another tab mid-chapter (see tabsLocked in tourRun.js).
+      screenOptions={{ swipeEnabled: !locked }}
       screenListeners={({ route }) => ({ focus: () => tourEvent('tab', route.name) })}
     >
       <Tabs.Screen name="Home" component={HomeScreen} />

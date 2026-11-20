@@ -24,7 +24,7 @@ import Medal from './Medal';
 import TourTarget from './TourTarget';
 import { MEDALS } from '../medals';
 import {
-  getRun, getTarget, tourEvent, getTourChapters, minimizeTour, nextStep, revealTarget, scrollForStep, sectionOf, startChapter, stepOf, stopTour, swipeTab, topHost, useRun,
+  getRun, getTarget, targetOnScreen, tourEvent, getTourChapters, minimizeTour, nextStep, revealTarget, scrollForStep, sectionOf, startChapter, stepOf, stopTour, swipeTab, topHost, useRun,
 } from '../tourRun';
 
 const safeCall = (fn) => { try { return !!fn(); } catch { return true; } };
@@ -119,6 +119,9 @@ export default function TourLayer({ host = 'root' }) {
       // and not while the tour is tucked away (you're using the app).
       if (t.onScreen && !safeCall(t.onScreen)) {
         setRect(null);
+        // Nothing left outlined on whatever page is showing instead.
+        setMarkRects((prev) => (prev ? null : prev));
+        setBoxRect((prev) => (prev ? null : prev));
         scrolledFor.current = null; // back on its page → scroll to the spot again
         const r = getRun();
         // In-page steps leave you free to look around: no pulling you back,
@@ -334,7 +337,7 @@ export default function TourLayer({ host = 'root' }) {
     // it never covers ×, Prompt, Aa or Pause. A step you're still doing keeps
     // its pulsing "tap here" (e.g. Save & check in), as a reminder.
     if (step?.inline) {
-      if (!step.task || run.taskDone || !markRects || !markRects.length) return null;
+      if (!step.task || run.taskDone || !markRects || !markRects.length || !targetOnScreen(step.target)) return null;
       const bottom = Math.min(barTop.current || H, kb ? H - kb : H);
       return (
         <View style={StyleSheet.absoluteFill} pointerEvents="none">

@@ -48,6 +48,21 @@ export function stepOf(r = run) {
   return CHAPTERS[r.ch]?.steps?.[r.step] || null;
 }
 // Is this target the one being shown right now?
+// While you're doing a chapter, the tab bar (and swiping between tabs) is
+// off, so you can't wander away mid-step; it works again when the chapter
+// ends. Not on the steps that ask you to tap a tab, and not when the tour is
+// tucked away as a "Tour paused" card (then you're using the app). Hidden on
+// a page step (the slim strip, e.g. on the writing page) it stays off: you're
+// still doing that step. The tour itself can still change tabs.
+export function tabsLocked(r = run) {
+  if (!r || r.phase !== 'step') return false;
+  const st = stepOf(r);
+  if (!st || !st.target) return false;
+  if (/^tab(\.|bar$)/.test(st.target)) return false;
+  if (r.min && !st.inline) return false;
+  return true;
+}
+
 export function isTourTarget(id, r = run) {
   const st = stepOf(r);
   return !!st && st.target === id;

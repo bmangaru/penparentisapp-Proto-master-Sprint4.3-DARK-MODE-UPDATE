@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, gradients, themed } from '../theme';
 import TourTarget from './TourTarget';
-import { isTourTarget, tourEvent, useRun } from '../tourRun';
+import { isTourTarget, tabsLocked, tourEvent, useRun } from '../tourRun';
 
 export const TAB_ICONS = {
   Home: 'book',
@@ -31,6 +31,8 @@ export default function BottomBar({ state, descriptors, navigation }) {
   // The app tour's "tap each tab" step: a ✓ on each tab you've opened.
   const run = useRun();
   const seen = isTourTarget('tabbar', run) ? run.data?.seen || {} : null;
+  // Mid-chapter the tabs are off (faded) until the chapter ends.
+  const locked = tabsLocked(run);
   return (
     <TourTarget id="tabbar" style={[s.bar, { paddingBottom: Math.max(insets.bottom - 4, 8) }]}>
       {state.routes.map((route, index) => {
@@ -40,6 +42,7 @@ export default function BottomBar({ state, descriptors, navigation }) {
         const color = focused ? colors.royalDeep : colors.tabIdle;
 
         function onPress() {
+          if (locked) return;
           tourEvent('tab', route.name);
           const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
           if (!focused && !event.defaultPrevented) navigation.navigate(route.name, route.params);
@@ -50,13 +53,15 @@ export default function BottomBar({ state, descriptors, navigation }) {
 
         const center = route.name === CENTER;
         return (
-          <TourTarget key={route.key} id={`tab.${route.name}`} style={s.slot}>
+          <TourTarget key={route.key} id={`tab.${route.name}`} style={[s.slot, locked && !focused && { opacity: 0.4 }]}>
           <Pressable
             onPress={onPress}
+            disabled={locked}
             onLongPress={onLongPress}
             style={s.item}
             accessibilityRole="tab"
-            accessibilityState={{ selected: focused }}
+            accessibilityState={{ selected: focused, disabled: locked }}
+            accessibilityHint={locked ? 'Off until this tour chapter ends' : undefined}
             accessibilityLabel={label}
           >
             {center ? (
