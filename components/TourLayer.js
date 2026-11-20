@@ -170,8 +170,9 @@ export default function TourLayer({ host = 'root' }) {
             tip.measureInWindow((tx, ty, tw, th) => {
               // (A tip outside the spot, e.g. Home's under the header: the whole spot.)
               if (!th || ty < y - 1 || ty > y + h) { box({ x, y, w, h }); return; }
-              // A little gap either side, so the gold box never touches the tip.
-              if (ty - y < h / 2) { const top = ty + th + 14; box({ x, y: top, w, h: Math.max(0, y + h - top) }); }
+              // The box is the spot below the tip (the tip's 8 pt margin left
+              // out), or above it with a little gap (the calendar's top cards).
+              if (ty - y < h / 2) { const top = ty + th + 8; box({ x, y: top, w, h: Math.max(0, y + h - top) }); }
               else box({ x, y, w, h: Math.max(0, ty - y - 14) });
             });
           }
@@ -424,6 +425,9 @@ export default function TourLayer({ host = 'root' }) {
       if (bot - top > 12) vis = { x: boxRect.x, y: top, w: boxRect.w, h: bot - top };
     }
     const showBox = vis && !marks.length && !step.noBox;
+    // How far the gold box sits outside its spot: a bit more round one button
+    // (step.box), so the pulse shows; 0 = right on the spot's own border.
+    const pad = step.boxPad ?? (step.box ? 8 : 5);
     const block = vis && step.look;
     // Scrolled right away from it (tip and all): the arrow back, as on the
     // other steps. Only once it's completely gone, so a tall spot like the
@@ -442,7 +446,7 @@ export default function TourLayer({ host = 'root' }) {
         ) : null}
         {block ? <View {...dragProps} style={[c.abs, { left: vis.x, top: vis.y, width: vis.w, height: vis.h }]} /> : null}
         {showBox ? (
-          <Animated.View pointerEvents="none" style={[c.abs, c.mark, { left: vis.x - 5, top: vis.y - 5, width: vis.w + 10, height: vis.h + 10, borderRadius: step.boxRound ?? 24, opacity: pulse }]} />
+          <Animated.View pointerEvents="none" style={[c.abs, c.mark, { left: vis.x - pad, top: vis.y - pad, width: vis.w + pad * 2, height: vis.h + pad * 2, borderRadius: step.boxRound ?? 24, opacity: pulse }]} />
         ) : null}
         {marks.map((r, i) => (
           <Animated.View key={`m${i}`} pointerEvents="none" style={[c.abs, c.mark, { left: r.x - 5, top: r.y - 5, width: r.w + 10, height: r.h + 10, borderRadius: step.markRound ?? 999, opacity: pulse }]} />

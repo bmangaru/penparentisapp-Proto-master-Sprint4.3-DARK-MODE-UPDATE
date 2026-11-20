@@ -22,7 +22,8 @@
 //   <TourInline at="bs.today" /> placed at the top of that spot),
 //   offNote (a 🔒 line in the tips box: this button is off during the tour),
 //   box ('id': on an in-page step, the pulsing gold box goes around just that
-//   spot instead of the whole part below the tip), noArrow (no "it's up
+//   spot instead of the whole part below the tip), boxPad / boxRound (how far
+//   outside it the box sits, its corners: 0 / 20 = right on a card's own border), noArrow (no "it's up
 //   here" arrow when you scroll away), goal ('text' or (run) => 'text': what
 //   the slim "Tour hidden" strip shows, with a ✓ once it's done).
 // Every chapter now runs on the app. (TourModal.js can still show chapters
@@ -380,7 +381,7 @@ export const CHAPTERS = [
     steps: [
       tapTab('Eventbrite', 'Eventbrite', 'Pen Parentis salons: monthly, free and online.', { section: 'Monthly salons' }),
       {
-        target: 'ev.next', inline: 'ev.next', tab: 'Eventbrite', info: true, look: true, wait: true, offNote: offInTour('The event’s buttons', true),
+        target: 'ev.next', inline: 'ev.next', boxPad: 0, boxRound: 20, tab: 'Eventbrite', info: true, look: true, wait: true, offNote: offInTour('The event’s buttons', true),
         text: 'The next salon. Register on Eventbrite, watch it live on YouTube, add it to your calendar, or share it with a friend.',
       },
       {
