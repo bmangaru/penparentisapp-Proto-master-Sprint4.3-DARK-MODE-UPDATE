@@ -173,8 +173,7 @@ export default function GoalsSheet({ visible, goals, firstTime, kind = 'usual', 
 
       {/* Hidden while the number pad is open; Done brings it back. */}
       {!pad.active ? (
-        {/* (marginBottom: room for the tour's pulsing outline inside the sheet.) */}
-        <TourTarget id="goals.save" style={{ marginTop: space.md, marginBottom: 8 }}>
+        <TourTarget id="goals.save" style={{ marginTop: space.md, marginBottom: 8 /* room for the tour's pulsing outline */ }}>
           <Pressable style={s.save} onPress={save}>
             <Text style={s.saveText}>{firstTime ? 'Save goals' : 'Save'}</Text>
           </Pressable>
