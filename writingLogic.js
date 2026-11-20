@@ -1147,13 +1147,13 @@ export function upgradeOldGoals(dailyGoals, sessions, goals, today = dayKey()) {
 // "Share your rings" (Calendar → Share): which months to show and the totals.
 // ---------------------------------------------------------------------------
 
-// kind: 'month' | '3months' | '6months' → [{ year, month }] oldest first,
+// kind: 'month' | '2months' | '3months' | '4months' | '6months' → [{ year, month }] oldest first,
 // ending with this month.
 export function shareMonths(kind, today = dayKey()) {
   const t = parseDayKey(today);
   const y = t.getFullYear();
   const m = t.getMonth();
-  const count = kind === 'month' ? 1 : kind === '6months' ? 6 : 3;
+  const count = { month: 1, '2months': 2, '3months': 3, '4months': 4, '6months': 6 }[kind] || 3;
   const out = [];
   for (let k = count - 1; k >= 0; k -= 1) {
     const d = new Date(y, m - k, 1);

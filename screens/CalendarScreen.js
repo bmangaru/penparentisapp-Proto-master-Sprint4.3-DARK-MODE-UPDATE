@@ -305,16 +305,18 @@ export default function CalendarScreen({ navigation, route }) {
             <Text style={[s.legendText, s.legend]}>Your latest feeling is in front. Tap a day to see them all.</Text>
           ) : (
             // Key: the ink drops, then the four medals with the words each needs.
-            <View style={[s.legend, { flexDirection: 'column', gap: 7 }]}>
+            <View style={s.medalLegend}>
               <View style={s.legendItem}>
                 <View style={s.dropsKey}><InkDrop words={5} min={5} max={14} /><InkDrop words={150} min={5} max={14} /><InkDrop words={1000} min={5} max={14} /></View>
                 <Text style={s.legendText}>Bigger drop = more words that day</Text>
               </View>
-              <View style={s.medalKey}>
-                {[['bronze', '500'], ['silver', '1k'], ['gold', '5k'], ['diamond', '10k']].map(([t, n]) => (
-                  <View key={t} style={s.legendItem}>
-                    <MedalPin tier={t} height={15} />
-                    <Text style={s.legendText} numberOfLines={1}>{TIER_LABEL[t]} {n}</Text>
+              {/* A small table: each medal and the words it takes this month. */}
+              <View style={s.medalTable}>
+                {[['bronze', '500'], ['silver', '1,000'], ['gold', '5,000'], ['diamond', '10,000']].map(([t, n], i) => (
+                  <View key={t} style={[s.medalRow, i > 0 && s.medalRowLine]}>
+                    <MedalPin tier={t} height={17} />
+                    <Text style={s.medalRowName}>{TIER_LABEL[t]}</Text>
+                    <Text style={s.medalRowWords}>{n} words</Text>
                   </View>
                 ))}
               </View>
@@ -549,6 +551,11 @@ const s = themed(() => ({
   wordBadge: { right: -14, bottom: -5 },
   pin: { position: 'absolute', top: -20, right: -12 },
   cellWon: { backgroundColor: '#FFF6DE' },
-  medalKey: { flexDirection: 'row', justifyContent: 'space-between', gap: 4 },
+  medalLegend: { gap: 8, marginTop: 6, marginBottom: 10 },
+  medalTable: { borderRadius: 10, backgroundColor: '#F4F5F9', paddingHorizontal: 10, paddingVertical: 2 },
+  medalRow: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 26 },
+  medalRowLine: { borderTopWidth: 1, borderTopColor: colors.line },
+  medalRowName: { flex: 1, fontSize: 12.5, fontWeight: '700', color: colors.ink },
+  medalRowWords: { fontSize: 12.5, color: colors.body, fontVariant: ['tabular-nums'] },
   dropsKey: { flexDirection: 'row', alignItems: 'center', gap: 2 },
 }));

@@ -41,6 +41,12 @@ const RANGES = [
   { id: '3months', label: '3 months' },
   { id: '6months', label: '6 months' },
 ];
+// Medals sit two months to a row, so they go by 2 and 4.
+const MEDAL_RANGES = [
+  { id: 'month', label: 'This month' },
+  { id: '2months', label: '2 months' },
+  { id: '4months', label: '4 months' },
+];
 
 export default function ShareCalendarSheet({ visible, onClose, mode = 'rings', sessions = [], dailyGoals = {}, goals = null }) {
   const M = MODE[mode] || MODE.rings;
@@ -48,7 +54,10 @@ export default function ShareCalendarSheet({ visible, onClose, mode = 'rings', s
   const touring = !!run;
   // In the tour the three ranges pulse, drawn on the chips so they move with them.
   const chipTip = useTapHint(isTourTarget('share.card', run));
-  const [range, setRange] = useState('3months');
+  const [rangePick, setRange] = useState('3months');
+  const rangeList = mode === 'medals' ? MEDAL_RANGES : RANGES;
+  // A pick from the other list (e.g. 3 months, then switching to Medals) → its middle choice.
+  const range = rangeList.some((r) => r.id === rangePick) ? rangePick : rangeList[1].id;
   const [medalLook, setMedalLook] = useState('ink'); // 'ink' | 'medals'
   const [totals, setTotals] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -94,7 +103,7 @@ export default function ShareCalendarSheet({ visible, onClose, mode = 'rings', s
   // One month fills the width with big rings; 3 and 6 months sit 3 to a
   // row, so the picture stays short enough to share (one row for 3 months,
   // two for 6).
-  const perRow = range === 'month' ? 1 : 3;
+  const perRow = range === 'month' ? 1 : mode === 'medals' ? 2 : 3;
   const gap = 10;
   const monthW = (inner - gap * (perRow - 1)) / perRow;
   const ring = Math.floor(monthW / 7) - (perRow === 1 ? 6 : 2);
@@ -119,7 +128,7 @@ export default function ShareCalendarSheet({ visible, onClose, mode = 'rings', s
   return (
     <Sheet visible={visible} onClose={onClose} tourId="share" title={M.title} subtitle={M.sub}>
       <View style={s.chips}>
-        {RANGES.map((r) => {
+        {rangeList.map((r) => {
           const on = r.id === range;
           return (
             <TourTarget key={r.id} id={`share.${r.id}`}>
