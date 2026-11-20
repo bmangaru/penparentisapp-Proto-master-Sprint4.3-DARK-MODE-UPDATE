@@ -1,7 +1,7 @@
 // components/Cycler.js — cards that take turns in one spot, full width (the
 // Calendar tab's top card: today's rings ↔ the next event's countdown; Home's
 // blog posts).
-//   • Switches every `every` ms (10 s); swipe either way; dots show which card.
+//   • Switches every `every` ms (15 s); swipe either way; dots show which card.
 //   • It goes round and round: swiping on from the last card brings back the
 //     first, and back from the first shows the last (a copy of each sits at
 //     the far ends; the moment a slide lands on one, it swaps to the real card).
@@ -26,7 +26,7 @@ import TourTarget from './TourTarget';
 
 const HOLD_AFTER_TOUCH = 12000;
 
-export default function Cycler({ children, every = 10000, paused = false, resetKey, arrows = false, onIndex, tourId, goTo, autoNext }) {
+export default function Cycler({ children, every = 15000, paused = false, resetKey, arrows = false, onIndex, tourId, goTo, autoNext }) {
   const pages = React.Children.toArray(children).filter(Boolean);
   const n = pages.length;
   const [w, setW] = useState(0);
@@ -34,6 +34,9 @@ export default function Cycler({ children, every = 10000, paused = false, resetK
   const iRef = useRef(0);
   const ref = useRef(null);
   const heldUntil = useRef(0);
+  // True only while a finger drags the strip, so a slide the timer or the
+  // app started is never mistaken for the person's swipe.
+  const dragging = useRef(false);
   // Where the strip starts (the real first card). Set once: changing it on
   // every redraw made iOS jump mid-slide.
   const startOffset = useRef({ x: 0, y: 0 });
@@ -90,6 +93,7 @@ export default function Cycler({ children, every = 10000, paused = false, resetK
   }, [n, paused, w, every, reduceMotion]);
 
   const hold = () => { heldUntil.current = Date.now() + HOLD_AFTER_TOUCH; };
+  const startDrag = () => { dragging.current = true; hold(); };
 
   // Arriving on a copy at either end (by swipe, arrow or timer): swap to the
   // real card it shows, which looks identical, so nothing visibly moves.
@@ -103,10 +107,12 @@ export default function Cycler({ children, every = 10000, paused = false, resetK
   // After a swipe: landing on a copy jumps to the real card it shows.
   function onSwipeEnd(e) {
     if (!w) return;
+    const how = dragging.current ? 'user' : 'auto';
+    dragging.current = false;
     const slot = Math.round(e.nativeEvent.contentOffset.x / w);
-    if (slot <= 0) { setIndex(n - 1, 'user'); ref.current?.scrollTo({ x: xOf(n), animated: false }); }
-    else if (slot >= n + 1) { setIndex(0, 'user'); ref.current?.scrollTo({ x: xOf(1), animated: false }); }
-    else if (slot - 1 !== iRef.current) setIndex(slot - 1, 'user');
+    if (slot <= 0) { if (iRef.current !== n - 1) setIndex(n - 1, how); ref.current?.scrollTo({ x: xOf(n), animated: false }); }
+    else if (slot >= n + 1) { if (iRef.current !== 0) setIndex(0, how); ref.current?.scrollTo({ x: xOf(1), animated: false }); }
+    else if (slot - 1 !== iRef.current) setIndex(slot - 1, how);
   }
 
   if (n < 2) return <View>{pages[0] || null}</View>;
@@ -124,7 +130,7 @@ export default function Cycler({ children, every = 10000, paused = false, resetK
         showsHorizontalScrollIndicator={false}
         contentOffset={startOffset.current}
         onTouchStart={hold}
-        onScrollBeginDrag={hold}
+        onScrollBeginDrag={startDrag}
         onScroll={onScroll}
         onMomentumScrollEnd={onSwipeEnd}
         scrollEventThrottle={16}

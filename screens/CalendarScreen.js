@@ -73,6 +73,16 @@ export default function CalendarScreen({ navigation, route }) {
     if (r === 'denied') setNotifyNote('denied');
   }
   const [selected, setSelected] = useState(today);
+  // Using the calendar (a touch anywhere on it) pauses the top cards for a
+  // while, so they never change under you while you read the days.
+  const [calBusy, setCalBusy] = useState(false);
+  const busyTimer = useRef(null);
+  const touchCalendar = () => {
+    setCalBusy(true);
+    clearTimeout(busyTimer.current);
+    busyTimer.current = setTimeout(() => setCalBusy(false), 30000);
+  };
+  useEffect(() => () => clearTimeout(busyTimer.current), []);
   const [shareOpen, setShareOpen] = useState(false); // ⇪ Share your rings
   // From the app tour's "Try it": open Share your rings.
   useEffect(() => {
@@ -204,15 +214,14 @@ export default function CalendarScreen({ navigation, route }) {
       <View style={s.pad}>
         {/* ---------- Top cards: Today's rings · Feelings · Medals · Countdown ----------
             Each has its own page. The calendar switch below jumps to its
-            card, and swiping to Rings, Feelings or Medals switches the
-            calendar too. The timer only alternates between the card that
-            matches the calendar and the salon countdown, and waits a full
-            turn after anything you do (it never moves straight after you). */}
+            card, and swiping (or the arrows / dots) to Rings, Feelings or
+            Medals switches the calendar too. The timer goes round all four
+            every 15 s but never changes the calendar, and it stops while
+            you're using the calendar or looking at another day. */}
         <TourTarget id="cal.top">
         <Cycler
-          paused={selected !== today || !!tourRun}
+          paused={selected !== today || !!tourRun || calBusy}
           goTo={{ index: PAGE[view], key: `${selected}-${view}-${isTourTarget('cal.top', tourRun) ? 'tour' : ''}` }}
-          autoNext={(i) => (hasCountdown ? (i === 3 ? PAGE[view] : 3) : i)}
           arrows
           tourId="cal"
           onIndex={(k, how) => {
@@ -242,7 +251,7 @@ export default function CalendarScreen({ navigation, route }) {
           ))}
           {!sel.future && sel.count > 0 ? (
             <Pressable onPress={() => openDay(selected)} hitSlop={6}>
-              <Text style={s.dayLink}>Read what you wrote  ›</Text>
+              <Text style={s.dayLink}>{sel.isToday ? 'Tap to see what you wrote today' : 'Tap to see what you wrote that day'}  ›</Text>
             </Pressable>
           ) : (
             <Text style={s.dayNote}>
@@ -261,7 +270,7 @@ export default function CalendarScreen({ navigation, route }) {
         </TourTarget>
 
         {/* ---------- Rolling calendar ---------- */}
-        <TourTarget id="cal.grid" style={[s.card, lift, { paddingHorizontal: 10 }]}>
+        <TourTarget id="cal.grid" style={[s.card, lift, { paddingHorizontal: 10 }]} onTouchStart={touchCalendar}>
           <View style={s.titleRow}>
             <Text style={s.h}>Your writing calendar</Text>
             <TourTarget id="cal.share">

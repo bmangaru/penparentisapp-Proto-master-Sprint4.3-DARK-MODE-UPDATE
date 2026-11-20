@@ -75,14 +75,14 @@ export function FeelingsCard({ mix, monthName }) {
               key={m.id}
               name={feelingLabel(m.id).toUpperCase()}
               color={feelingById(m.id)?.color || '#FFF'}
-              value={String(m.n)}
-              of={m.n === 1 ? 'time' : 'times'}
+              value={`${m.n} ${m.n === 1 ? 'time' : 'times'}`}
+              of={null}
               bar={(m.n / mix.total) * 100}
             />
           )) : <Text style={s.empty}>No feelings picked yet this month.</Text>}
         </View>
       </View>
-      <Text style={s.note}>{more > 0 ? `+${more} more · ` : ''}Tap a day below to see them all.</Text>
+      <Text style={s.note}>{more > 0 ? `+${more} more · ` : ''}Use the calendar below to see what you wrote and how you felt each day.</Text>
     </View>
   );
 }
@@ -118,7 +118,7 @@ export function MonthMedalCardTop({ progress: p, onSeeAll }) {
       </View>
       {onSeeAll ? (
         <Pressable onPress={onSeeAll} hitSlop={6} accessibilityRole="button">
-          <Text style={s.link}>All your monthly medals  ›</Text>
+          <Text style={s.link}>Tap to view all your monthly medals  ›</Text>
         </Pressable>
       ) : null}
     </View>

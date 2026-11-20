@@ -161,7 +161,8 @@ export default function ShareCalendarSheet({ visible, onClose, mode = 'rings', s
                     <>
                       <Medal medal={p} tier={p.tier} size={Math.min(64, monthW - 30)} />
                       <Text style={s.medSmall} numberOfLines={1}>{p.name}</Text>
-                      <Text style={s.medTier}>{p.tier ? TIER_LABEL[p.tier] : `${p.value.toLocaleString()} words`}</Text>
+                      <Text style={s.medTier}>{p.tier ? TIER_LABEL[p.tier] : 'No medal yet'}</Text>
+                      <Text style={s.medTier}>{p.value.toLocaleString()} words</Text>
                     </>
                   )}
                 </View>
