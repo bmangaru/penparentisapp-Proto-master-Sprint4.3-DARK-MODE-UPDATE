@@ -43,7 +43,7 @@ const PAGE = { rings: 0, feelings: 1, medals: 2 };
 const VIEW_OF = ['rings', 'feelings', 'medals'];
 import { TIER_LABEL } from '../medals';
 import { InkDrop, WordBadge, MedalPin } from '../components/InkDrop';
-import { dayTotals, monthDays, monthKeyOf, monthProgress, recentTypical } from '../monthMedals';
+import { dayTotals, monthDays, monthKeyOf, monthProgress, recentReference } from '../monthMedals';
 import { FEELINGS, feelingById, feelingLabel } from '../feelings';
 import { loadAll, useDataChange, useToday } from '../writingStore';
 
@@ -164,15 +164,16 @@ export default function CalendarScreen({ navigation, route }) {
     if (view !== 'medals') return map;
     const months = new Set();
     for (const w of weeks) for (const k of w) months.add(monthKeyOf(k));
-    // Each day's drop and green are sized against your 7 days before it.
-    const totals = dayTotals(data.sessions);
+    // Every day's drop and green are sized against one number, your typical
+    // day over the last 7 days, so more words always looks bigger and darker.
+    const typ = recentReference(dayTotals(data.sessions), today);
     for (const mk of months) {
       const { days: words, reached } = monthDays(data.sessions, mk);
-      for (const [k, n] of Object.entries(words)) map[k] = { words: n, tier: null, typ: recentTypical(totals, k) };
+      for (const [k, n] of Object.entries(words)) map[k] = { words: n, tier: null, typ };
       for (const [tier, k] of Object.entries(reached)) map[k] = { ...(map[k] || { words: 0, typ: null }), tier };
     }
     return map;
-  }, [view, weeks, data]);
+  }, [view, weeks, data, today]);
   const monthMedalNow = useMemo(() => monthProgress(data.sessions, month), [data, month]);
   const hasCountdown = !!nextUpcoming(events);
 
@@ -323,7 +324,7 @@ export default function CalendarScreen({ navigation, route }) {
                   </View>
                 ))}
               </View>
-              <Text style={s.legendText}>Each day’s drop and green are compared with your 7 days before it, so a big day for you stands out. Every word counts toward the month’s medal; a medal marks the day you reached it, and a gold date with a <Text style={s.goldStar}>★</Text> is an event.</Text>
+              <Text style={s.legendText}>Drops and greens are compared with your typical day over the last 7 days: more words is always a bigger drop and a darker green, and a big day for you gets a “!”. Every word counts toward the month’s medal; a medal marks the day you reached it, and a gold date with a <Text style={s.goldStar}>★</Text> is an event.</Text>
             </View>
           )}
           <View style={s.weekHead}>

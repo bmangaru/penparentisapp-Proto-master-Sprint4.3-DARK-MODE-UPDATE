@@ -173,6 +173,26 @@ export function dayTotals(sessions) {
   return out;
 }
 
+// Your typical day right now: the middle value of your writing days in the
+// last 7 days (up to today). Every day on the calendar is compared with this
+// one number, so more words always means a bigger drop and a darker green.
+// Back after time away (nothing in the last 7 days): your 7 most recent
+// writing days instead. null if you've never written.
+export function recentReference(totals, today) {
+  const [y, mo, d] = today.split('-').map(Number);
+  const week = {};
+  for (let i = 0; i < RECENT_DAYS; i++) {
+    const k = new Date(Date.UTC(y, mo - 1, d - i)).toISOString().slice(0, 10);
+    if (totals[k] > 0) week[k] = totals[k];
+  }
+  if (Object.keys(week).length) return typicalDay(week);
+  const last = {};
+  Object.keys(totals).filter((k) => k <= today && totals[k] > 0).sort().slice(-RECENT_DAYS).forEach((k) => { last[k] = totals[k]; });
+  return typicalDay(last);
+}
+
+// (Not used by the calendar any more: each day against the 7 days before
+// it, which could make a bigger day look lighter than a smaller one.)
 // A day's typical day: your writing days in the 7 days before it (not
 // counting the day itself). So a day is always compared with your most
 // recent week; nothing older ever counts (back after a month away, nothing
