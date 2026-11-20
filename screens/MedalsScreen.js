@@ -13,7 +13,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Screen } from '../components/ui';
 import Medal, { TIER_STYLE } from '../components/Medal';
-import { colors, gradients, radius, space, themed } from '../theme';
+import { colors, dk, gradients, radius, space, themed } from '../theme';
 import { TIER_LABEL, TIERS, TOTAL_TIERS, tierCounts, tierBarColor } from '../medals';
 import { loadAll, syncMedals, useToday } from '../writingStore';
 import { MonthMedalCard } from '../components/MonthMedal';
@@ -187,10 +187,10 @@ const s = themed(() => ({
   chev: { fontSize: 14, fontWeight: '800', color: colors.royal },
   slots: { flexDirection: 'row', paddingHorizontal: 6, paddingBottom: 10 },
   slot: { flex: 1, alignItems: 'center', gap: 3, paddingVertical: 4, borderRadius: 8 },
-  slotOn: { backgroundColor: '#E8EDFB' },
+  slotOn: { backgroundColor: dk('#E8EDFB', 'rgba(159,176,255,0.18)') },
   slotText: { fontSize: 9.5, fontWeight: '700', color: colors.muted },
-  missed: { width: 24, height: 24, borderRadius: 12, margin: 1, backgroundColor: '#E6E3DA' },
-  future: { width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, borderStyle: 'dashed', borderColor: '#D6D3C8' },
+  missed: { width: 24, height: 24, borderRadius: 12, margin: 1, backgroundColor: dk('#E6E3DA', 'rgba(255,255,255,0.12)') },
+  future: { width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, borderStyle: 'dashed', borderColor: dk('#D6D3C8', 'rgba(255,255,255,0.28)') },
   note: { flexDirection: 'row', gap: 12, alignItems: 'center', backgroundColor: '#EEF2FB', margin: 8, marginTop: 0, borderRadius: 12, padding: 10 },
   noteTitle: { fontSize: 14, fontWeight: '800', color: colors.ink },
   noteText: { fontSize: 12, color: colors.body },

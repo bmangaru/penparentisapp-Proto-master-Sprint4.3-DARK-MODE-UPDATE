@@ -29,7 +29,7 @@ export default function ConfirmDeleteSheet({ visible, kind = 'day', title, impac
     `${impact.count} session${impact.count === 1 ? '' : 's'}`,
   ];
   const footer = (
-    <View style={{ gap: 10 }}>
+    <View style={s.foot}>
       <Pressable onPress={onClose} style={({ pressed }) => [s.keep, pressed && { opacity: 0.85 }]} accessibilityRole="button">
         <Text style={s.keepText}>Keep it</Text>
       </Pressable>
@@ -84,8 +84,10 @@ const s = themed(() => ({
   note: { fontSize: 12.5, color: colors.muted, marginTop: 6 },
   send: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 14, alignSelf: 'flex-start', minHeight: 36 },
   sendText: { fontSize: 14, fontWeight: '700', color: colors.royal },
-  keep: { minHeight: 50, borderRadius: 999, backgroundColor: colors.royal, alignItems: 'center', justifyContent: 'center' },
-  keepText: { color: '#FFFFFF', fontSize: 16, fontWeight: '800' },
-  del: { minHeight: 46, borderRadius: 999, borderWidth: 1.5, borderColor: red(), flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center' },
+  // Inset to line up with the boxes above (the sheet's footer is edge to edge).
+  foot: { gap: 8, paddingHorizontal: 22, paddingTop: 10 },
+  keep: { minHeight: 44, borderRadius: 999, backgroundColor: colors.royal, alignItems: 'center', justifyContent: 'center' },
+  keepText: { color: '#FFFFFF', fontSize: 15, fontWeight: '800' },
+  del: { minHeight: 42, borderRadius: 999, borderWidth: 1.5, borderColor: red(), flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center' },
   delText: { color: red(), fontSize: 15, fontWeight: '800' },
 }));

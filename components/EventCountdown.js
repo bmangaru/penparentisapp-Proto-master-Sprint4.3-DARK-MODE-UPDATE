@@ -79,7 +79,7 @@ export default function EventCountdown({ events, onDetails, style }) {
           </Pressable>
         ) : (
           <Pressable onPress={() => onDetails(going)} style={[s.btn, s.btnWhite]} accessibilityRole="button">
-            <Text style={[s.btnText, { color: '#1B3FA0' }]}>Details</Text>
+            <Text style={[s.btnText, { color: '#FFFFFF' }]}>Details</Text>
           </Pressable>
         )}
         <Pressable onPress={() => shareEvent(going)} style={[s.btn, s.btnGhost]} accessibilityRole="button" accessibilityLabel="Share this event">
@@ -105,8 +105,8 @@ const s = themed(() => ({
   when: { fontSize: 12.5, color: 'rgba(255,255,255,0.85)' },
   btns: { flexDirection: 'row', gap: 8, marginTop: 12 },
   btn: { flex: 1, minHeight: 42, borderRadius: radius.md, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center' },
-  // Solid white with blue text in light and dark (it sits on the blue card).
-  btnWhite: { backgroundColor: dk('#FFFFFF', '#F4F6FF') },
+  // Solid blue with white text, like the calendar's Share button.
+  btnWhite: { backgroundColor: '#3352C4' },
   btnGold: { backgroundColor: '#F2C14E' },
   btnGhost: { backgroundColor: 'rgba(255,255,255,0.14)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)' },
   btnText: { fontSize: 13, fontWeight: '700' },

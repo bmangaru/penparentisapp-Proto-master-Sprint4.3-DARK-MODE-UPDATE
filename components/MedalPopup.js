@@ -98,7 +98,7 @@ export default function MedalPopup({ medals, onClose, onSeeMedals, replay = fals
   return (
     <Modal visible animationType="fade" presentationStyle="fullScreen" onRequestClose={onClose}>
       <LinearGradient colors={dk(['#FFFFFF', '#EEF2FF'], ['#1B3FA0', '#0C2265'])} style={{ flex: 1 }}>
-        <Page key={`${m.id}-${tier}-${i}-${again}`} m={m} tier={tier} fx={fx} calm={calm} insets={insets} onReplay={() => setAgain((n) => n + 1)}
+        <Page key={`${m.id}-${tier}-${i}-${again}`} m={m} tier={tier} fx={fx} calm={calm} insets={insets} onReplay={() => setAgain((n) => n + 1)} onExit={onClose}
           counter={list.length > 1 ? `${i + 1} of ${list.length}` : null}>
           {diamond ? (
             <>
@@ -114,8 +114,9 @@ export default function MedalPopup({ medals, onClose, onSeeMedals, replay = fals
               <Text style={[s.btnText, s.btnOutText]}>Share</Text>
             </Pressable>
           ) : null}
-          <Pressable onPress={next} style={({ pressed }) => [s.btn, diamond ? s.btnOut : s.btnMain, pressed && s.pressed]} accessibilityRole="button">
-            <Text style={[s.btnText, diamond ? s.btnOutText : s.btnMainText]}>{last ? (replay ? 'Close' : 'Done') : 'Next medal  ›'}</Text>
+          {/* Next medal / Done: solid blue (like Chapters). Close (a replay): red. */}
+          <Pressable onPress={next} style={({ pressed }) => [s.btn, last && replay ? s.btnClose : diamond ? s.btnOut : s.btnMain, pressed && s.pressed]} accessibilityRole="button">
+            <Text style={[s.btnText, last && replay ? s.btnCloseText : diamond ? s.btnOutText : s.btnMainText]}>{last ? (replay ? 'Close' : 'Done') : 'Next medal  ›'}</Text>
           </Pressable>
           {/* Only on the last page: leaving early would skip the rest. */}
           {!replay && onSeeMedals && last ? (
@@ -130,7 +131,7 @@ export default function MedalPopup({ medals, onClose, onSeeMedals, replay = fals
 }
 
 // One medal's page. Remounts per medal, so each one plays from the start.
-function Page({ m, tier, fx, calm, insets, counter, onReplay, children }) {
+function Page({ m, tier, fx, calm, insets, counter, onReplay, onExit, children }) {
   const pop = useRef(new Animated.Value(calm ? 1 : 0)).current;
   const glow = useRef(new Animated.Value(calm ? 1 : 0)).current;
   const spin = useRef(new Animated.Value(0)).current;
@@ -173,11 +174,15 @@ function Page({ m, tier, fx, calm, insets, counter, onReplay, children }) {
   return (
     <View style={{ flex: 1, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 16, paddingHorizontal: 24 }}>
       {fx.confetti && !calm ? <Confetti colors={fx.colors} count={fx.confetti} rain={fx.rain} /> : null}
+      {/* Top: × to leave (like the sheets' ×), "1 of 5", ↻ Replay. */}
       <View style={s.topRow}>
+        <Pressable onPress={onExit} hitSlop={10} style={s.exit} accessibilityRole="button" accessibilityLabel="Close">
+          <Text style={s.exitText}>×</Text>
+        </Pressable>
+        <Text style={s.counter}>{counter || ''}</Text>
         <Pressable onPress={onReplay} hitSlop={10} style={s.replay} accessibilityRole="button" accessibilityLabel="Replay the animation">
           <Text style={s.replayText}>↻  Replay</Text>
         </Pressable>
-        <Text style={s.counter}>{counter || ''}</Text>
       </View>
 
       <View style={s.center}>
@@ -304,9 +309,12 @@ const s = themed(() => ({
   msg: { marginTop: 8, fontSize: 15, lineHeight: 21, textAlign: 'center', maxWidth: 320, color: dk('#3A4466', 'rgba(255,255,255,0.88)') },
   btns: { gap: 10 },
   btn: { minHeight: 50, borderRadius: 999, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18 },
-  // (not plain #FFFFFF: dark mode would turn that into the dark card colour)
-  btnMain: { backgroundColor: dk('#1B3FA0', '#F4F6FF') },
-  btnMainText: { color: dk('#FFFFFF', '#1B3FA0') },
+  btnMain: { backgroundColor: '#3352C4' },
+  btnMainText: { color: '#FFFFFF' },
+  btnClose: { backgroundColor: dk('#FDECEC', 'rgba(255,138,128,0.16)'), borderWidth: 1.5, borderColor: dk('rgba(198,40,40,0.4)', 'rgba(255,138,128,0.55)') },
+  btnCloseText: { color: dk('#C62828', '#FF8A80') },
+  exit: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: dk('rgba(20,27,58,0.08)', 'rgba(255,255,255,0.14)') },
+  exitText: { fontSize: 20, lineHeight: 22, fontWeight: '600', color: dk('#141B3A', '#FFFFFF') },
   btnDiamond: { backgroundColor: '#CFC2FF' },
   btnOut: { borderWidth: 1.5, borderColor: dk('rgba(27,63,160,0.35)', 'rgba(255,255,255,0.45)') },
   btnOutText: { color: dk('#1B3FA0', '#FFFFFF') },
