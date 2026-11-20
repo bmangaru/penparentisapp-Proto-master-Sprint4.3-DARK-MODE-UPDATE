@@ -97,7 +97,9 @@ function SummaryRow({ row, pending, selected, onPress }) {
       <Medal medal={before} tier={unlocked ? after.tier : before.tier} size={34} />
       <View style={{ flex: 1, minWidth: 0 }}>
         <View style={s.top}>
-          <Text style={s.name} numberOfLines={1}>{before.name}</Text>
+          <Text style={s.name} numberOfLines={1}>
+            {before.name}{before.monthly ? <Text style={s.monthPill}>  THIS MONTH</Text> : null}
+          </Text>
           <Text style={s.right} numberOfLines={1}>
             {right}{added > 0 ? <Text style={s.plus}>  {plusText(before, added)}</Text> : null}
           </Text>
@@ -116,9 +118,9 @@ function RowNote({ row, pending }) {
   const { after, added, why } = row;
   return (
     <View style={s.note}>
-      <Text style={s.noteTitle}>{after.name}</Text>
+      <Text style={s.noteTitle}>{after.title || after.name}</Text>
       <Text style={s.noteText}>
-        {TRACKS[row.id]}{' '}
+        {TRACKS[row.id] || after.track}{' '}
         {added > 0 ? <Text style={s.noteGreen}>{pending ? 'This log adds' : 'This session added'} {addedText(after, added)}.</Text> : null}
         {why ? <Text>{why}.</Text> : null}
         {!added && !why ? <Text>{pending ? 'Add minutes or words to see what this log adds.' : 'This session didn’t change it.'}</Text> : null}
@@ -155,6 +157,7 @@ const s = themed(() => ({
   name: { fontSize: 13, fontWeight: '800', color: colors.ink, flexShrink: 1 },
   right: { fontSize: 11.5, fontWeight: '700', color: colors.muted, flexShrink: 0 },
   plus: { color: ADDED_BAR, fontWeight: '800' },
+  monthPill: { fontSize: 9.5, fontWeight: '800', letterSpacing: 0.6, color: colors.royal },
   sub: { fontSize: 11, color: colors.muted, marginTop: 3 },
   unlock: {
     alignSelf: 'flex-start', marginTop: 4, backgroundColor: '#FFF4D6', borderWidth: 1, borderColor: '#F0D48A', color: '#7A5208',

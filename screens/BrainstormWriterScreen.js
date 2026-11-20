@@ -37,7 +37,8 @@ import {
   anchorAt, appRatingFor, cleanAnswers, countWords, createWordCounter, editRange, pruneAnswers, shiftAnswers, dayKey, dailyPct, goalForDay, sessionsOnDay, summarize, textToContinue,
 } from '../writingLogic';
 import { loadAll, saveSession, shareWriting, syncMedals } from '../writingStore';
-import { MEDALS, TIER_LABEL, liveMedalStats, medalStats, nextMedals, reachNudge, reachTitle, summaryRows, textStats } from '../medals';
+import { MEDALS, TIER_LABEL, liveMedalStats, medalStats, nextMedals, reachNudge, reachTitle, summaryRow, summaryRows, textStats } from '../medals';
+import { monthKeyOf, monthProgress, monthWords } from '../monthMedals';
 import { LEVEL_LABEL, nextLevel, nextPrompt, promptForDay } from '../prompts';
 import usePromptLevel, { LEVEL_STYLE } from '../components/usePromptLevel';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -205,6 +206,7 @@ export default function BrainstormWriterScreen({ navigation, route }) {
       medalBase.current = {
         stats: medalStats(sessions, dailyGoals, goals),
         goalMetBefore: (dailyPct(goal, earlier) ?? 0) >= 100,
+        monthWords: monthWords(sessions, monthKeyOf(session.day)), // this month's medal
       };
       // All of today's writing so far, as one page you can carry on, edit or
       // delete in (the tour too: its tips can be hidden for room).
@@ -479,8 +481,14 @@ export default function BrainstormWriterScreen({ navigation, route }) {
     // it never shows up as "+4 chapters" in a session's summary.
     const tourNow = medals.find((m) => m.id === 'tour')?.value;
     const base = medalBase.current?.stats ? { ...medalBase.current.stats, tour: tourNow } : null;
-    setNextRows(nextMedals(base, medals));
-    setAllRows(summaryRows(base, medals));
+    // This month's medal comes first, unless it was already Diamond before
+    // this session (then the next-closest medals take its place).
+    const mk = monthKeyOf(session.day);
+    const mBefore = medalBase.current?.monthWords ?? 0;
+    const monthRow = summaryRow(monthProgress([], mk, mBefore), monthProgress([], mk, mBefore + (rec.words || 0)));
+    const others = nextMedals(base, medals);
+    setNextRows(monthRow.before.maxed ? others : [monthRow, ...others].slice(0, 3));
+    setAllRows([monthRow, ...summaryRows(base, medals)]);
     // A new medal gets its own moment first; the check-in sheet follows.
     setSheet(newlyEarned.length ? 'medals' : 'done');
   }

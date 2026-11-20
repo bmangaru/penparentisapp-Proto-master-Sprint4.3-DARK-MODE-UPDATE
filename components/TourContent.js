@@ -23,11 +23,16 @@
 // made of `cards` — a picture, a title and a few sentences — if one is added.)
 
 import { getTarget } from '../tourRun';
+import { monthKeyOf, monthMedal } from '../monthMedals';
+import { dayKey } from '../writingLogic';
 
 // For spots that work normally but are turned off while the tour shows them
 // (they'd take you away from it): a short note in the tips box, so it's
 // clear the button isn't broken. Shown under the step's text.
 const offInTour = (what, plural) => `${what} ${plural ? 'are' : 'is'} turned off while the tour is running, so tapping ${plural ? 'them' : 'it'} won’t take you out of the tour. ${plural ? 'They work' : 'It works'} again as soon as you’re done: come back here any time.`;
+
+// This month's medal, for its name in chapter 9 ("This month: First Frost").
+const THIS_MONTH = monthMedal(monthKeyOf(dayKey()));
 
 // Shared steps.
 // Each chapter starts at the tab bar, so you learn where everything is.
@@ -299,27 +304,56 @@ export const CHAPTERS = [
       },
       {
         target: 'bs.medals', tab: 'Brainstorm', info: true, look: true, section: 'Four tiers', offNote: offInTour('The medals card'),
-        title: 'Bronze, Silver, Gold, Diamond', text: 'Every medal has four tiers. Its bar is the colour of the medal you have and shows how close the next one is. Tap this card any time to see them all.',
+        title: 'Bronze, Silver, Gold, Diamond', text: 'Every medal has four tiers. Its bar is the colour of the medal you have and shows how close the next one is. There’s also a medal for every month, with its own name; you’ll meet it in the Calendar chapter. Tap this card any time to see them all.',
       },
     ],
   },
   {
-    id: 'calendar', title: 'Calendar', short: 'Calendar', sub: 'Your rings over time, salons, sharing', prelude: [0],
+    id: 'calendar', title: 'Calendar', short: 'Calendar', sub: 'Rings, feelings and monthly medals; salons; sharing', prelude: [0],
     steps: [
-      tapTab('Calendar', 'Calendar', 'Every day you showed up to write, as rings.', { section: 'Today & the next salon' }),
+      tapTab('Calendar', 'Calendar', 'Every day you showed up to write: as rings, as feelings, and as monthly medals.', { section: 'Today & the next salon' }),
       {
-        target: 'cal.top', tab: 'Calendar', marks: ['cal.prev', 'cal.next'],
-        text: 'Today’s rings take turns with a countdown to the next salon. (They switch every few seconds; that’s paused for the tour.)',
+        target: 'cal.top', tab: 'Calendar', marks: ['cal.prev', 'cal.next'], calView: 'rings',
+        text: 'Today’s rings take turns with a countdown to the next salon. (They switch every few seconds; that’s paused for the tour.) This card also follows the calendar below, so you’ll see it change in a moment.',
         task: 'Tap the arrows to see the countdown.', doneText: 'Look as long as you like, then go on.', manual: true, nextLabel: 'Ready to go on ›',
         on: (ev, v) => ev === 'cal-index' && v > 0,
       },
       {
-        target: 'cal.grid', tab: 'Calendar', info: true, look: true, section: 'Your writing calendar', offNote: offInTour('The days', true),
+        target: 'cal.grid', tab: 'Calendar', info: true, look: true, section: 'Your writing calendar', calView: 'rings', offNote: offInTour('The days', true),
         text: 'Each day’s progress is shown as its own set of rings. The current week is at the top of the calendar; scroll up for earlier weeks. A gold star (★) marks a salon day. Tap a past day to read what you wrote that day.',
       },
       {
-        target: 'cal.share', tab: 'Calendar', info: true, look: true, round: 999, section: 'Share your rings', offNote: offInTour('Share'),
-        text: 'Show off all the days you showed up to write! Tap Share to turn your calendar into a picture for friends or family, showing 1, 3 or 6 months. Only your rings and totals are included; your writing always stays private.',
+        target: 'cal.view.feelings', tab: 'Calendar', section: 'Feelings', round: 999,
+        text: 'The calendar can also show how you felt.',
+        task: 'Tap Feelings.',
+        on: (ev, v) => ev === 'cal-view' && v === 'feelings',
+      },
+      {
+        target: 'cal.grid', tab: 'Calendar', info: true, look: true, calView: 'feelings', offNote: offInTour('The days', true),
+        text: 'Each day shows the faces you picked after writing. Wrote more than once? Your latest feeling is in front, with the one before it peeking out (and “+1” for more). Tap a day to see them all.',
+      },
+      {
+        target: 'cal.top', tab: 'Calendar', info: true, calView: 'feelings',
+        text: 'Look up: the top card switched too. It now shows how you’ve felt this month, and a pattern once there’s enough to tell.',
+      },
+      {
+        target: 'cal.view.medals', tab: 'Calendar', section: 'Monthly medals', round: 999,
+        text: 'Every month has a medal of its own.',
+        task: 'Tap Medals.',
+        on: (ev, v) => ev === 'cal-view' && v === 'medals',
+      },
+      {
+        target: 'cal.top', tab: 'Calendar', info: true, calView: 'medals',
+        title: `This month: ${THIS_MONTH.name}`,
+        text: 'Every month has its own medal, with a name that changes each year. Words you write this month earn it: Bronze at 500, Silver at 1,000, Gold at 5,000, Diamond at 10,000. The bar changes colour at each one. It starts fresh on the 1st, and a missed month never takes anything away.',
+      },
+      {
+        target: 'cal.grid', tab: 'Calendar', info: true, look: true, calView: 'medals', offNote: offInTour('The days', true),
+        text: 'In this view each day shows the words you wrote, and a dot marks the day you reached a tier. Every month you’ve earned, year by year, is on the Medals page at the bottom of Brainstorm.',
+      },
+      {
+        target: 'cal.share', tab: 'Calendar', info: true, look: true, round: 999, section: 'Share', offNote: offInTour('Share'),
+        text: 'Share shares the view you’re on: your rings, your feelings, or your monthly medals, as a picture of 1, 3 or 6 months. Your writing is never included.',
       },
       {
         target: 'cal.past', reveal: true, hold: 500, section: 'Previous salons',

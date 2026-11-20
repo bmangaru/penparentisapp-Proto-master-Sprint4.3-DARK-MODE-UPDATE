@@ -24,7 +24,7 @@ import RingStats from '../components/RingStats';
 import { LinearGradient } from 'expo-linear-gradient';
 import Cycler from '../components/Cycler';
 import TourTarget from '../components/TourTarget';
-import { isTourTarget, tourEvent, tourRunning, useRun } from '../tourRun';
+import { isTourTarget, stepOf, tourEvent, tourRunning, useRun } from '../tourRun';
 import ShareCalendarSheet from '../components/ShareCalendarSheet';
 import EventCountdown, { nextUpcoming } from '../components/EventCountdown';
 import { colors, gradients, lift, radius, space, themed } from '../theme';
@@ -33,6 +33,9 @@ import {
   DEFAULT_GOALS, calendarDay, calendarWeeks, dayFeelings, describeDailyGoal, monthFeelings, parseDayKey,
 } from '../writingLogic';
 import Face from '../components/Face';
+import { MonthMedalCard } from '../components/MonthMedal';
+import { TIER_BAR } from '../medals';
+import { monthDays, monthKeyOf, monthProgress } from '../monthMedals';
 import { feelingById, feelingLabel } from '../feelings';
 import { loadAll, useDataChange, useToday } from '../writingStore';
 
@@ -47,7 +50,13 @@ export default function CalendarScreen({ navigation, route }) {
   const today = useToday();
   const [data, setData] = useState({ goals: DEFAULT_GOALS, dailyGoals: {}, sessions: [] });
   const [events, setEvents] = useState([]); // the gold ★ on event days, and the countdown card
-  const [view, setView] = useState('rings'); // the calendar shows 'rings' or 'feelings'
+  // One switch for the whole tab: the calendar shows 'rings', 'feelings' or
+  // 'medals', the top card follows it, and Share shares that view.
+  const [view, setViewState] = useState('rings');
+  const setView = (v) => { setViewState(v); tourEvent('cal-view', v); };
+  // The app tour can put the calendar on the view a step talks about.
+  const tourCalView = (() => { const r = tourRun; const st = r && !r.min ? stepOf(r) : null; return st?.calView || null; })();
+  useEffect(() => { if (tourCalView) setViewState(tourCalView); }, [tourCalView]);
   const [podcast, setPodcast] = useState(null); // newest episode, for the new-episode switch
   const notify = useNotifySettings();
   const [notifyNote, setNotifyNote] = useState(null); // 'denied' | null
@@ -105,6 +114,20 @@ export default function CalendarScreen({ navigation, route }) {
   }, [view, weeks, data]);
   const month = today.slice(0, 7);
   const mix = useMemo(() => monthFeelings(data.sessions, month), [data, month]);
+  // Medals view: words each day, and the day each of a month's tiers was reached.
+  const medalDays = useMemo(() => {
+    const map = {};
+    if (view !== 'medals') return map;
+    const months = new Set();
+    for (const w of weeks) for (const k of w) months.add(monthKeyOf(k));
+    for (const mk of months) {
+      const { days: words, reached } = monthDays(data.sessions, mk);
+      for (const [k, n] of Object.entries(words)) map[k] = { words: n, tier: null };
+      for (const [tier, k] of Object.entries(reached)) map[k] = { ...(map[k] || { words: 0 }), tier };
+    }
+    return map;
+  }, [view, weeks, data]);
+  const monthMedalNow = useMemo(() => monthProgress(data.sessions, month), [data, month]);
 
   const sel = days[selected] || calendarDay(data.sessions, data.dailyGoals, data.goals, selected, today);
   const selEvents = byDay[selected] || [];
@@ -175,7 +198,17 @@ export default function CalendarScreen({ navigation, route }) {
             Switches every 6 s while today is selected; tapping another day
             shows that day and holds still. */}
         <TourTarget id="cal.top">
-        <Cycler paused={selected !== today || !!tourRun} resetKey={isTourTarget('cal.top', tourRun) ? `tour-${selected}` : selected} arrows tourId="cal" onIndex={(k) => tourEvent('cal-index', k)}>
+        <Cycler paused={selected !== today || !!tourRun} resetKey={isTourTarget('cal.top', tourRun) ? `tour-${selected}-${view}` : `${selected}-${view}`} arrows tourId="cal" onIndex={(k) => tourEvent('cal-index', k)}>
+        {view === 'feelings' ? (
+          <LinearGradient colors={gradients.header} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={s.dayCard}>
+            <MonthFeelings mix={mix} month={month} />
+          </LinearGradient>
+        ) : view === 'medals' ? (
+          <LinearGradient colors={gradients.header} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={[s.dayCard, { justifyContent: 'center' }]}>
+            <Text style={s.topKick}>THIS MONTH’S MEDAL</Text>
+            <MonthMedalCard progress={monthMedalNow} dark />
+          </LinearGradient>
+        ) : (
         <LinearGradient colors={gradients.header} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={s.dayCard}>
           <View style={s.dayHead}>
             <Text style={s.dayTitle} numberOfLines={1}>
@@ -206,6 +239,7 @@ export default function CalendarScreen({ navigation, route }) {
             </Text>
           )}
         </LinearGradient>
+        )}
         {nextUpcoming(events) ? <EventCountdown events={events} onDetails={(e) => showEvent(e.id)} style={{ flex: 1 }} /> : null}
         </Cycler>
         </TourTarget>
@@ -215,7 +249,7 @@ export default function CalendarScreen({ navigation, route }) {
           <View style={s.titleRow}>
             <Text style={s.h}>Your writing calendar</Text>
             <TourTarget id="cal.share">
-              <Pressable onPress={() => setShareOpen(true)} style={s.shareBtn} hitSlop={6} accessibilityRole="button" accessibilityLabel="Share your rings">
+              <Pressable onPress={() => setShareOpen(true)} style={s.shareBtn} hitSlop={6} accessibilityRole="button" accessibilityLabel={view === 'rings' ? 'Share your rings' : view === 'feelings' ? 'Share your feelings' : 'Share your medals'}>
                 <Ionicons name="share-outline" size={14} color="#FFFFFF" />
                 <Text style={s.shareText}>Share</Text>
               </Pressable>
@@ -223,10 +257,12 @@ export default function CalendarScreen({ navigation, route }) {
           </View>
           {/* Rings (progress) or Feelings (the faces you picked) */}
           <View style={s.seg} accessibilityRole="tablist">
-            {[['rings', 'Rings'], ['feelings', 'Feelings']].map(([v, label]) => (
-              <Pressable key={v} onPress={() => setView(v)} style={[s.segBtn, view === v && s.segOn]} accessibilityRole="tab" accessibilityState={{ selected: view === v }}>
-                <Text style={[s.segText, view === v && s.segTextOn]}>{label}</Text>
-              </Pressable>
+            {[['rings', 'Rings'], ['feelings', 'Feelings'], ['medals', 'Medals']].map(([v, label]) => (
+              <TourTarget key={v} id={`cal.view.${v}`}>
+                <Pressable onPress={() => setView(v)} style={[s.segBtn, view === v && s.segOn]} accessibilityRole="tab" accessibilityState={{ selected: view === v }}>
+                  <Text style={[s.segText, view === v && s.segTextOn]}>{label}</Text>
+                </Pressable>
+              </TourTarget>
             ))}
           </View>
           {view === 'rings' ? (
@@ -239,8 +275,10 @@ export default function CalendarScreen({ navigation, route }) {
                 <Text style={s.legendText}>Event</Text>
               </View>
             </View>
-          ) : (
+          ) : view === 'feelings' ? (
             <Text style={[s.legendText, s.legend]}>Your latest feeling is in front. Tap a day to see them all.</Text>
+          ) : (
+            <Text style={[s.legendText, s.legend]}>Words written each day. A dot marks the day you reached a tier.</Text>
           )}
           <View style={s.weekHead}>
             {WEEKDAYS.map((d, i) => <Text key={i} style={s.weekHeadText}>{d}</Text>)}
@@ -270,6 +308,7 @@ export default function CalendarScreen({ navigation, route }) {
                     key={k}
                     day={days[k]}
                     feelings={view === 'feelings' ? feelingsByDay[k] || [] : null}
+                    medal={view === 'medals' ? medalDays[k] || { words: 0, tier: null } : null}
                     selected={k === selected}
                     hasEvent={!!byDay[k]}
                     onPress={() => onPressDay(days[k])}
@@ -286,9 +325,6 @@ export default function CalendarScreen({ navigation, route }) {
           </View>
           <Text style={s.hint}>Tap a past day to read what you wrote.</Text>
         </TourTarget>
-
-        {/* ---------- This month's feelings (Feelings view) ---------- */}
-        {view === 'feelings' ? <MonthFeelings mix={mix} month={month} /> : null}
 
         {/* ---------- Previous salons ---------- */}
         <TourTarget id="cal.past" style={{ gap: 8 }}>
@@ -319,7 +355,7 @@ export default function CalendarScreen({ navigation, route }) {
         </TourTarget>
       </View>
 
-      <ShareCalendarSheet visible={shareOpen} onClose={() => setShareOpen(false)} sessions={data.sessions} dailyGoals={data.dailyGoals} goals={data.goals} />
+      <ShareCalendarSheet visible={shareOpen} mode={view} onClose={() => setShareOpen(false)} sessions={data.sessions} dailyGoals={data.dailyGoals} goals={data.goals} />
     </Screen>
   );
 }
@@ -341,13 +377,14 @@ function DayFaces({ feelings, wrote, animate }) {
   );
 }
 
+// The top card in Feelings view: this month's feelings (on the blue card).
 function MonthFeelings({ mix, month }) {
   const name = parseDayKey(`${month}-01`).toLocaleDateString(undefined, { month: 'long' });
   return (
-    <View style={[s.card, lift, { gap: 10 }]}>
-      <Text style={s.h}>How you’ve felt in {name}</Text>
+    <View style={{ gap: 10 }}>
+      <Text style={s.dayTitle}>How you’ve felt in {name}</Text>
       {mix.total === 0 ? (
-        <Text style={s.body}>No feelings picked yet this month. After you save your writing, tap how you feel and it shows up here.</Text>
+        <Text style={s.dayNote}>No feelings picked yet this month. After you save your writing, tap how you feel and it shows up here.</Text>
       ) : (
         <>
           <View style={s.mixBar} accessibilityLabel={mix.list.map((m) => `${feelingLabel(m.id)} ${m.n}`).join(', ')}>
@@ -359,12 +396,12 @@ function MonthFeelings({ mix, month }) {
             {mix.list.map((m) => (
               <View key={m.id} style={s.mixItem}>
                 <Face id={m.id} size={18} />
-                <Text style={s.legendText}>{feelingLabel(m.id)} {m.n}</Text>
+                <Text style={s.mixText}>{feelingLabel(m.id)} {m.n}</Text>
               </View>
             ))}
           </View>
           <View style={s.insight}>
-            <Text style={s.body}>
+            <Text style={s.insightText}>
               Mostly <Text style={s.bold}>{feelingLabel(mix.top)}</Text> this month.
               {mix.pattern ? <Text> On days you wrote <Text style={s.bold}>{mix.pattern.minutes}+ minutes</Text>, you picked Happy or Ecstatic <Text style={s.bold}>{mix.pattern.good} of {mix.pattern.of}</Text> times.</Text> : null}
             </Text>
@@ -375,7 +412,7 @@ function MonthFeelings({ mix, month }) {
   );
 }
 
-function DayCell({ day, selected, hasEvent, onPress, feelings }) {
+function DayCell({ day, selected, hasEvent, onPress, feelings, medal }) {
   const date = parseDayKey(day.key);
   const n = date.getDate();
   const monthTag = n === 1 ? date.toLocaleDateString(undefined, { month: 'short' }) : null;
@@ -392,6 +429,11 @@ function DayCell({ day, selected, hasEvent, onPress, feelings }) {
       <View>
         {feelings ? (
           <DayFaces feelings={feelings} wrote={day.count > 0} animate={day.isToday} />
+        ) : medal ? (
+          <View style={s.medalCell}>
+            {medal.words > 0 ? <Text style={s.dayWords}>+{medal.words.toLocaleString()}</Text> : null}
+            {medal.tier ? <View style={[s.tierDot, { backgroundColor: TIER_BAR[medal.tier] }]} /> : null}
+          </View>
         ) : (
           <Rings
             minutes={day.rings.minutes} words={day.rings.words} sessions={day.rings.sessions}
@@ -484,10 +526,18 @@ const s = themed(() => ({
   moreBadge: { position: 'absolute', right: -4, bottom: -2, minWidth: 16, height: 16, borderRadius: 8, paddingHorizontal: 3, backgroundColor: '#1B3FA0', borderWidth: 1.5, borderColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
   moreText: { color: '#FFFFFF', fontSize: 9.5, fontWeight: '800' },
 
-  // This month's feelings
+  // This month's feelings (top card, on blue)
   mixBar: { flexDirection: 'row', height: 12, borderRadius: 999, overflow: 'hidden' },
   mixRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   mixItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  insight: { backgroundColor: '#F7F3E8', borderRadius: 12, padding: 10 },
-  bold: { fontWeight: '800', color: colors.ink },
+  mixText: { fontSize: 12, color: 'rgba(255,255,255,0.9)' },
+  insight: { backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 12, padding: 10 },
+  insightText: { fontSize: 12.5, lineHeight: 18, color: 'rgba(255,255,255,0.9)' },
+  bold: { fontWeight: '800', color: '#FFFFFF' },
+  topKick: { fontSize: 11, fontWeight: '800', letterSpacing: 1, color: 'rgba(255,255,255,0.75)' },
+
+  // Medals view day cells: words that day, a tier dot on the day it was reached
+  medalCell: { width: 34, height: 30, alignItems: 'center', justifyContent: 'center', gap: 3 },
+  dayWords: { fontSize: 10, fontWeight: '800', color: '#2E8A57', fontVariant: ['tabular-nums'] },
+  tierDot: { width: 11, height: 11, borderRadius: 6, borderWidth: 1.5, borderColor: '#FFFFFF' },
 }));
