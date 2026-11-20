@@ -98,7 +98,7 @@ export default function MedalPopup({ medals, onClose, onSeeMedals, replay = fals
   return (
     <Modal visible animationType="fade" presentationStyle="fullScreen" onRequestClose={onClose}>
       <LinearGradient colors={dk(['#FFFFFF', '#EEF2FF'], ['#1B3FA0', '#0C2265'])} style={{ flex: 1 }}>
-        <Page key={`${m.id}-${tier}-${i}-${again}`} m={m} tier={tier} fx={fx} calm={calm} insets={insets} onReplay={() => setAgain((n) => n + 1)} onExit={onClose}
+        <Page key={`${m.id}-${tier}-${i}-${again}`} m={m} tier={tier} fx={fx} calm={calm} insets={insets} onReplay={() => setAgain((n) => n + 1)} onExit={last ? onClose : null}
           counter={list.length > 1 ? `${i + 1} of ${list.length}` : null}>
           {diamond ? (
             <>
@@ -174,11 +174,14 @@ function Page({ m, tier, fx, calm, insets, counter, onReplay, onExit, children }
   return (
     <View style={{ flex: 1, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 16, paddingHorizontal: 24 }}>
       {fx.confetti && !calm ? <Confetti colors={fx.colors} count={fx.confetti} rain={fx.rain} /> : null}
-      {/* Top: × to leave (like the sheets' ×), "1 of 5", ↻ Replay. */}
+      {/* Top: × to leave (like the sheets' ×; only on the last page, so no
+          medal gets skipped), "1 of 5", ↻ Replay. */}
       <View style={s.topRow}>
-        <Pressable onPress={onExit} hitSlop={10} style={s.exit} accessibilityRole="button" accessibilityLabel="Close">
-          <Text style={s.exitText}>×</Text>
-        </Pressable>
+        {onExit ? (
+          <Pressable onPress={onExit} hitSlop={10} style={s.exit} accessibilityRole="button" accessibilityLabel="Close">
+            <Text style={s.exitText}>×</Text>
+          </Pressable>
+        ) : <View style={s.exitSpace} />}
         <Text style={s.counter}>{counter || ''}</Text>
         <Pressable onPress={onReplay} hitSlop={10} style={s.replay} accessibilityRole="button" accessibilityLabel="Replay the animation">
           <Text style={s.replayText}>↻  Replay</Text>
@@ -313,6 +316,7 @@ const s = themed(() => ({
   btnMainText: { color: '#FFFFFF' },
   btnClose: { backgroundColor: dk('#FDECEC', 'rgba(255,138,128,0.16)'), borderWidth: 1.5, borderColor: dk('rgba(198,40,40,0.4)', 'rgba(255,138,128,0.55)') },
   btnCloseText: { color: dk('#C62828', '#FF8A80') },
+  exitSpace: { width: 32, height: 32 },
   exit: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: dk('rgba(20,27,58,0.08)', 'rgba(255,255,255,0.14)') },
   exitText: { fontSize: 20, lineHeight: 22, fontWeight: '600', color: dk('#141B3A', '#FFFFFF') },
   btnDiamond: { backgroundColor: '#CFC2FF' },
