@@ -1,6 +1,8 @@
 // components/ShareCalendarSheet.js — Calendar → ⇪ Share. It shares the view
 // the calendar is on (mode): 'rings' (your rings), 'feelings' (the faces you
-// picked) or 'medals' (your monthly medals).
+// picked) or 'medals' (your monthly medals). Medals can be shared two ways:
+// the ink-drop calendar (a drop a day, bigger for more words, with each
+// month's medal by its name) or the medals themselves.
 // A picture of your rings for This month / 3 months / 6 months, in the
 // app's blue with the Pen Parentis logo, plus (switchable) totals: days with
 // every ring closed, words, best streak. Never any of your writing.
@@ -24,7 +26,8 @@ import Face from './Face';
 import Medal from './Medal';
 import { MilestoneBar } from './MonthMedal';
 import { TIER_LABEL } from '../medals';
-import { monthKey, monthProgress } from '../monthMedals';
+import { monthDays, monthKey, monthProgress } from '../monthMedals';
+import { InkDrop, MedalPin, WordBadge } from './InkDrop';
 import { feelingLabel } from '../feelings';
 
 const MODE = {
@@ -46,6 +49,7 @@ export default function ShareCalendarSheet({ visible, onClose, mode = 'rings', s
   // In the tour the three ranges pulse, drawn on the chips so they move with them.
   const chipTip = useTapHint(isTourTarget('share.card', run));
   const [range, setRange] = useState('3months');
+  const [medalLook, setMedalLook] = useState('ink'); // 'ink' | 'medals'
   const [totals, setTotals] = useState(true);
   const [busy, setBusy] = useState(false);
   const shot = useRef(null);
@@ -70,6 +74,19 @@ export default function ShareCalendarSheet({ visible, onClose, mode = 'rings', s
     () => (visible && mode === 'medals' ? months.map((m) => monthProgress(sessions, monthKey(m.year, m.month))) : []),
     [visible, mode, months, sessions],
   );
+  // Ink-drop calendar: words each day and the day each tier was reached, per month.
+  const ink = useMemo(() => {
+    const out = {};
+    if (!visible || mode !== 'medals') return out;
+    for (const m of months) {
+      const mk = monthKey(m.year, m.month);
+      const { days, reached } = monthDays(sessions, mk);
+      const tierOn = {};
+      for (const [t, k] of Object.entries(reached)) tierOn[k] = t;
+      out[mk] = { days, tierOn };
+    }
+    return out;
+  }, [visible, mode, months, sessions]);
 
   // Picture width: the sheet's width less its padding.
   const imgW = Math.min(width, 520) - 44;
@@ -115,6 +132,19 @@ export default function ShareCalendarSheet({ visible, onClose, mode = 'rings', s
         })}
       </View>
 
+      {mode === 'medals' ? (
+        <View style={[s.chips, { marginTop: -4 }]}>
+          {[['ink', 'Ink calendar'], ['medals', 'Medals']].map(([id, label]) => {
+            const on = medalLook === id;
+            return (
+              <Pressable key={id} onPress={() => setMedalLook(id)} style={[s.look, on && s.lookOn]} accessibilityRole="button" accessibilityState={{ selected: on }}>
+                <Text style={[s.lookText, on && { color: colors.royal }]}>{label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : null}
+
       {/* The picture. Always drawn in the app's blue, in light or dark mode. */}
       <View ref={shot} collapsable={false} style={{ borderRadius: 18, overflow: 'hidden' }}>
         <LinearGradient colors={['#1B3FA0', '#0C2265']} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={s.img}>
@@ -141,7 +171,47 @@ export default function ShareCalendarSheet({ visible, onClose, mode = 'rings', s
             </View>
           ) : <View style={{ height: 10 }} />}
 
-          {mode === 'medals' ? (
+          {mode === 'medals' && medalLook === 'ink' ? (
+            // The ink-drop calendar: each month with the medal it earned by its name.
+            <View style={[s.months, { gap }]}>
+              {months.map((m) => {
+                const mk = monthKey(m.year, m.month);
+                const p = medals.find((x) => x.monthKey === mk);
+                const { days = {}, tierOn = {} } = ink[mk] || {};
+                const one = perRow === 1;
+                const cellW = monthW / 7;
+                const cellH = one ? ring + 14 : ring + 3;
+                return (
+                  <View key={mk} style={{ width: monthW }}>
+                    <View style={s.inkHead}>
+                      <Text style={[s.mon, { marginTop: 0, marginBottom: 0 }, !one && { fontSize: 9 }]} numberOfLines={1}>
+                        {new Date(m.year, m.month, 1).toLocaleDateString('en-US', { month: one ? 'long' : 'short' }).toUpperCase()}
+                      </Text>
+                      {p && p.tier ? <MedalPin tier={p.tier} height={one ? 22 : 15} /> : null}
+                      {one && p ? <Text style={s.inkName} numberOfLines={1}>{p.name} · {p.tier ? TIER_LABEL[p.tier] : 'on the way'} · {p.value.toLocaleString()} words</Text> : null}
+                    </View>
+                    {monthGrid(m.year, m.month).map((row, r) => (
+                      <View key={r} style={s.week}>
+                        {row.map((k, c) => {
+                          if (!k) return <View key={c} style={{ width: cellW, height: cellH }} />;
+                          const w = days[k] || 0;
+                          return (
+                            <View key={k} style={{ width: cellW, height: cellH, alignItems: 'center', justifyContent: 'center' }}>
+                              {w > 0
+                                ? <InkDrop words={w} min={Math.max(4, ring * 0.32)} max={ring} color="#0B0C10" edge="rgba(255,255,255,0.45)" />
+                                : <View style={[s.blank, { width: ring * 0.22, height: ring * 0.22, borderRadius: ring, opacity: k > today ? 0.4 : 1 }]} />}
+                              {one && w > 0 ? <WordBadge words={w} size={8.5} border="#1B3FA0" style={s.inkBadge} /> : null}
+                              {one && tierOn[k] ? <View style={s.inkPin}><MedalPin tier={tierOn[k]} height={16} /></View> : null}
+                            </View>
+                          );
+                        })}
+                      </View>
+                    ))}
+                  </View>
+                );
+              })}
+            </View>
+          ) : mode === 'medals' ? (
             // One medal per month: big with its bar for one month, three to a row otherwise.
             <View style={[s.months, { gap }]}>
               {medals.map((p) => (
@@ -246,6 +316,13 @@ const s = themed(() => ({
   statN: { fontSize: 18, fontWeight: '800', color: '#FFFFFF' },
   statL: { fontSize: 10, color: 'rgba(255,255,255,0.8)', textAlign: 'center' },
   months: { flexDirection: 'row', flexWrap: 'wrap' },
+  look: { borderRadius: 999, paddingHorizontal: 12, minHeight: 30, justifyContent: 'center', backgroundColor: '#EEF0F5' },
+  lookOn: { backgroundColor: '#FFFFFF', borderWidth: 1.5, borderColor: colors.royal },
+  lookText: { fontSize: 12.5, fontWeight: '800', color: '#5A6484' },
+  inkHead: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4, marginBottom: 4, minHeight: 16 },
+  inkName: { flex: 1, fontSize: 11, color: 'rgba(255,255,255,0.85)' },
+  inkBadge: { position: 'absolute', bottom: -1, right: -2 },
+  inkPin: { position: 'absolute', top: -2, right: 0 },
   blank: { backgroundColor: 'rgba(255,255,255,0.18)' },
   medName: { fontSize: 18, fontWeight: '800', color: '#FFFFFF' },
   medSub: { fontSize: 12, color: 'rgba(255,255,255,0.85)', marginTop: 2 },

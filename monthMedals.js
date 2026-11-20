@@ -136,3 +136,38 @@ export function milestoneParts(words) {
     return { tier: TIERS[i], fill };
   });
 }
+
+// ---------- The ink-drop calendar ----------
+// Each day you wrote gets an ink drop: the more words, the bigger the drop.
+// Even a few words leave a clear dot (min), and the biggest drop still fits
+// under the date (max). Grows on a log scale: 1 → min, 1,000+ → max.
+export const INK = '#16181D';
+export function inkSize(words, min = 12, max = 30) {
+  if (!words || words <= 0) return 0;
+  const t = Math.min(1, Math.log10(Math.max(1, words)) / 3);
+  return Math.round(min + (max - min) * t);
+}
+
+// The green "+words" badge on a day: pale lime for a few words, darker as it
+// grows, and a "!" from 500 words.
+//   { text: '+620!', bg, fg, big }
+export const WORD_GREENS = [
+  { from: 1, bg: '#E4FBC2', fg: '#2F5A0C' },
+  { from: 50, bg: '#B8F07A', fg: '#24480A' },
+  { from: 200, bg: '#5FD07A', fg: '#0B3A1C' },
+  { from: 500, bg: '#1F9D4C', fg: '#FFFFFF' },
+  { from: 1000, bg: '#0E6B32', fg: '#FFFFFF' },
+];
+export function shortWords(words) {
+  if (words >= 1000) {
+    const k = words / 1000;
+    return `${k >= 10 || Number.isInteger(k) ? Math.round(k) : k.toFixed(1)}k`;
+  }
+  return String(words);
+}
+export function wordBadge(words) {
+  if (!words || words <= 0) return null;
+  const g = WORD_GREENS.reduce((a, x) => (words >= x.from ? x : a), WORD_GREENS[0]);
+  const big = words >= 500;
+  return { text: `+${shortWords(words)}${big ? '!' : ''}`, bg: g.bg, fg: g.fg, big };
+}

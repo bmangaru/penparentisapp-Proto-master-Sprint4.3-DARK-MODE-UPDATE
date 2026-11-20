@@ -38,7 +38,8 @@ import { FeelingsCard, MonthMedalCardTop } from '../components/TopCards';
 // The top cards, in order, and the calendar view each one goes with.
 const PAGE = { rings: 0, feelings: 1, medals: 2 };
 const VIEW_OF = ['rings', 'feelings', 'medals'];
-import { TIER_BAR } from '../medals';
+import { TIER_LABEL } from '../medals';
+import { InkDrop, WordBadge, MedalPin } from '../components/InkDrop';
 import { monthDays, monthKeyOf, monthProgress } from '../monthMedals';
 import { feelingById, feelingLabel } from '../feelings';
 import { loadAll, useDataChange, useToday } from '../writingStore';
@@ -303,7 +304,20 @@ export default function CalendarScreen({ navigation, route }) {
           ) : view === 'feelings' ? (
             <Text style={[s.legendText, s.legend]}>Your latest feeling is in front. Tap a day to see them all.</Text>
           ) : (
-            <Text style={[s.legendText, s.legend]}>Words written each day. A dot marks the day you reached a tier.</Text>
+            // Key: the ink drops, then the four medals with the words each needs.
+            <View style={s.legend}>
+              <View style={s.legendItem}>
+                <View style={s.dropsKey}><InkDrop words={3} min={6} max={14} /><InkDrop words={80} min={6} max={14} /><InkDrop words={1000} min={6} max={14} /></View>
+                <Text style={s.legendText}>Bigger drop = more words</Text>
+              </View>
+              {[['bronze', '500'], ['silver', '1k'], ['gold', '5k'], ['diamond', '10k']].map(([t, n]) => (
+                <View key={t} style={s.legendItem}>
+                  <MedalPin tier={t} height={15} />
+                  <Text style={s.legendText}>{TIER_LABEL[t]} {n}</Text>
+                </View>
+              ))}
+              <Text style={[s.legendText, { width: '100%' }]}>Every word you write this month counts toward its medal. A medal marks the day you reached it.</Text>
+            </View>
           )}
           <View style={s.weekHead}>
             {WEEKDAYS.map((d, i) => <Text key={i} style={s.weekHeadText}>{d}</Text>)}
@@ -409,9 +423,9 @@ function DayCell({ day, selected, hasEvent, onPress, feelings, medal }) {
   return (
     <Pressable
       onPress={onPress}
-      style={[s.cell, selected && s.cellSelected, day.isToday && s.cellToday]}
+      style={[s.cell, medal?.tier && s.cellWon, selected && s.cellSelected, day.isToday && s.cellToday]}
       accessibilityRole="button"
-      accessibilityLabel={`${date.toDateString()}${hasEvent ? ', event' : ''}${day.count ? `, ${day.words} words` : ''}${feelings && feelings.length ? `, felt ${feelings.map((f) => feelingLabel(f.feeling)).join(' then ')}` : ''}`}
+      accessibilityLabel={`${date.toDateString()}${hasEvent ? ', event' : ''}${day.count ? `, ${day.words} words` : ''}${medal?.tier ? `, reached ${TIER_LABEL[medal.tier]}` : ''}${feelings && feelings.length ? `, felt ${feelings.map((f) => feelingLabel(f.feeling)).join(' then ')}` : ''}`}
     >
       <Text style={[s.cellNum, day.isToday && s.cellNumToday, day.future && { color: colors.muted }]}>
         {monthTag ? <Text style={s.monthTag}>{monthTag} </Text> : null}{n}
@@ -420,9 +434,10 @@ function DayCell({ day, selected, hasEvent, onPress, feelings, medal }) {
         {feelings ? (
           <DayFaces feelings={feelings} wrote={day.count > 0} animate={day.isToday} />
         ) : medal ? (
+          // An ink drop (bigger for more words) with the green "+words" badge.
           <View style={s.medalCell}>
-            {medal.words > 0 ? <Text style={s.dayWords}>+{medal.words.toLocaleString()}</Text> : null}
-            {medal.tier ? <View style={[s.tierDot, { backgroundColor: TIER_BAR[medal.tier] }]} /> : null}
+            <InkDrop words={medal.words} />
+            {medal.words > 0 ? <WordBadge words={medal.words} style={s.wordBadge} /> : null}
           </View>
         ) : (
           <Rings
@@ -430,6 +445,7 @@ function DayCell({ day, selected, hasEvent, onPress, feelings, medal }) {
             faded={day.future} size={34}
           />
         )}
+        {medal?.tier ? <View style={s.pin} pointerEvents="none"><MedalPin tier={medal.tier} height={18} /></View> : null}
         {hasEvent && (
           <View style={s.star} pointerEvents="none">
             <Ionicons name="star" size={22} color={STAR} style={s.starIcon} />
@@ -526,8 +542,10 @@ const s = themed(() => ({
   bold: { fontWeight: '800', color: '#FFFFFF' },
   topKick: { fontSize: 11, fontWeight: '800', letterSpacing: 1, color: 'rgba(255,255,255,0.75)' },
 
-  // Medals view day cells: words that day, a tier dot on the day it was reached
-  medalCell: { width: 34, height: 30, alignItems: 'center', justifyContent: 'center', gap: 3 },
-  dayWords: { fontSize: 10, fontWeight: '800', color: '#2E8A57', fontVariant: ['tabular-nums'] },
-  tierDot: { width: 11, height: 11, borderRadius: 6, borderWidth: 1.5, borderColor: '#FFFFFF' },
+  // Medals view day cells: an ink drop and "+words"; a medal on the day a tier was reached
+  medalCell: { width: 34, height: 32, alignItems: 'center', justifyContent: 'center' },
+  wordBadge: { position: 'absolute', right: -13, bottom: -5 },
+  pin: { position: 'absolute', top: -20, right: -12 },
+  cellWon: { backgroundColor: '#FFF6DE' },
+  dropsKey: { flexDirection: 'row', alignItems: 'center', gap: 2 },
 }));

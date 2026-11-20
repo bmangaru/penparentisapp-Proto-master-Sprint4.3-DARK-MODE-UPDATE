@@ -8,7 +8,8 @@
 //     a ring of this month's feelings with the top face in the middle;
 //     the top three feelings as lines (how many times each)
 //   <MonthMedalCardTop progress={monthProgress(...)} onSeeAll />
-//     this month's medal; a line for each tier (Bronze 500 … Diamond 10,000)
+//     "This month: November 2026 · First Frost"; a line for each tier
+//     ("313 of 500 words" … Diamond 10,000), so it's clear words are what count
 
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
@@ -93,7 +94,7 @@ export function MonthMedalCardTop({ progress: p, onSeeAll }) {
   return (
     <View style={s.card}>
       <View style={s.head}>
-        <Text style={s.title} numberOfLines={1}>This month · {p.name}</Text>
+        <Text style={s.title} numberOfLines={2}>This month: {p.when} · {p.name}</Text>
         {p.tier ? <Text style={s.chip}>{TIER_LABEL[p.tier]} ✓</Text> : null}
       </View>
       <View style={s.body}>
@@ -108,7 +109,7 @@ export function MonthMedalCardTop({ progress: p, onSeeAll }) {
                 name={TIER_LABEL[tier].toUpperCase()}
                 color={TIER_ON_BLUE[tier]}
                 value={Math.min(p.value, t).toLocaleString()}
-                of={t.toLocaleString()}
+                of={`${t.toLocaleString()} words`}
                 pct={pct}
                 bar={pct}
               />
@@ -116,6 +117,7 @@ export function MonthMedalCardTop({ progress: p, onSeeAll }) {
           })}
         </View>
       </View>
+      <Text style={s.note}>Every word you write this month counts toward its medal.</Text>
       {onSeeAll ? (
         <Pressable onPress={onSeeAll} hitSlop={6} accessibilityRole="button">
           <Text style={s.link}>Tap to view all your monthly medals  ›</Text>

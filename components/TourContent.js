@@ -344,16 +344,16 @@ export const CHAPTERS = [
       },
       {
         target: 'cal.top', tab: 'Calendar', info: true, calView: 'medals',
-        title: `This month: ${THIS_MONTH.name}`,
-        text: 'Every month has its own medal, with a name that changes each year. Words you write this month earn it: Bronze at 500, Silver at 1,000, Gold at 5,000, Diamond at 10,000. The bar changes colour at each one. It starts fresh on the 1st, and a missed month never takes anything away.',
+        title: `This month: ${THIS_MONTH.when} · ${THIS_MONTH.name}`,
+        text: 'Every month has its own medal, with a name that changes each year. Words you write this month earn it: Bronze at 500 words, Silver at 1,000, Gold at 5,000, Diamond at 10,000. It starts fresh on the 1st, and a missed month never takes anything away.',
       },
       {
         target: 'cal.grid', tab: 'Calendar', info: true, look: true, calView: 'medals', offNote: offInTour('The days', true),
-        text: 'In this view each day shows the words you wrote, and a dot marks the day you reached a tier. Every month you’ve earned, year by year, is on the Medals page at the bottom of Brainstorm.',
+        text: 'In this view each day you wrote gets an ink drop: the more words, the bigger the drop, with the words in green. A little medal marks the day you reached a tier. Every month you’ve earned, year by year, is on the Medals page at the bottom of Brainstorm.',
       },
       {
         target: 'cal.share', tab: 'Calendar', info: true, look: true, round: 999, section: 'Share', offNote: offInTour('Share'),
-        text: 'Share shares the view you’re on: your rings, your feelings, or your monthly medals, as a picture of 1, 3 or 6 months. Your writing is never included.',
+        text: 'Share shares the view you’re on: your rings, your feelings, or your monthly medals (as medals or as the ink-drop calendar), as a picture of 1, 3 or 6 months. Your writing is never included.',
       },
       {
         target: 'cal.past', reveal: true, hold: 500, section: 'Previous salons',
