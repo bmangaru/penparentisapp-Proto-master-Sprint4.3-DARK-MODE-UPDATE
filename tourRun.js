@@ -43,6 +43,24 @@ let CHAPTERS = [];
 export function setTourChapters(list) { CHAPTERS = list; }
 export const getTourChapters = () => CHAPTERS;
 
+// The in-page step's gold box (the spot minus its tip), measured relative to
+// the spot, so the spot draws it itself (TourTarget) and it moves with the
+// page with no lag. { id, top, left, width, height } or { id, full: true }.
+let pulseBox = null;
+const pulseListeners = new Set();
+export function setPulseBox(b) {
+  const same = (pulseBox === b) || (pulseBox && b && pulseBox.id === b.id && pulseBox.full === b.full
+    && pulseBox.top === b.top && pulseBox.left === b.left && pulseBox.width === b.width && pulseBox.height === b.height);
+  if (same) return;
+  pulseBox = b;
+  pulseListeners.forEach((fn) => fn(b));
+}
+export function usePulseBox(id) {
+  const [v, setV] = useState(pulseBox);
+  useEffect(() => { if (!id) return undefined; pulseListeners.add(setV); setV(pulseBox); return () => pulseListeners.delete(setV); }, [id]);
+  return id && v && v.id === id ? v : null;
+}
+
 export function stepOf(r = run) {
   if (!r || r.phase !== 'step') return null;
   return CHAPTERS[r.ch]?.steps?.[r.step] || null;

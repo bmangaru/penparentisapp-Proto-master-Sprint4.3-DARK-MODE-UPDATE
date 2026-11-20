@@ -24,7 +24,7 @@ import Medal from './Medal';
 import TourTarget from './TourTarget';
 import { MEDALS } from '../medals';
 import {
-  getRun, getTarget, targetOnScreen, tourEvent, getTourChapters, minimizeTour, nextStep, revealTarget, scrollForStep, sectionOf, startChapter, stepOf, stopTour, swipeTab, topHost, useRun,
+  getRun, getTarget, setPulseBox, targetOnScreen, tourEvent, getTourChapters, minimizeTour, nextStep, revealTarget, scrollForStep, sectionOf, startChapter, stepOf, stopTour, swipeTab, topHost, useRun,
 } from '../tourRun';
 
 const safeCall = (fn) => { try { return !!fn(); } catch { return true; } };
@@ -99,6 +99,7 @@ export default function TourLayer({ host = 'root' }) {
     setRingRects(null);
     setMarkRects(null);
     setBoxRect(null);
+    setPulseBox(null);
     setAway(false);
     awaySince.current = 0;
     if (!step?.target) return undefined;
@@ -161,10 +162,15 @@ export default function TourLayer({ host = 'root' }) {
         // A tip inside the page: the spot minus the tip (it sits at the top of
         // the spot, or at the bottom, as on the calendar's top cards).
         if (typeof step.inline === 'string') {
-          const box = (b) => setBoxRect((p) => (p && p.x === b.x && p.y === b.y && p.w === b.w && p.h === b.h ? p : b));
+          // Kept on screen (for the touch blocker) and relative to the spot (the
+          // spot draws the gold box itself: TourTarget).
+          const box = (b, full = false) => {
+            setBoxRect((p) => (p && p.x === b.x && p.y === b.y && p.w === b.w && p.h === b.h ? p : b));
+            setPulseBox(full ? { id: step.box, full: true } : { id: step.target, top: Math.round(b.y - y), left: Math.round(b.x - x), width: Math.round(b.w), height: Math.round(b.h) });
+          };
           const tip = getTarget(`inline:${step.inline}`)?.ref.current;
           const only = step.box ? getTarget(step.box)?.ref.current : null; // just this part
-          if (only?.measureInWindow) only.measureInWindow((bx, by, bw, bh) => { if (bw || bh) box({ x: bx, y: by, w: bw, h: bh }); });
+          if (only?.measureInWindow) only.measureInWindow((bx, by, bw, bh) => { if (bw || bh) box({ x: bx, y: by, w: bw, h: bh }, true); });
           else if (!tip?.measureInWindow) box({ x, y, w, h });
           else {
             tip.measureInWindow((tx, ty, tw, th) => {
@@ -338,17 +344,8 @@ export default function TourLayer({ host = 'root' }) {
     // On the writing page it's a slim strip inside the page (TourInline), so
     // it never covers ×, Prompt, Aa or Pause. A step you're still doing keeps
     // its pulsing "tap here" (e.g. Save & check in), as a reminder.
-    if (step?.inline) {
-      if (!step.task || run.taskDone || !markRects || !markRects.length || !targetOnScreen(step.target)) return null;
-      const bottom = Math.min(barTop.current || H, kb ? H - kb : H);
-      return (
-        <View style={StyleSheet.absoluteFill} pointerEvents="none">
-          {markRects.filter((m) => { const cy = m.y + m.h / 2; return cy > insets.top && cy < bottom; }).map((m, i) => (
-            <Animated.View key={`h${i}`} style={[c.abs, c.mark, { left: m.x - 5, top: m.y - 5, width: m.w + 10, height: m.h + 10, borderRadius: step.markRound ?? 999, opacity: pulse }]} />
-          ))}
-        </View>
-      );
-    }
+    // (A step you're still doing keeps its pulsing "tap here": TourTarget draws it.)
+    if (step?.inline) return null;
     return (
       <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
         <View style={[c.paused, { top: insets.top + 2 }]}>
@@ -424,16 +421,13 @@ export default function TourLayer({ host = 'root' }) {
       const bot = Math.min(boxRect.y + boxRect.h, bottom);
       if (bot - top > 12) vis = { x: boxRect.x, y: top, w: boxRect.w, h: bot - top };
     }
-    const showBox = vis && !marks.length && !step.noBox;
-    // How far the gold box sits outside its spot: a bit more round one button
-    // (step.box), so the pulse shows; 0 = right on the spot's own border.
-    const pad = step.boxPad ?? (step.box ? 8 : 5);
+    // (The gold box and marks are drawn by the spots themselves: TourTarget.)
     const block = vis && step.look;
     // Scrolled right away from it (tip and all): the arrow back, as on the
     // other steps. Only once it's completely gone, so a tall spot like the
     // calendar never gets an arrow over it.
     const off = step.noArrow ? null : rect.y + rect.h < insets.top + 4 ? 'up' : rect.y > bottom - 4 ? 'down' : null;
-    if (!marks.length && !showBox && !block && !off) return null;
+    if (!block && !off) return null;
     return (
       <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
         {off ? (
@@ -445,12 +439,6 @@ export default function TourLayer({ host = 'root' }) {
           </Animated.View>
         ) : null}
         {block ? <View {...dragProps} style={[c.abs, { left: vis.x, top: vis.y, width: vis.w, height: vis.h }]} /> : null}
-        {showBox ? (
-          <Animated.View pointerEvents="none" style={[c.abs, c.mark, { left: vis.x - pad, top: vis.y - pad, width: vis.w + pad * 2, height: vis.h + pad * 2, borderRadius: step.boxRound ?? 24, opacity: pulse }]} />
-        ) : null}
-        {marks.map((r, i) => (
-          <Animated.View key={`m${i}`} pointerEvents="none" style={[c.abs, c.mark, { left: r.x - 5, top: r.y - 5, width: r.w + 10, height: r.h + 10, borderRadius: step.markRound ?? 999, opacity: pulse }]} />
-        ))}
       </View>
     );
   }
@@ -538,9 +526,6 @@ export default function TourLayer({ host = 'root' }) {
           <View style={[StyleSheet.absoluteFill, c.ringGlow, { borderRadius: (step.round ?? 14) + 4 }]} />
         </View>
       ) : null}
-      {marking ? markRects.filter((r) => r.y + r.h / 2 > insets.top && r.y + r.h / 2 < visBottom).map((r, i) => (
-        <Animated.View key={`m${i}`} pointerEvents="none" style={[c.abs, c.mark, { left: r.x - 5, top: r.y - 5, width: r.w + 10, height: r.h + 10, borderRadius: step.markRound ?? 999, opacity: pulse }]} />
-      )) : null}
       {off ? (
         <Animated.View style={[c.abs, c.edgeWrap, { top: arrowTop }, { transform: [{ translateY: bob.interpolate({ inputRange: [0, 1], outputRange: [0, off === 'up' ? -6 : 6] }) }] }]}>
           <Pressable onPress={findSpot} style={c.edge} accessibilityRole="button" accessibilityLabel={off === 'up' ? 'The spot is above. Scroll back to it' : 'The spot is below. Scroll back to it'}>
