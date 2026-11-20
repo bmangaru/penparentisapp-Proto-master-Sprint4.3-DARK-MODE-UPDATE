@@ -353,7 +353,7 @@ export const CHAPTERS = [
       },
       {
         target: 'cal.share', tab: 'Calendar', info: true, look: true, round: 999, section: 'Share', offNote: offInTour('Share'),
-        text: 'Share shares the view you’re on: your rings, your feelings, or your monthly medals (as medals or as the ink-drop calendar), as a picture of 1, 3 or 6 months. Your writing is never included.',
+        text: 'Share shares the view you’re on: your rings, your feelings, or your monthly medals, as a picture of 1, 3 or 6 months. Your writing is never included.',
       },
       {
         target: 'cal.past', reveal: true, hold: 500, section: 'Previous salons',
