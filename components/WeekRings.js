@@ -9,14 +9,19 @@ import Rings from './Rings';
 import { colors, lift, themed } from '../theme';
 import { timeClock, timeLabel } from '../writingLogic';
 
-export default function WeekRings({ week, onPressDay, title = 'This week', meta = null, footer = null, flat = false, style = null }) {
+export default function WeekRings({ week, onPressDay, title = 'This week', meta = null, footer = null, flat = false, style = null, right = null, below = null }) {
   const { days, done, closedDays } = week;
+  const metaText = meta || `${closedDays} day${closedDays === 1 ? '' : 's'} with all rings closed`;
+  // right: a button beside the title (the meta then goes under `below`);
+  // below: something under the title row (Brainstorm's This / Last week switch).
   return (
     <View style={[s.card, !flat && lift, style]}>
-      <View style={s.head}>
+      <View style={[s.head, right && { alignItems: 'center' }]}>
         <Text style={s.h}>{title}</Text>
-        <Text style={s.meta}>{meta || `${closedDays} day${closedDays === 1 ? '' : 's'} with all rings closed`}</Text>
+        {right || <Text style={s.meta}>{metaText}</Text>}
       </View>
+      {below}
+      {right ? <Text style={[s.meta, { marginTop: -4 }]}>{metaText}</Text> : null}
       <View style={s.row}>
         {days.map((d) => (
           <Pressable

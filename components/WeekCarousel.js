@@ -1,95 +1,59 @@
-// components/WeekCarousel.js — Brainstorm's week card, two pages you swipe
-// between: Last week on the left (with "View last week’s review", the same
-// page Sunday's notification opens) and This week on the right, where it
-// starts (with "View this week’s review", the same page for this week). Dots underneath say which one. The cards are flat here (a shadow
-// gets cut off at the edges of a swiping row).
+// components/WeekCarousel.js — Brainstorm's week card: This week or Last
+// week, picked with a switch (like the Calendar's Rings / Feelings / Medals),
+// never by swiping: the card sits mid-page, where you scroll. "View review"
+// opens that week's summary (the page Sunday's notification opens too).
 
-import React, { useRef, useState } from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import WeekRings from './WeekRings';
-import { colors, themed } from '../theme';
+import { colors, dk, themed } from '../theme';
 import { parseDayKey } from '../writingLogic';
 
 const short = (k) => parseDayKey(k).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-const PAGES = ['Last week', 'This week'];
+const WEEKS = [['this', 'This week'], ['last', 'Last week']];
 
 export default function WeekCarousel({ week, last, onPressDay, onOpenReview, onOpenThisWeek }) {
-  const [w, setW] = useState(0);
-  const [i, setI] = useState(1); // This week
-  const ref = useRef(null);
-  // Where the strip starts (This week), set once: a new start position on
-  // every redraw made iOS jump and stick mid-swipe (as Cycler found).
-  const start = useRef(null);
-  if (w && !start.current) start.current = { x: w, y: 0 };
-  const show = (n) => { setI(n); ref.current?.scrollTo({ x: n * w, animated: true }); };
-  return (
-    <View onLayout={(e) => setW(Math.round(e.nativeEvent.layout.width))}>
-      {w ? (
-        <ScrollView
-          ref={ref} horizontal pagingEnabled showsHorizontalScrollIndicator={false} nestedScrollEnabled
-          contentOffset={start.current}
-          scrollEventThrottle={16}
-          onMomentumScrollEnd={(e) => setI(Math.round(e.nativeEvent.contentOffset.x / w))}
-        >
-          <View style={{ width: w }}>
-            <WeekRings
-              flat style={{ flex: 1 }} week={last} onPressDay={onPressDay} title="Last week"
-              meta={`${short(last.start)} – ${short(last.end)}`}
-              footer={(
-                <Pressable onPress={onOpenReview} style={({ pressed }) => [s.link, pressed && { opacity: 0.7 }]} accessibilityRole="button">
-                  <Text style={s.linkText}>View last week’s review</Text>
-                </Pressable>
-              )}
-            />
-          </View>
-          <View style={{ width: w }}>
-            {/* Both cards the same height (so swiping never leaves a gap):
-                each fills its page, and each has a link at the bottom. */}
-            <WeekRings
-              flat style={{ flex: 1 }} week={week} onPressDay={onPressDay}
-              footer={(
-                <Pressable onPress={onOpenThisWeek} style={({ pressed }) => [s.link, pressed && { opacity: 0.7 }]} accessibilityRole="button">
-                  <Text style={s.linkText}>View this week’s review</Text>
-                </Pressable>
-              )}
-            />
-          </View>
-        </ScrollView>
-      ) : null}
-      {/* The same bar as the Calendar's top cards and Home's blog: round ‹ ›
-          either side, dots in the middle (with two cards, either arrow goes
-          to the other one). */}
-      <View style={s.bar}>
-        <Arrow dir={-1} onPress={() => show(i ? 0 : 1)} />
-        <View style={s.dots}>
-          {PAGES.map((t, n) => (
-            <Pressable key={t} onPress={() => show(n)} hitSlop={6} accessibilityRole="button" accessibilityLabel={`Show ${t.toLowerCase()}`} accessibilityState={{ selected: i === n }}>
-              <View style={[s.dot, i === n && s.dotOn]} />
-            </Pressable>
-          ))}
-        </View>
-        <Arrow dir={1} onPress={() => show(i ? 0 : 1)} />
-      </View>
-    </View>
-  );
-}
-
-function Arrow({ dir, onPress }) {
-  return (
-    <Pressable onPress={onPress} hitSlop={8} style={({ pressed }) => [s.arrow, pressed && { opacity: 0.6 }]} accessibilityRole="button" accessibilityLabel={dir < 0 ? 'Previous week' : 'Next week'}>
-      <Ionicons name={dir < 0 ? 'chevron-back' : 'chevron-forward'} size={18} color={colors.royal} />
+  const [which, setWhich] = useState('this');
+  const isLast = which === 'last';
+  const shown = isLast ? last : week;
+  const full = `${shown.closedDays} day${shown.closedDays === 1 ? '' : 's'} with all rings closed`;
+  const review = (
+    <Pressable
+      onPress={isLast ? onOpenReview : onOpenThisWeek} hitSlop={6}
+      style={({ pressed }) => [s.btn, pressed && { opacity: 0.85 }]}
+      accessibilityRole="button" accessibilityLabel={isLast ? 'View last week’s review' : 'View this week’s review'}
+    >
+      <Ionicons name="stats-chart" size={13} color="#FFFFFF" />
+      <Text style={s.btnText}>View review</Text>
     </Pressable>
   );
+  const seg = (
+    <View style={s.seg} accessibilityRole="tablist">
+      {WEEKS.map(([k, label]) => (
+        <Pressable key={k} onPress={() => setWhich(k)} style={[s.segBtn, which === k && s.segOn]} accessibilityRole="tab" accessibilityState={{ selected: which === k }}>
+          <Text style={[s.segText, which === k && s.segTextOn]}>{label}</Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+  return (
+    <WeekRings
+      week={shown} onPressDay={onPressDay}
+      title={isLast ? 'Last week' : 'This week'}
+      meta={isLast ? `${short(last.start)} – ${short(last.end)} · ${full}` : full}
+      right={review} below={seg}
+    />
+  );
 }
 
+// (The same switch and button as the Calendar's.)
 const s = themed(() => ({
-  link: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, minHeight: 36, marginTop: -2 },
-  linkText: { fontSize: 14, fontWeight: '700', color: colors.royal },
-  // (As Cycler: arrows a little in from the edges, dots in the middle.)
-  bar: { flexDirection: 'row', alignItems: 'center', marginTop: 10, paddingHorizontal: 44 },
-  arrow: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF', borderWidth: 1.5, borderColor: colors.line },
-  dots: { flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 },
-  dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#C8CEDE' },
-  dotOn: { width: 18, backgroundColor: colors.royal },
+  btn: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: colors.royal, borderRadius: 999, paddingHorizontal: 12, minHeight: 30 },
+  btnText: { color: '#FFFFFF', fontSize: 12.5, fontWeight: '800' },
+  seg: { flexDirection: 'row', alignSelf: 'flex-start', backgroundColor: dk('#EEF0F5', 'rgba(255,255,255,0.08)'), borderRadius: 999, padding: 3 },
+  segBtn: { paddingHorizontal: 14, minHeight: 30, justifyContent: 'center', borderRadius: 999 },
+  segOn: { backgroundColor: dk('#FFFFFF', '#3352C4'), shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 3, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
+  segText: { fontSize: 12.5, fontWeight: '700', color: dk('#5A6484', '#A3AECB') },
+  segTextOn: { color: dk('#1B3FA0', '#FFFFFF') },
 }));
