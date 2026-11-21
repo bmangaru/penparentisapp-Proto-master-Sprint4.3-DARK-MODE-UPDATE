@@ -3,7 +3,7 @@
 //
 //   Settings ─┬─ Appearance      System / Light / Dark, each a tiny picture of the app
 //             ├─ Notifications   writing reminders (add, rename, remove), Streak
-//             │                  saver, medals, month's medal, week in review,
+//             │                  saver, medals, month's medal,
 //             │                  salons, quiet hours; each with an example
 //             ├─ App tour        every chapter (tap one to go over it), start over
 //             └─ Contact Pen Parentis
@@ -363,21 +363,6 @@ function NotificationsPage({ data, perm, setPerm, onEdit, onQuiet }) {
       </Group>
       <Foot>No writing last month? The 1st just introduces the new month’s medal.</Foot>
 
-      <Header>WEEK IN REVIEW</Header>
-      <Group>
-        <Row
-          title="Sunday summary" sub="Last week’s words, rings and medals" chevron={false}
-          right={(
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Text style={s.time}>{timeText(prefs.weekly.h, prefs.weekly.m)}</Text>
-              <Toggle value={prefs.weekly.on} onChange={(v) => set({ weekly: { ...prefs.weekly, on: v } }, v)} label="Sunday week in review" />
-            </View>
-          )}
-        />
-        {prefs.weekly.on ? <Example {...eg.week} when="Sunday" /> : null}
-      </Group>
-      <Foot>It’s always on Brainstorm too: swipe This week to the right to see last week.</Foot>
-
       <Header>SALONS</Header>
       <Group>
         <Row title="When a salon goes live" sub="30 minutes before · also on Eventbrite" chevron={false} right={<Toggle value={prefs.live} onChange={(v) => salon('live', v)} label="When a salon goes live" />} />
@@ -395,7 +380,7 @@ function NotificationsPage({ data, perm, setPerm, onEdit, onQuiet }) {
           right={<Toggle value={q.on} onChange={(v) => set({ quiet: { ...q, on: v } })} label="Quiet hours" />}
         />
       </Group>
-      <Foot>Medal, month and week notes due then wait until quiet hours end. Your own reminders still come at the time you set.</Foot>
+      <Foot>Medal and month notes due then wait until quiet hours end. Your own reminders still come at the time you set.</Foot>
     </View>
   );
 }
@@ -514,7 +499,7 @@ function QuietPage() {
       <Group><TimeStepper h={q.from[0]} m={q.from[1]} onStep={move('from')} /></Group>
       <Header>UNTIL</Header>
       <Group><TimeStepper h={q.to[0]} m={q.to[1]} onStep={move('to')} /></Group>
-      <Foot>Medal, month and week notes due in quiet hours wait until they end. Your own writing reminders still come at the time you set.</Foot>
+      <Foot>Medal and month notes due in quiet hours wait until they end. Your own writing reminders still come at the time you set.</Foot>
     </View>
   );
 }

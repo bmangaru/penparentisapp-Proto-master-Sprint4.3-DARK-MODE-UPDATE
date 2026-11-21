@@ -1,8 +1,7 @@
-// screens/WeekReviewScreen.js — Week in review: last week (Sunday to
-// Saturday) next to the week before. Opens from Sunday's notification, from
-// Settings, and from "Last week" on Brainstorm's week card, so it's there
-// even with notifications off. With { week: 'this' } (This week's card) it
-// shows this week so far, next to last week.
+// screens/WeekReviewScreen.js — This week's review: the week so far (Sunday
+// to Saturday) next to last week, opened from "View review" on Brainstorm's
+// This week card. Share my week makes a picture of it. (Earlier weeks: the
+// Calendar. Last week's review and its Sunday notification were removed.)
 
 import React, { useCallback, useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
@@ -40,7 +39,8 @@ export function reviewHeadline(r, thisWeek = false) {
 }
 
 export default function WeekReviewScreen({ navigation, route }) {
-  const thisWeek = route?.params?.week === 'this';
+  // This week so far (last week's review was removed: the Calendar has it).
+  const thisWeek = true;
   const insets = useSafeAreaInsets();
   const [data, setData] = useState(null);
   const [shareOpen, setShareOpen] = useState(false); // Share my week: a picture

@@ -123,7 +123,7 @@ export default function App() {
         : () => navRef.navigate('Brainstorm', { screen: 'BrainstormHome' });
     }
     if (data.kind === 'medals') go = () => navRef.navigate('Brainstorm', { screen: 'Medals' });
-    if (data.kind === 'week') go = () => navRef.navigate('Brainstorm', { screen: 'WeekReview' });
+    if (data.kind === 'week') go = () => navRef.navigate('Brainstorm', { screen: 'WeekReview' }); // (an old Sunday one)
     if (!go) return;
     if (navRef.isReady()) go(); else setTimeout(go, 600);
   }), []);

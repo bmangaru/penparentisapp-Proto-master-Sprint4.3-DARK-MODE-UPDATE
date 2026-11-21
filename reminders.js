@@ -9,8 +9,9 @@
 //   almost     a medal's next tier is close (once per tier)
 //   month      on the 1st (last month's medal + the new one), and 3 days
 //              before the month ends (how close the next tier is)
-//   weekly     { on, h, m }  Sunday: last week in review
 //   quiet      { on, from: [h, m], to: [h, m] }  nothing automatic in between
+//   (A Sunday "last week" summary was tried and removed: too many kinds of
+//   notification. This week's review is on Brainstorm.)
 //              (your own reminders still come at the time you set)
 //
 // planNotifications(prefs, data, now) → [{ id, at, title, body, data, category }]
@@ -40,7 +41,6 @@ export const DEFAULT_PREFS = {
   live: false, episodes: false,
   reminders: DEFAULT_REMINDERS,
   skipDone: true, streak: true, almost: true, month: true,
-  weekly: { on: true, h: 18, m: 0 },
   quiet: { on: true, from: [21, 30], to: [7, 0] },
 };
 
@@ -51,7 +51,6 @@ export function withDefaults(saved) {
     ...DEFAULT_PREFS,
     ...s,
     reminders: Array.isArray(s.reminders) ? s.reminders : DEFAULT_REMINDERS,
-    weekly: { ...DEFAULT_PREFS.weekly, ...(s.weekly || {}) },
     quiet: { ...DEFAULT_PREFS.quiet, ...(s.quiet || {}) },
   };
 }
@@ -184,18 +183,6 @@ export function monthEndText(sessions, mk) {
   return { title: `3 days left in ${MONTHS[m]}`, body: `${p.toGo.toLocaleString()} words to ${TIER_LABEL[p.nextTier]} ${p.name}.` };
 }
 
-// Sunday: the week that just ended (Sunday to Saturday before `sunday`).
-export function weekText(sessions, dailyGoals, goals, sunday) {
-  const last = addDays(sunday, -7);
-  const wk = weekSummary(sessions, dailyGoals, goals, last);
-  const prev = weekSummary(sessions, dailyGoals, goals, addDays(last, -7)).done;
-  const w = wk.done.words;
-  if (!w && !wk.done.count) return { title: 'A new week', body: 'Last week was quiet. A new week starts today: even a few lines counts.' };
-  const days = `${wk.closedDays} full day${wk.closedDays === 1 ? '' : 's'}`;
-  const up = prev.words > 0 && w > prev.words ? ` Up ${Math.round(((w - prev.words) / prev.words) * 100)}% on the week before.` : '';
-  return { title: 'Your week', body: `${w.toLocaleString()} words and ${days} last week.${up} See your week ›` };
-}
-
 // Example text for Settings (what each one looks like).
 export function examples(prefs, data, now = new Date()) {
   const { sessions = [], dailyGoals = {}, goals = null } = data || {};
@@ -214,7 +201,6 @@ export function examples(prefs, data, now = new Date()) {
     almost: near ? almostText(near) : { title: '120 words to Gold', body: 'Wordsmith is nearly Gold. One more session would do it.' },
     monthStart: monthStartText(sessions, nextMk),
     monthEnd: monthEndText(sessions, thisMk) || { title: '3 days left this month', body: 'Every tier is yours this month. Diamond!' },
-    week: weekText(sessions, dailyGoals, goals, startOfWeek(now)),
   };
 }
 
@@ -299,14 +285,6 @@ export function planNotifications(prefsIn, data, now = new Date(), sent = {}) {
     if (end) push({ id: 'pp-month-end', at: afterQuiet(at(addDays(last, -2), morning.h, morning.m), quiet), ...end, data: { kind: 'medals' } });
   }
 
-  // Sunday: last week in review.
-  if (prefs.weekly?.on) {
-    let sun = at(addDays(now, (7 - now.getDay()) % 7), prefs.weekly.h, prefs.weekly.m);
-    if (sun <= now) sun = addDays(sun, 7);
-    const when = afterQuiet(sun, quiet);
-    push({ id: 'pp-week', at: when, ...weekText(sessions, dailyGoals, goals, at(sun, 0, 0)), data: { kind: 'week' } });
-  }
-
   return out.sort((a, b) => a.at - b.at);
 }
 
@@ -314,5 +292,5 @@ export function planNotifications(prefsIn, data, now = new Date(), sent = {}) {
 export function countOn(prefsIn) {
   const p = withDefaults(prefsIn);
   return (p.reminders || []).filter((r) => r.on !== false).length
-    + [p.streak, p.almost, p.month, p.weekly?.on, p.live, p.episodes].filter(Boolean).length;
+    + [p.streak, p.almost, p.month, p.live, p.episodes].filter(Boolean).length;
 }

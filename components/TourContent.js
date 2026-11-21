@@ -88,7 +88,7 @@ export const CHAPTERS = [
       },
       {
         target: 'settings.rowNotify', wait: true, info: true, look: true, round: 12,
-        title: 'Notifications', text: 'Writing reminders (Morning, Lunch, Evening; add your own), a streak saver, medal news, a Sunday week in review and salon alerts. Each one shows an example of what it says, so you can pick the ones you want.',
+        title: 'Notifications', text: 'Writing reminders (Morning, Lunch, Evening; add your own), a streak saver, medal news and salon alerts. Each one shows an example of what it says, so you can pick the ones you want.',
         offNote: offInTour('Notifications', true),
       },
       {
