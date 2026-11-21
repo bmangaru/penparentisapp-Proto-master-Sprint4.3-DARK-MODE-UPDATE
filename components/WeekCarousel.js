@@ -6,6 +6,7 @@
 
 import React, { useRef, useState } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import WeekRings from './WeekRings';
 import { colors, themed } from '../theme';
 import { parseDayKey } from '../writingLogic';
@@ -56,29 +57,39 @@ export default function WeekCarousel({ week, last, onPressDay, onOpenReview, onO
           </View>
         </ScrollView>
       ) : null}
-      <View style={s.dots}>
-        <Pressable onPress={() => show(i ? 0 : 1)} hitSlop={8} accessibilityRole="button" style={{ marginRight: 6 }}>
-          <Text style={[s.dotText, !i && { opacity: 0 }]}>‹ Last week</Text>
-        </Pressable>
-        {PAGES.map((t, n) => (
-          <Pressable key={t} onPress={() => show(n)} hitSlop={8} accessibilityRole="button" accessibilityLabel={`Show ${t.toLowerCase()}`} accessibilityState={{ selected: i === n }} style={s.dotHit}>
-            <View style={[s.dot, i === n && s.dotOn]} />
-          </Pressable>
-        ))}
-        <Pressable onPress={() => show(1)} hitSlop={8} accessibilityRole="button" style={{ marginLeft: 6 }} disabled={i === 1}>
-          <Text style={[s.dotText, i === 1 && { opacity: 0 }]}>This week ›</Text>
-        </Pressable>
+      {/* The same bar as the Calendar's top cards and Home's blog: round ‹ ›
+          either side, dots in the middle (with two cards, either arrow goes
+          to the other one). */}
+      <View style={s.bar}>
+        <Arrow dir={-1} onPress={() => show(i ? 0 : 1)} />
+        <View style={s.dots}>
+          {PAGES.map((t, n) => (
+            <Pressable key={t} onPress={() => show(n)} hitSlop={6} accessibilityRole="button" accessibilityLabel={`Show ${t.toLowerCase()}`} accessibilityState={{ selected: i === n }}>
+              <View style={[s.dot, i === n && s.dotOn]} />
+            </Pressable>
+          ))}
+        </View>
+        <Arrow dir={1} onPress={() => show(i ? 0 : 1)} />
       </View>
     </View>
+  );
+}
+
+function Arrow({ dir, onPress }) {
+  return (
+    <Pressable onPress={onPress} hitSlop={8} style={({ pressed }) => [s.arrow, pressed && { opacity: 0.6 }]} accessibilityRole="button" accessibilityLabel={dir < 0 ? 'Previous week' : 'Next week'}>
+      <Ionicons name={dir < 0 ? 'chevron-back' : 'chevron-forward'} size={18} color={colors.royal} />
+    </Pressable>
   );
 }
 
 const s = themed(() => ({
   link: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, minHeight: 36, marginTop: -2 },
   linkText: { fontSize: 14, fontWeight: '700', color: colors.royal },
-  dots: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 2, marginTop: 8 },
-  dotHit: { padding: 4 },
-  dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.line },
+  // (As Cycler: arrows a little in from the edges, dots in the middle.)
+  bar: { flexDirection: 'row', alignItems: 'center', marginTop: 10, paddingHorizontal: 44 },
+  arrow: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF', borderWidth: 1.5, borderColor: colors.line },
+  dots: { flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 },
+  dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#C8CEDE' },
   dotOn: { width: 18, backgroundColor: colors.royal },
-  dotText: { fontSize: 12.5, fontWeight: '700', color: colors.royal },
 }));
