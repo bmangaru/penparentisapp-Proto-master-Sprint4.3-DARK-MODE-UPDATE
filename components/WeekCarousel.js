@@ -1,12 +1,11 @@
 // components/WeekCarousel.js — Brainstorm's week card, two pages you swipe
-// between: Last week on the left (with "See your week in review ›", the same
+// between: Last week on the left (with "View last week’s review", the same
 // page Sunday's notification opens) and This week on the right, where it
-// starts (with "See this week so far ›", the same page for this week). Dots underneath say which one. The cards are flat here (a shadow
+// starts (with "View this week’s review", the same page for this week). Dots underneath say which one. The cards are flat here (a shadow
 // gets cut off at the edges of a swiping row).
 
 import React, { useRef, useState } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import WeekRings from './WeekRings';
 import { colors, themed } from '../theme';
 import { parseDayKey } from '../writingLogic';
@@ -38,8 +37,7 @@ export default function WeekCarousel({ week, last, onPressDay, onOpenReview, onO
               meta={`${short(last.start)} – ${short(last.end)}`}
               footer={(
                 <Pressable onPress={onOpenReview} style={({ pressed }) => [s.link, pressed && { opacity: 0.7 }]} accessibilityRole="button">
-                  <Text style={s.linkText}>See your week in review</Text>
-                  <Ionicons name="chevron-forward" size={15} color={colors.royal} />
+                  <Text style={s.linkText}>View last week’s review</Text>
                 </Pressable>
               )}
             />
@@ -51,8 +49,7 @@ export default function WeekCarousel({ week, last, onPressDay, onOpenReview, onO
               flat style={{ flex: 1 }} week={week} onPressDay={onPressDay}
               footer={(
                 <Pressable onPress={onOpenThisWeek} style={({ pressed }) => [s.link, pressed && { opacity: 0.7 }]} accessibilityRole="button">
-                  <Text style={s.linkText}>See this week so far</Text>
-                  <Ionicons name="chevron-forward" size={15} color={colors.royal} />
+                  <Text style={s.linkText}>View this week’s review</Text>
                 </Pressable>
               )}
             />
