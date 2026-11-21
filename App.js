@@ -8,7 +8,7 @@ import React, { useEffect, useState } from 'react';
 import { StatusBar as RNStatusBar } from 'react-native';
 import { View, useColorScheme, Appearance } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { NavigationContainer, DefaultTheme, DarkTheme, createNavigationContainerRef } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, DarkTheme, createNavigationContainerRef, getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -45,7 +45,9 @@ const BrainstormStackNav = createNativeStackNavigator();
 
 function BrainstormStack() {
   return (
-    <BrainstormStackNav.Navigator screenOptions={{ headerShown: false }}>
+    // fullScreenGestureEnabled: on iPhone a swipe anywhere (not only from the
+    // edge) goes back a page, e.g. Medals → Brainstorm.
+    <BrainstormStackNav.Navigator screenOptions={{ headerShown: false, fullScreenGestureEnabled: true }}>
       <BrainstormStackNav.Screen name="BrainstormHome" component={BrainstormHomeScreen} />
       <BrainstormStackNav.Screen name="BrainstormWriter" component={BrainstormWriterScreen} />
       <BrainstormStackNav.Screen name="MyWriting" component={MyWritingScreen} />
@@ -69,7 +71,14 @@ function TabNavigator() {
       initialRouteName="Home"
       tabBar={(props) => <BottomBar {...props} />}
       // No swiping to another tab mid-chapter (see tabsLocked in tourRun.js).
-      screenOptions={{ swipeEnabled: !locked }}
+      // Swiping sideways changes tab only on a tab's own first page. On a page
+      // opened inside one (Medals, a day, your writing…) a swipe goes back to
+      // that tab's first page instead; the next swipe changes tab.
+      screenOptions={({ route }) => {
+        const inner = getFocusedRouteNameFromRoute(route);
+        const deeper = route.name === 'Brainstorm' && inner && inner !== 'BrainstormHome';
+        return { swipeEnabled: !locked && !deeper };
+      }}
       screenListeners={({ route }) => ({ focus: () => tourEvent('tab', route.name) })}
     >
       <Tabs.Screen name="Home" component={HomeScreen} />

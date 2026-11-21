@@ -5,12 +5,13 @@
 // shows this week so far, next to last week.
 
 import React, { useCallback, useState } from 'react';
-import { View, Text, Pressable, Share } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Screen } from '../components/ui';
 import WeekRings from '../components/WeekRings';
+import ShareWeekSheet from '../components/ShareWeekSheet';
 import Face from '../components/Face';
 import { TIER_STYLE } from '../components/Medal';
 import { colors, gradients, lift, space, themed } from '../theme';
@@ -42,6 +43,7 @@ export default function WeekReviewScreen({ navigation, route }) {
   const thisWeek = route?.params?.week === 'this';
   const insets = useSafeAreaInsets();
   const [data, setData] = useState(null);
+  const [shareOpen, setShareOpen] = useState(false); // Share my week: a picture
   const reload = useCallback(() => { loadAll().then(setData).catch(() => {}); }, []);
   useFocusEffect(reload);
   useDataChange(reload);
@@ -56,16 +58,6 @@ export default function WeekReviewScreen({ navigation, route }) {
   const medals = weekMedals(sessions, dailyGoals, goals, r.start, r.end);
   const head = reviewHeadline(r, thisWeek);
   const when = thisWeek ? 'yet this week' : 'last week';
-  const share = () => {
-    const lines = [
-      `My writing week (${short(r.start)} – ${short(r.end)}):`,
-      `${r.done.words.toLocaleString()} words · ${timeClock(r.done.seconds)} writing · ${r.done.count} sessions`,
-      `${r.closedDays} day${r.closedDays === 1 ? '' : 's'} with all rings closed`,
-      ...medals.map((m) => `${TIER_LABEL[m.tier]} ${m.name}`),
-      '— Pen Parentis',
-    ];
-    Share.share({ message: lines.join('\n') }).catch(() => {});
-  };
   return (
     <Screen>
       <LinearGradient colors={gradients.header} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={[s.header, { paddingTop: insets.top + 8 }]}>
@@ -110,10 +102,11 @@ export default function WeekReviewScreen({ navigation, route }) {
           )) : <Line icon={<Text style={s.big}>○</Text>} title="Medals" sub={`No new tiers ${when}. They’re waiting.`} />}
         </View>
 
-        <Pressable onPress={share} style={({ pressed }) => [s.btn, pressed && { opacity: 0.85 }]} accessibilityRole="button">
+        <Pressable onPress={() => setShareOpen(true)} style={({ pressed }) => [s.btn, pressed && { opacity: 0.85 }]} accessibilityRole="button">
           <Text style={s.btnText}>Share my week</Text>
         </Pressable>
       </View>
+      <ShareWeekSheet visible={shareOpen} onClose={() => setShareOpen(false)} review={r} medals={medals} thisWeek={thisWeek} />
     </Screen>
   );
 }
