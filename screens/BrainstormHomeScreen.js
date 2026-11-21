@@ -266,7 +266,7 @@ export default function BrainstormHomeScreen({ navigation, route }) {
             // (Off during the tour, so a tap can't take you out of it; swiping still works.)
             onPressDay={(d) => { if (!tourRunning()) navigation.navigate('BrainstormDay', { day: d.key }); }}
             onOpenReview={() => { if (!tourRunning()) navigation.navigate('WeekReview'); }}
-            onOpenAll={() => { if (!tourRunning()) navigation.navigate('MyWriting'); }}
+            onOpenThisWeek={() => { if (!tourRunning()) navigation.navigate('WeekReview', { week: 'this' }); }}
           />
         </TourTarget>
 

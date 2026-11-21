@@ -1,7 +1,8 @@
 // screens/WeekReviewScreen.js — Week in review: last week (Sunday to
 // Saturday) next to the week before. Opens from Sunday's notification, from
 // Settings, and from "Last week" on Brainstorm's week card, so it's there
-// even with notifications off.
+// even with notifications off. With { week: 'this' } (This week's card) it
+// shows this week so far, next to last week.
 
 import React, { useCallback, useState } from 'react';
 import { View, Text, Pressable, Share } from 'react-native';
@@ -14,7 +15,7 @@ import Face from '../components/Face';
 import { TIER_STYLE } from '../components/Medal';
 import { colors, gradients, lift, space, themed } from '../theme';
 import { loadAll, useDataChange } from '../writingStore';
-import { changeText, parseDayKey, timeClock, weekReview } from '../writingLogic';
+import { changeText, dayKey, parseDayKey, timeClock, weekReview } from '../writingLogic';
 import { weekMedals } from '../monthMedals';
 import { feelingLabel } from '../feelings';
 import { TIER_LABEL } from '../medals';
@@ -23,15 +24,22 @@ const short = (k) => parseDayKey(k).toLocaleDateString(undefined, { month: 'shor
 const weekday = (k) => parseDayKey(k).toLocaleDateString(undefined, { weekday: 'long' });
 
 // The headline for the week.
-export function reviewHeadline(r) {
-  if (r.empty) return { title: 'A quiet week', sub: 'Nothing written last week. A new week is a fresh page.' };
+export function reviewHeadline(r, thisWeek = false) {
+  if (r.empty) {
+    return thisWeek
+      ? { title: 'A fresh week', sub: 'Nothing written yet this week. Even a few lines counts.' }
+      : { title: 'A quiet week', sub: 'Nothing written last week. A new week is a fresh page.' };
+  }
   const up = r.prev.words > 0 && r.done.words > r.prev.words;
-  const title = r.closedDays >= 5 ? 'What a week' : up ? 'More than the week before' : r.closedDays > 0 ? 'A good week' : 'You showed up';
+  const title = thisWeek
+    ? (up ? 'Ahead of last week' : r.closedDays > 0 ? 'A good start' : 'You showed up')
+    : r.closedDays >= 5 ? 'What a week' : up ? 'More than the week before' : r.closedDays > 0 ? 'A good week' : 'You showed up';
   const days = `${r.closedDays} day${r.closedDays === 1 ? '' : 's'} with all rings closed`;
   return { title, sub: r.restDays ? `${days} · ${r.restDays} rest day${r.restDays === 1 ? '' : 's'}` : days };
 }
 
-export default function WeekReviewScreen({ navigation }) {
+export default function WeekReviewScreen({ navigation, route }) {
+  const thisWeek = route?.params?.week === 'this';
   const insets = useSafeAreaInsets();
   const [data, setData] = useState(null);
   const reload = useCallback(() => { loadAll().then(setData).catch(() => {}); }, []);
@@ -39,9 +47,15 @@ export default function WeekReviewScreen({ navigation }) {
   useDataChange(reload);
   if (!data) return <Screen><View style={{ height: 200 }} /></Screen>;
   const { sessions, dailyGoals, goals } = data;
-  const r = weekReview(sessions, dailyGoals, goals);
+  // This week = the week before next week's; its days to come are faded.
+  const now = new Date();
+  const base = thisWeek ? new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7, 12) : now;
+  const raw = weekReview(sessions, dailyGoals, goals, base);
+  const todayKey = dayKey(now);
+  const r = thisWeek ? { ...raw, days: raw.days.map((d) => ({ ...d, isToday: d.key === todayKey, future: d.key > todayKey })) } : raw;
   const medals = weekMedals(sessions, dailyGoals, goals, r.start, r.end);
-  const head = reviewHeadline(r);
+  const head = reviewHeadline(r, thisWeek);
+  const when = thisWeek ? 'yet this week' : 'last week';
   const share = () => {
     const lines = [
       `My writing week (${short(r.start)} – ${short(r.end)}):`,
@@ -58,7 +72,7 @@ export default function WeekReviewScreen({ navigation }) {
         <Pressable onPress={() => navigation.goBack()} hitSlop={10} style={s.back} accessibilityRole="button">
           <Text style={s.backText}>‹  Back</Text>
         </Pressable>
-        <Text style={s.kicker}>LAST WEEK · {short(r.start).toUpperCase()} – {short(r.end).toUpperCase()}</Text>
+        <Text style={s.kicker}>{thisWeek ? 'THIS WEEK SO FAR' : 'LAST WEEK'} · {short(r.start).toUpperCase()} – {short(r.end).toUpperCase()}</Text>
         <Text style={s.title}>{head.title}</Text>
         <Text style={s.sub}>{head.sub}</Text>
         <View style={s.stats}>
@@ -66,7 +80,7 @@ export default function WeekReviewScreen({ navigation }) {
           <Stat n={timeClock(r.done.seconds)} label="writing" change={changeText(r.done.seconds, r.prev.seconds)} />
           <Stat n={String(r.done.count)} label={r.done.count === 1 ? 'session' : 'sessions'} change={changeText(r.done.count, r.prev.count)} />
         </View>
-        <Text style={s.vs}>Compared with the week before: {r.prev.words.toLocaleString()} words</Text>
+        <Text style={s.vs}>{thisWeek ? 'Last week' : 'The week before'}: {r.prev.words.toLocaleString()} words</Text>
       </LinearGradient>
 
       <View style={s.pad}>
@@ -76,12 +90,12 @@ export default function WeekReviewScreen({ navigation }) {
         />
 
         <View style={[s.card, lift]}>
-          <Line icon={<Text style={s.big}>★</Text>} title="Best day" sub={r.best ? `${weekday(r.best.key)} · ${r.best.words.toLocaleString()} words` : 'No writing last week'} />
+          <Line icon={<Text style={s.big}>★</Text>} title="Best day" sub={r.best ? `${weekday(r.best.key)} · ${r.best.words.toLocaleString()} words` : `No writing ${when}`} />
           <View style={s.sep} />
           <Line
             icon={r.feelings[0] ? <Face id={r.feelings[0][0]} size={30} /> : <Text style={s.big}>·</Text>}
             title="Felt most"
-            sub={r.feelings.length ? r.feelings.slice(0, 2).map(([id, n]) => `${feelingLabel(id)} (${n})`).join(' · ') : 'No feelings picked last week'}
+            sub={r.feelings.length ? r.feelings.slice(0, 2).map(([id, n]) => `${feelingLabel(id)} (${n})`).join(' · ') : `No feelings picked ${when}`}
           />
           <View style={s.sep} />
           {medals.length ? medals.map((m, i) => (
@@ -93,7 +107,7 @@ export default function WeekReviewScreen({ navigation }) {
                 sub={m.monthly ? `${m.name}, the month’s medal` : 'Medal'}
               />
             </View>
-          )) : <Line icon={<Text style={s.big}>○</Text>} title="Medals" sub="No new tiers last week. They’re waiting." />}
+          )) : <Line icon={<Text style={s.big}>○</Text>} title="Medals" sub={`No new tiers ${when}. They’re waiting.`} />}
         </View>
 
         <Pressable onPress={share} style={({ pressed }) => [s.btn, pressed && { opacity: 0.85 }]} accessibilityRole="button">

@@ -61,15 +61,19 @@ export default function Sheet({ visible, onClose, title, subtitle, children, foo
         <View style={s.backdrop}>
           <Pressable style={StyleSheet.absoluteFill} onPress={close} />
           <TourTarget id={tourId ? `${tourId}.card` : null} style={[s.card, lift, full && { height: height - insets.top - 8, paddingBottom: Math.max(insets.bottom, 12) }, cardStyle]}>
-            <View style={s.head}>
-              {onBack ? (
+            {/* ‹ Back sits on its own line above the title (as in the iPhone's
+                Settings), so every page's title starts at the same place. */}
+            {onBack ? (
+              <View style={s.backRow}>
                 <TourTarget id={tourId ? `${tourId}.back` : null}>
                   <Pressable onPress={onBack} style={s.backBtn} hitSlop={8} accessibilityRole="button" accessibilityLabel={`Back to ${backLabel}`}>
                     <Ionicons name="chevron-back" size={19} color={colors.royal} />
                     <Text style={s.backText} numberOfLines={1}>{backLabel}</Text>
                   </Pressable>
                 </TourTarget>
-              ) : null}
+              </View>
+            ) : null}
+            <View style={s.head}>
               <View style={{ flex: 1 }}>
                 <Text style={s.title}>{title}</Text>
                 {subtitle ? <Text style={s.subtitle}>{subtitle}</Text> : null}
@@ -118,7 +122,8 @@ const s = themed(() => ({
   subtitle: { fontSize: 12.5, color: colors.muted, marginTop: 3 },
   close: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.line },
   closeText: { fontSize: 18, color: colors.ink, lineHeight: 18 },
-  backBtn: { flexDirection: 'row', alignItems: 'center', minHeight: 30, paddingRight: 10, marginRight: 4, maxWidth: 120 },
+  backRow: { flexDirection: 'row', marginTop: -6, marginBottom: 2 },
+  backBtn: { flexDirection: 'row', alignItems: 'center', minHeight: 34, paddingRight: 12, marginLeft: -4 },
   backText: { fontSize: 15, fontWeight: '700', color: colors.royal },
   // Full width, to the bottom edge (cancels the card's padding).
   footer: { marginHorizontal: -space.lg, marginBottom: -space.xl, marginTop: space.sm, paddingBottom: space.lg, backgroundColor: '#F1EDE3' },

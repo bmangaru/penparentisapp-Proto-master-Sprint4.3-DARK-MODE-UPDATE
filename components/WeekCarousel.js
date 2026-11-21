@@ -1,7 +1,7 @@
 // components/WeekCarousel.js — Brainstorm's week card, two pages you swipe
 // between: Last week on the left (with "See your week in review ›", the same
 // page Sunday's notification opens) and This week on the right, where it
-// starts. Dots underneath say which one. The cards are flat here (a shadow
+// starts (with "See this week so far ›", the same page for this week). Dots underneath say which one. The cards are flat here (a shadow
 // gets cut off at the edges of a swiping row).
 
 import React, { useRef, useState } from 'react';
@@ -14,7 +14,7 @@ import { parseDayKey } from '../writingLogic';
 const short = (k) => parseDayKey(k).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 const PAGES = ['Last week', 'This week'];
 
-export default function WeekCarousel({ week, last, onPressDay, onOpenReview, onOpenAll }) {
+export default function WeekCarousel({ week, last, onPressDay, onOpenReview, onOpenThisWeek }) {
   const [w, setW] = useState(0);
   const [i, setI] = useState(1); // This week
   const ref = useRef(null);
@@ -50,8 +50,8 @@ export default function WeekCarousel({ week, last, onPressDay, onOpenReview, onO
             <WeekRings
               flat style={{ flex: 1 }} week={week} onPressDay={onPressDay}
               footer={(
-                <Pressable onPress={onOpenAll} style={({ pressed }) => [s.link, pressed && { opacity: 0.7 }]} accessibilityRole="button">
-                  <Text style={s.linkText}>See all my writing</Text>
+                <Pressable onPress={onOpenThisWeek} style={({ pressed }) => [s.link, pressed && { opacity: 0.7 }]} accessibilityRole="button">
+                  <Text style={s.linkText}>See this week so far</Text>
                   <Ionicons name="chevron-forward" size={15} color={colors.royal} />
                 </Pressable>
               )}
