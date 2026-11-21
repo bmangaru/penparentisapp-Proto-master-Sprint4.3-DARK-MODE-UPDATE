@@ -25,7 +25,8 @@
 //   spot instead of the whole part below the tip), boxPad / boxRound (how far
 //   outside it the box sits, its corners: 0 / 20 = right on a card's own border), noArrow (no "it's up
 //   here" arrow when you scroll away), goal ('text' or (run) => 'text': what
-//   the slim "Tour hidden" strip shows, with a ✓ once it's done).
+//   the slim "Tour hidden" strip shows, with a ✓ once it's done), noScroll (the
+//   page is never scrolled to the spot: it's at the top, and you swipe it).
 // Every chapter now runs on the app. (TourModal.js can still show chapters
 // made of `cards` — a picture, a title and a few sentences — if one is added.)
 
@@ -334,7 +335,7 @@ export const CHAPTERS = [
     steps: [
       tapTab('Calendar', 'Calendar', 'Every day you showed up to write: as rings, as feelings, and as monthly medals.', { section: 'The top cards' }),
       {
-        target: 'cal.top', tab: 'Calendar', inline: 'cal.top', marks: ['cal.prev', 'cal.next'], calView: 'rings',
+        target: 'cal.top', tab: 'Calendar', inline: 'cal.top', marks: ['cal.prev', 'cal.next'], calView: 'rings', noScroll: true, // (the page never moves while you swipe the cards)
         text: 'Four cards take turns here: today’s rings, this month’s feelings, this month’s medal, and a countdown to the next salon. Swipe the card, or tap the arrows, to move between them; the calendar below follows along. (They also change by themselves now and then; that’s paused for the tour.)',
         task: 'Swipe or tap the arrows to see every card.', doneText: 'You’ve seen them all. Look as long as you like, then go on.', manual: true, nextLabel: 'Ready to go on ›',
         on: (ev, v, d) => {

@@ -233,7 +233,8 @@ export default function TourLayer({ host = 'root' }) {
         // (Up to 3 tries, in case a flick still moving undid the first.)
         const sf = scrolledFor.current;
         const fresh = !sf || sf.key !== key;
-        if (t.scroll && !getRun()?.min && (fresh || (sf.tries < 3 && Date.now() - sf.at > 700))) {
+        // (step.noScroll: never; e.g. the calendar's top cards, which you swipe.)
+        if (t.scroll && !step.noScroll && !getRun()?.min && (fresh || (sf.tries < 3 && Date.now() - sf.at > 700))) {
           if (outOfView(y, h)) {
             scrolledFor.current = { key, tries: fresh ? 1 : sf.tries + 1, at: Date.now() };
             scrollSpotIntoView(t, y, h);
