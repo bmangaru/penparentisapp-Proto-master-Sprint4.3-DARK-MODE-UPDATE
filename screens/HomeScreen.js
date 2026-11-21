@@ -86,7 +86,7 @@ export default function HomeScreen() {
         <TourTarget id="home.socials" style={{ gap: 9, marginTop: space.md }}>
         <TourInline at="home.socials" flush />
         <Pressable onPress={() => go(LINKS.website)} style={({ pressed }) => [s.web, pressed && { opacity: 0.85 }]} accessibilityRole="link" accessibilityLabel="Visit penparentis.org">
-          <Image source={require('../assets/pen-parentis-logo.png')} style={s.webLogo} resizeMode="cover" accessibilityIgnoresInvertColors />
+          <Image source={require('../assets/icon.png')} style={s.webLogo} resizeMode="cover" accessibilityIgnoresInvertColors />
           <Text style={s.webText}>Visit penparentis.org</Text>
           <Ionicons name="arrow-up-outline" size={16} color={colors.royal} style={{ transform: [{ rotate: '45deg' }] }} />
         </Pressable>
@@ -141,7 +141,7 @@ const s = themed(() => ({
     flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: space.sm,
     backgroundColor: '#FFFFFF', borderWidth: 1.5, borderColor: '#B9C6E8', borderRadius: radius.md, paddingVertical: 10, paddingHorizontal: 12,
   },
-  webLogo: { width: 46, height: 40, borderRadius: 8 },
+  webLogo: { width: 44, height: 44, borderRadius: 10 },
   webText: { flex: 1, fontSize: 15, fontWeight: '700', color: colors.ink },
   karma: { flexDirection: 'row', alignItems: 'center', borderRadius: radius.md, padding: 16, marginTop: space.xs },
   karmaTitle: { fontSize: 17, fontWeight: '700', color: '#231702' },

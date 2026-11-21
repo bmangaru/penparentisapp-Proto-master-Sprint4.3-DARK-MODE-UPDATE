@@ -59,7 +59,7 @@ export default function BlogCarousel() {
                 <Image source={{ uri: p.image }} style={s.img} resizeMode="cover" accessibilityIgnoresInvertColors />
               ) : (
                 <View style={[s.img, s.noImg]}>
-                  <Image source={require('../assets/pen-parentis-logo.png')} style={s.noImgLogo} resizeMode="contain" />
+                  <Image source={require('../assets/icon.png')} style={s.noImgLogo} resizeMode="contain" />
                 </View>
               )}
               <View style={s.body}>
@@ -85,7 +85,7 @@ const s = themed(() => ({
   card: { flex: 1, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: colors.line, borderRadius: radius.md, overflow: 'hidden' },
   img: { width: '100%', height: 190, backgroundColor: '#E6ECFA' },
   noImg: { alignItems: 'center', justifyContent: 'center' },
-  noImgLogo: { width: 100, height: 86, borderRadius: 10 },
+  noImgLogo: { width: 92, height: 92, borderRadius: 21 },
   body: { padding: 14, paddingTop: 10 },
   date: { fontSize: 10.5, fontWeight: '800', letterSpacing: 0.8, color: '#8A5E12' },
   title: { fontSize: 17, fontWeight: '800', color: colors.ink, marginTop: 3, lineHeight: 22 },

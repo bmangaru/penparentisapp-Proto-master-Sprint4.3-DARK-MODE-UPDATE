@@ -8,7 +8,7 @@
 // and opens the phone's share sheet (expo-sharing): Messages, Instagram,
 // Save Image…
 
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, Pressable, Switch, Image, Alert, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { captureRef } from 'react-native-view-shot';
@@ -45,7 +45,9 @@ export default function ShareCalendarSheet({ visible, onClose, mode = 'rings', s
   const touring = !!run;
   // In the tour the three ranges pulse, drawn on the chips so they move with them.
   const chipTip = useTapHint(isTourTarget('share.card', run));
-  const [range, setRange] = useState('3months');
+  // Always opens on This month, whatever you picked last time.
+  const [range, setRange] = useState('month');
+  useEffect(() => { if (visible) setRange('month'); }, [visible, mode]);
   const [totals, setTotals] = useState(true);
   const [busy, setBusy] = useState(false);
   const shot = useRef(null);
@@ -203,7 +205,7 @@ export default function ShareCalendarSheet({ visible, onClose, mode = 'rings', s
           )}
 
           <View style={s.foot}>
-            <Image source={require('../assets/pen-parentis-logo.png')} style={s.logo} resizeMode="cover" />
+            <Image source={require('../assets/icon.png')} style={s.logo} resizeMode="cover" />
             <Text style={s.footText}>parenting done, write.</Text>
           </View>
         </LinearGradient>
@@ -254,7 +256,7 @@ const s = themed(() => ({
   mon: { fontSize: 10.5, fontWeight: '800', letterSpacing: 0.8, color: 'rgba(255,255,255,0.75)', marginBottom: 4, marginTop: 4 },
   week: { flexDirection: 'row' },
   foot: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
-  logo: { width: 28, height: 24, borderRadius: 5, borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)' },
+  logo: { width: 26, height: 26, borderRadius: 6, borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)' },
   footText: { fontSize: 11.5, color: 'rgba(255,255,255,0.85)' },
   toggle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 },
   toggleText: { fontSize: 13, color: colors.body },

@@ -896,7 +896,7 @@ function WelcomeCard() {
   return (
     <View style={[c.card, { backgroundColor: colors.card, borderColor: colors.line }]}>
       <Pressable onPress={() => setPlay((n) => n + 1)} accessibilityRole="button" accessibilityLabel="Pen Parentis logo. Tap to write the tagline again" style={{ alignSelf: 'center' }}>
-        <Image source={require('../assets/pen-parentis-logo.png')} style={c.logo} resizeMode="contain" accessibilityIgnoresInvertColors />
+        <Image source={require('../assets/icon.png')} style={c.logo} resizeMode="contain" accessibilityIgnoresInvertColors />
       </Pressable>
       <WrittenTagline play={play} />
       <Text style={[c.cardTitle, { color: colors.ink }]}>Welcome to Pen Parentis</Text>
@@ -1092,7 +1092,7 @@ const c = StyleSheet.create({
     borderRadius: 22, borderWidth: 1, paddingHorizontal: 18, paddingVertical: 20,
     shadowColor: '#000', shadowOpacity: 0.4, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }, elevation: 14,
   },
-  logo: { width: 132, height: 114, borderRadius: 12 },
+  logo: { width: 120, height: 120, borderRadius: 27 },
   tag: { fontSize: 32 },
   measure: { position: 'absolute', opacity: 0, left: -9999 },
   tagDot: { position: 'absolute', top: 29, width: 7, height: 7, borderRadius: 3.5 },

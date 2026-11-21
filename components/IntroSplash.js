@@ -116,7 +116,7 @@ export default function IntroSplash({ onDone }) {
         >
           {isDark() ? <View pointerEvents="none" style={s.logoGlow} /> : null}
           <Image
-            source={require('../assets/pen-parentis-logo.png')}
+            source={require('../assets/icon.png')}
             resizeMode="contain"
             style={s.logo}
             accessibilityIgnoresInvertColors
@@ -177,11 +177,12 @@ const s = themed(() => ({
   // The light page, or the app's navy in dark mode.
   wrap: { backgroundColor: dk('#FFFDF8', '#0D1324'), zIndex: 100, elevation: 100 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  // The app icon (pen + name), as on the home screen.
   logo: {
-    width: 170, height: 147, borderRadius: 14,
+    width: 168, height: 168, borderRadius: 38,
   },
   // Dark mode: a thin soft edge and glow so the blue tile doesn't melt into the page.
-  logoGlow: { position: 'absolute', width: 170, height: 147, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)', backgroundColor: '#2E4590', shadowColor: '#5A78DC', shadowOpacity: 0.55, shadowRadius: 16, shadowOffset: { width: 0, height: 0 }, elevation: 8 },
+  logoGlow: { position: 'absolute', width: 168, height: 168, borderRadius: 38, borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)', backgroundColor: '#2E4590', shadowColor: '#5A78DC', shadowOpacity: 0.55, shadowRadius: 16, shadowOffset: { width: 0, height: 0 }, elevation: 8 },
   line: { marginTop: 34, alignItems: 'center' },
   tag: { fontSize: 32, color: ink() },
   measure: { position: 'absolute', opacity: 0, left: -9999 },
